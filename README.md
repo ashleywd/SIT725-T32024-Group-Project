@@ -4,7 +4,6 @@
 BabySwap is a web application developed for SIT725 (T3 2024) that enables parents to exchange babysitting services using a points-based system. Parents can offer their time for babysitting in exchange for points, which they can then use when they need babysitting services themselves.
 
 ## Features
-
  - User registration and authentication
  - Create and view babysitting posts 
  - Accept babysitting requests
@@ -21,15 +20,6 @@ BabySwap is a web application developed for SIT725 (T3 2024) that enables parent
 - MongoDB installed and running
 - Git installed
 
-## Dependancies
-- express: Web application framework
-- mongoose: MongoDB object modeling tool
-- dotenv: Environment variable management
-- express-session: Session management
-- bcrypt: Password hashing
-- path: File and directory paths utility
-- materialize-css: UI framework
-
 ## Installation & Setup
 ### Clone Repository
 
@@ -41,7 +31,7 @@ cd SIT725-T32024-Group-Project
 ### Install Dependencies
 
 ```console
-npm install express mongoose dotenv express-session bcrypt path
+npm install
 ```
 
 ### Environment Setup
