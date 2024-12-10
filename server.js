@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const app = express();
 const routes = require('./routes/app');
-const controller = require('./controllers/controller');
+const controller = require('./controllers/appController');
 const { connectDB } = require('./config/db');
 
 // Set our server port
@@ -14,12 +14,6 @@ connectDB();
 
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/src', (req, res, next) => {
-    if (req.path.endsWith('.js')) {
-        res.type('application/javascript');
-    }
-    next();
-}, express.static(path.join(__dirname, 'src')));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
