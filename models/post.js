@@ -1,9 +1,9 @@
+// models/post.js
 const mongoose = require('mongoose');
 
 const postSchema = new mongoose.Schema({
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: String,
         required: true
     },
     type: {
@@ -23,6 +23,11 @@ const postSchema = new mongoose.Schema({
     dateTime: {
         type: Date,
         required: true
+    },
+    hoursNeeded: {
+        type: Number,
+        required: true,
+        min: 1
     },
     acceptedBy: {
         type: mongoose.Schema.Types.ObjectId,
