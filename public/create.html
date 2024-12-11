@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Babysitting Service</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col s12 m8 offset-m2">
+                <div class="card">
+                    <div class="card-content">
+                        <span class="card-title">Create Babysitting Post</span>
+                        <form id="postForm">
+                            <!-- User ID field (temporary) -->
+                            <div class="row">
+                                <div class="input-field col s12">
+                                    <input id="userId" name="userId" type="text" required>
+                                    <label for="userId">User ID (Temporary for testing)</label>
+                                    <span class="helper-text">Enter a valid MongoDB ObjectId for testing</span>
+                                </div>
+                            </div>
+
+                            <!-- Post Type -->
+                            <div class="row">
+                                <div class="input-field col s12">
+                                    <select id="type" name="type" class="browser-default" required>
+                                        <option value="" disabled selected>Choose your option</option>
+                                        <option value="offer">Offering Babysitting</option>
+                                        <option value="request">Requesting Babysitter</option>
+                                    </select>
+                                    <label class="active">Post Type</label>
+                                </div>
+                            </div>
+
+                            <!-- Hours Needed -->
+                            <div class="row">
+                                <div class="input-field col s12">
+                                    <input id="hoursNeeded" name="hoursNeeded" type="number" min="1" step="0.5" required>
+                                    <label for="hoursNeeded">Hours Needed</label>
+                                    <span class="helper-text">Enter number of hours (minimum 1 hour)</span>
+                                </div>
+                            </div>
+
+                            <!-- Date and Time -->
+                            <div class="row">
+                                <div class="input-field col s12">
+                                    <input type="datetime-local" id="dateTime" name="dateTime" required>
+                                    <label for="dateTime" class="active">Date and Time</label>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="row">
+                                <div class="input-field col s12">
+                                    <textarea id="description" name="description" class="materialize-textarea" required></textarea>
+                                    <label for="description">Description</label>
+                                    <span class="helper-text">Please provide details about your babysitting needs or services</span>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="row">
+                                <div class="col s12 center-align">
+                                    <button class="btn waves-effect waves-light" type="submit">
+                                        Submit
+                                        <i class="material-icons right">send</i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>
