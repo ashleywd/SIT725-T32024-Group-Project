@@ -1,30 +1,30 @@
-const path = require('path');
+const path = require("path");
 
 const controller = {
-    renderHome: (req, res) => {
-        res.sendFile(path.join(__dirname, '../public', 'index.html'));
-    },
+  renderHome: (_, res) => {
+    res.render("../views/login");
+  },
 
-    renderPosts: (req, res) => {
-        res.sendFile(path.join(__dirname, '../public', 'posts.html'));
-    },
+  renderDashboard: (_, res) => {
+    res.render("../views/dashboard");
+  },
 
-    renderLogin: (req, res) => {
-        res.sendFile(path.join(__dirname, '../public', 'login.html'));
-    },
+  renderLogin: (_, res) => {
+    res.render("../views/login");
+  },
 
-    renderRegister: (req, res) => {
-        res.sendFile(path.join(__dirname, '../public', 'register.html'));
-    },
+  renderRegister: (_, res) => {
+    res.sendFile(path.join(__dirname, "../public", "register.html"));
+  },
 
-    handleError: (err, req, res, next) => {
-        console.error(err.stack);
-        res.status(500).json({ error: 'Something went wrong!' });
-    },
+  handleError: (err, _, res) => {
+    console.error(err.stack);
+    res.status(500).json({ error: "Something went wrong!" });
+  },
 
-    handle404: (req, res) => {
-        res.status(404).json({ error: 'Route not found' });
-    }
+  handle404: (_, res) => {
+    res.status(404).json({ error: "Route not found" });
+  },
 };
 
 module.exports = controller;
