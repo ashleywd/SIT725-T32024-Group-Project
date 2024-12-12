@@ -17,13 +17,13 @@ const controller = {
     res.sendFile(path.join(__dirname, "../public", "register.html"));
   },
 
-  handleError: (err, _, res) => {
+  handleError: (err, _, res, __) => {
     console.error(err.stack);
-    res.status(500).json({ error: "Something went wrong!" });
+    res.status(500).send("Something broke!");
   },
 
   handle404: (_, res) => {
-    res.status(404).json({ error: "Route not found" });
+    res.status(404).send("Sorry can't find that!");
   },
 };
 
