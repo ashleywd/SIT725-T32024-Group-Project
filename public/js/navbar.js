@@ -6,7 +6,7 @@ const dashboardMenu = document.querySelector("#dashboard-menu");
 const toggleUnnecessaryMenu = () => {
   loginMenu.style.display = "none";
   registerMenu.style.display = "none";
-    dashboardMenu.style.display = "block";
+  dashboardMenu.style.display = "block";
   logoutMenu.style.display = "block";
 };
 

@@ -2,19 +2,19 @@ const path = require("path");
 
 const controller = {
   renderHome: (_, res) => {
-    res.render("../views/login");
+    res.render("../views/login", { title: "Login", viewScript: "login.js" });
   },
 
   renderDashboard: (_, res) => {
-    res.render("../views/dashboard");
+    res.render("../views/dashboard", { title: "Dashboard", viewScript: "dashboard.js" });
   },
 
   renderLogin: (_, res) => {
-    res.render("../views/login");
+    res.render("../views/login", { title: "Login", viewScript: "login.js" });
   },
 
   renderRegister: (_, res) => {
-    res.sendFile(path.join(__dirname, "../public", "register.html"));
+    res.render("../views/register", { title: "Register", viewScript: "register.js" });
   },
 
   handleError: (err, _, res, __) => {
