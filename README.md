@@ -45,11 +45,7 @@ PORT=3000
 ### Start Server
 
 ```console
-node server.js
-```
-For development with auto-reload:
-```npm install -g nodemon
-nodemon server.js
+npm run start
 ```
 Access application at http://localhost:3000
 
