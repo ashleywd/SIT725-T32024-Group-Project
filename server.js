@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const app = express();
-const routes = require('./routes/app');
+const { appRoutes, authRoutes } = require('./routes/');
 const controller = require('./controllers/appController');
 const { connectDB } = require('./config/db');
 
@@ -19,7 +19,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Use the router
-app.use('/', routes);
+app.use('/', appRoutes);
+app.use('/api/auth', authRoutes);
+
 
 // Error handlers
 app.use(controller.handleError);
