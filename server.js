@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const app = express();
-const { appRoutes, authRoutes } = require("./routes/");
+const { appRoutes, authRoutes, postRoutes } = require("./routes/");
 const { handleError, handle404 } = require("./controllers/appController");
 const { connectDB } = require("./config/db");
 const engine = require('ejs-mate')
@@ -25,6 +25,7 @@ app.set('view engine', 'ejs');
 
 // Use the router
 app.use("/", appRoutes);
+app.use("/api/posts", postRoutes);
 app.use("/api/auth", authRoutes);
 
 // Error handlers

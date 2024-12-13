@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const controller = require('../controllers/appController');
+const appController = require('../controllers/appController');
 
 // Basic route handlers
-router.get('/', controller.renderHome);
-router.get('/dashboard', controller.renderDashboard);
-router.get('/login', controller.renderLogin);
-router.get('/register', controller.renderRegister);
+router.get('/', appController.renderHome);
+router.get('/dashboard', appController.renderDashboard);
+router.get('/login', appController.renderLogin);
+router.get('/register', appController.renderRegister);
 
 module.exports = router;

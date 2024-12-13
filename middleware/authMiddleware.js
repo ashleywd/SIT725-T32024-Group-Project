@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-const SESSION_SECRET = process.env.SECRET;
+const SESSION_SECRET = process.env.SESSION_SECRET;
 
 const verifyToken = (req, res, next) => {
   const token = req.header("Authorization");

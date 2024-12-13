@@ -1,0 +1,20 @@
+.modal {
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+.modal .modal-content {
+    overflow: visible !important;
+    padding-bottom: 1rem !important;
+}
+
+.modal.open {
+    width: 80% !important;
+    max-height: none !important;
+    height: auto !important;
+    top: 5% !important;
+}
+
+.cancel-button {
+    margin-left: 10px;
+}
