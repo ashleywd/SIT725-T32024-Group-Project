@@ -57,7 +57,6 @@ postForm.addEventListener("submit", async function (e) {
 });
 
 const getPosts = async () => {
-  console.log("Fetching posts...");
   try {
     const response = await fetch("/api/posts", {
       method: "GET",
