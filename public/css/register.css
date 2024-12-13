@@ -1,4 +1,4 @@
-.login-form-container {
+.register-form-container {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6,6 +6,6 @@
   width: 100%;
 }
 
-.login-form {
+.register-form {
   width: 35rem;
 }

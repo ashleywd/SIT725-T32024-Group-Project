@@ -1,5 +1,5 @@
 const loginButton = document.querySelector("#login-button");
-const loginForm = document.querySelector("#login-form");
+const loginForm = document.querySelector(".login-form");
 
 const login = async () => {
   const username = document.querySelector("#username").value;
