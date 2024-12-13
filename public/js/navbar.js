@@ -21,8 +21,6 @@ const checkAuth = () => {
   toggleUnnecessaryMenu();
 };
 
-checkAuth();
-
 const logout = (e) => {
   e.preventDefault();
   localStorage.removeItem("token");
