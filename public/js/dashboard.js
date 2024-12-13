@@ -14,7 +14,6 @@ postForm.addEventListener("submit", async function (e) {
   e.preventDefault();
 
   const formData = {
-    userId: document.getElementById("userId").value,
     type: document.getElementById("type").value,
     hoursNeeded: parseFloat(document.getElementById("hoursNeeded").value),
     description: document.getElementById("description").value,

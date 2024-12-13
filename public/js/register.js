@@ -5,6 +5,7 @@ registerForm.addEventListener("submit", async (e) => {
   const username = document.querySelector("#username").value;
   const password = document.querySelector("#password").value;
   const email = document.querySelector("#email").value;
+  
   try {
     const response = await fetch("/api/auth/register", {
       method: "POST",
@@ -14,15 +15,17 @@ registerForm.addEventListener("submit", async (e) => {
       body: JSON.stringify({ username, password, email }),
     });
     const data = await response.json();
-    console.log(data);
+    
     if (response.status === 201) {
-      console.log(data);
+      M.toast({html: 'Registration successful!', classes: 'green'});
       localStorage.setItem("token", data.token);
       window.location.href = "/dashboard";
     } else {
-      console.log(data.error);
+      // Only show the toast notification, remove the error div creation
+      M.toast({html: data.error || 'Registration failed', classes: 'red'});
     }
   } catch (error) {
     console.error("Register failed", error);
+    M.toast({html: 'Registration failed. Please try again.', classes: 'red'});
   }
 });

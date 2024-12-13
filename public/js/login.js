@@ -4,6 +4,7 @@ const loginForm = document.querySelector(".login-form");
 const login = async () => {
   const username = document.querySelector("#username").value;
   const password = document.querySelector("#password").value;
+  
   try {
     const response = await fetch("api/auth/login", {
       method: "POST",
@@ -13,25 +14,25 @@ const login = async () => {
       body: JSON.stringify({ username, password }),
     });
     const data = await response.json();
+    
     if (response.status === 200) {
+      M.toast({html: 'Login successful!', classes: 'green'});
       localStorage.setItem("token", data.token);
       window.location.href = "/dashboard";
     } else {
-      console.log(data.error);
+      M.toast({html: data.error || 'Login failed', classes: 'red'});
     }
   } catch (error) {
     console.error("Login failed", error);
+    M.toast({html: 'Login failed. Please try again.', classes: 'red'});
   }
 };
 
-loginButton.addEventListener("click", (e) => {
+// We can simplify the event listeners since they do the same thing
+const handleSubmit = (e) => {
   e.preventDefault();
-  login(username, password);
-});
+  login();
+};
 
-loginForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  login(username, password);
-});
-
-
+loginButton.addEventListener("click", handleSubmit);
+loginForm.addEventListener("submit", handleSubmit);
