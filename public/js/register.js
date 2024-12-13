@@ -1,4 +1,4 @@
-const registerForm = document.querySelector("#register-form");
+const registerForm = document.querySelector(".register-form");
 
 registerForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -14,8 +14,9 @@ registerForm.addEventListener("submit", async (e) => {
       body: JSON.stringify({ username, password, email }),
     });
     const data = await response.json();
+    console.log(data);
     if (response.status === 201) {
-        console.log(data);
+      console.log(data);
       localStorage.setItem("token", data.token);
       window.location.href = "/dashboard";
     } else {
