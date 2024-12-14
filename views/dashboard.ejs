@@ -1,0 +1,87 @@
+<% layout('layout') -%>
+<h1>Welcome to BabySwap</h1>
+<p>A community-driven babysitting exchange platform</p>
+
+<!-- Button to Trigger Modal -->
+<button data-target="modalForm" class="btn modal-trigger teal lighten-2">
+  Create Post
+</button>
+
+<!-- Modal Structure -->
+<div id="modalForm" class="modal">
+  <div class="modal-content">
+    <h4>Create Babysitting Post</h4>
+    <form id="postForm">
+      <!-- Post Type -->
+      <div class="row">
+        <div class="input-field col s12">
+          <select id="type" name="type" required>
+            <option value="" disabled selected>Choose your option</option>
+            <option value="offer">Offering Babysitting</option>
+            <option value="request">Requesting Babysitter</option>
+          </select>
+          <label>Post Type</label>
+        </div>
+      </div>
+
+      <!-- Hours Needed -->
+      <div class="row">
+        <div class="input-field col s12">
+          <input
+            id="hoursNeeded"
+            name="hoursNeeded"
+            type="number"
+            min="1"
+            step="0.5"
+            required
+          />
+          <label for="hoursNeeded">Hours Needed</label>
+          <span class="helper-text"
+            >Enter number of hours (minimum 1 hour)</span
+          >
+        </div>
+      </div>
+
+      <!-- Date and Time -->
+      <div class="row">
+        <div class="input-field col s12">
+          <input type="datetime-local" id="dateTime" name="dateTime" required />
+          <label for="dateTime" class="active">Date and Time</label>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="row">
+        <div class="input-field col s12">
+          <textarea
+            id="description"
+            name="description"
+            class="materialize-textarea"
+            required
+          ></textarea>
+          <label for="description">Description</label>
+          <span class="helper-text"
+            >Please provide details about your babysitting needs or
+            services</span
+          >
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col s12 center-align">
+          <button class="btn waves-effect waves-light" type="submit">
+            Submit
+            <i class="material-icons right">send</i>
+          </button>
+          <button
+            class="btn waves-effect waves-light red modal-close cancel-button"
+            type="button"
+          >
+            Cancel
+            <i class="material-icons right">close</i>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

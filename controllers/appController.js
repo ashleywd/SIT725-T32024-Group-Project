@@ -1,30 +1,44 @@
-const path = require('path');
+const appController = {
+  renderHome: (_, res) => {
+    res.render("../views/dashboard", {
+      title: "Dashboard",
+      viewScript: "dashboard.js",
+      viewStyle: "dashboard.css",
+    });
+  },
 
-const controller = {
-    renderHome: (req, res) => {
-        res.sendFile(path.join(__dirname, '../public', 'index.html'));
-    },
+  renderDashboard: (_, res) => {
+    res.render("../views/dashboard", {
+      title: "Dashboard",
+      viewScript: "dashboard.js",
+      viewStyle: "dashboard.css",
+    });
+  },
 
-    renderPosts: (req, res) => {
-        res.sendFile(path.join(__dirname, '../public', 'posts.html'));
-    },
+  renderLogin: (_, res) => {
+    res.render("../views/login", {
+      title: "Login",
+      viewScript: "login.js",
+      viewStyle: "login.css",
+    });
+  },
 
-    renderLogin: (req, res) => {
-        res.sendFile(path.join(__dirname, '../public', 'login.html'));
-    },
+  renderRegister: (_, res) => {
+    res.render("../views/register", {
+      title: "Register",
+      viewScript: "register.js",
+      viewStyle: "register.css",
+    });
+  },
 
-    renderRegister: (req, res) => {
-        res.sendFile(path.join(__dirname, '../public', 'register.html'));
-    },
+  handleError: (err, _, res, __) => {
+    console.error(err.stack);
+    res.status(500).send("Something broke!");
+  },
 
-    handleError: (err, req, res, next) => {
-        console.error(err.stack);
-        res.status(500).json({ error: 'Something went wrong!' });
-    },
-
-    handle404: (req, res) => {
-        res.status(404).json({ error: 'Route not found' });
-    }
+  handle404: (_, res) => {
+    res.status(404).send("Sorry can't find that!");
+  },
 };
 
-module.exports = controller;
+module.exports = appController;
