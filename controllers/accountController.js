@@ -4,7 +4,10 @@ const UserModel = require('../models/user');
 
 const getAccountDetails = async (req, res) => {
     try {
-        console.log('req.userId:', req.userId);
+        if (!req.userId || !isValidObjectId(req.userId)) {
+            return res.status(400).json({ error: 'Invalid userId format' });
+        }
+
         const user = await UserModel.findById(req.userId);
 
         if (!user) {
@@ -20,5 +23,7 @@ const getAccountDetails = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+const isValidObjectId = (id) => /^[a-fA-F0-9]{24}$/.test(id); // Example for MongoDB ObjectId
 
 module.exports = { getAccountDetails };
