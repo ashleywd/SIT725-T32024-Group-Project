@@ -61,4 +61,4 @@ const updateAccountDetails = async (req, res) => {
 
 const isValidObjectId = (id) => /^[a-fA-F0-9]{24}$/.test(id); // Example for MongoDB ObjectId
 
-module.exports = { getAccountDetails };
+module.exports = { getAccountDetails,updateAccountDetails };
