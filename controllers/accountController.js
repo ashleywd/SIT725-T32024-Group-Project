@@ -81,7 +81,28 @@ const deleteAccount = async (req, res) => {
     }
 };
 
+const getAccountPoints = async (req, res) => {
+    try {
+        const { userId } = req;
+
+        // Validate userId
+        if (!userId || !isValidObjectId(userId)) {
+            return res.status(400).json({ error: 'Invalid userId format' });
+        }
+
+        // Find user and retrieve points
+        const user = await UserModel.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.status(200).json({ points: user.points });
+    } catch (err) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
 
 const isValidObjectId = (id) => /^[a-fA-F0-9]{24}$/.test(id); // Example for MongoDB ObjectId
 
-module.exports = { getAccountDetails,updateAccountDetails, deleteAccount };
+module.exports = { getAccountDetails,updateAccountDetails, deleteAccount, getAccountPoints };
