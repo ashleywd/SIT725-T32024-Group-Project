@@ -7,5 +7,6 @@ router.get('/', appController.renderHome);
 router.get('/dashboard', appController.renderDashboard);
 router.get('/login', appController.renderLogin);
 router.get('/register', appController.renderRegister);
+router.get('/account',appController.renderAccount);
 
 module.exports = router;
