@@ -15,6 +15,14 @@ const appController = {
     });
   },
 
+  renderViewpost: (_, res) => {
+    res.render("../views/viewpost", {
+      title: "Viewpost",
+      viewScript: "viewpost.js",
+      viewStyle: "viewpost.css",
+    });
+  },
+
   renderLogin: (_, res) => {
     res.render("../views/login", {
       title: "Login",

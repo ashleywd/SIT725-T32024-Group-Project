@@ -3,6 +3,7 @@ const express = require("express");
 const path = require("path");
 const app = express();
 const { appRoutes, authRoutes, postRoutes } = require("./routes/");
+const postController = require("./controllers/postController");
 const { handleError, handle404 } = require("./controllers/appController");
 const { connectDB } = require("./config/db");
 const engine = require('ejs-mate')
@@ -27,6 +28,11 @@ app.set('view engine', 'ejs');
 app.use("/", appRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/auth", authRoutes);
+
+const router = express.Router();
+router.get("/posts", postController.getAllPosts); 
+app.get("/viewpost", appController.renderViewpost); 
+app.use("/", router); 
 
 // Error handlers
 app.use(handleError);

@@ -26,9 +26,12 @@ const postController = {
   },
   getAllPosts: async (_, res) => {
     try {
-      const posts = await Post.find();
+      const posts = await Post.find()
+        .populate("userId", "name") // fetch username
+        .sort({ createdAt: -1 }); // sort by new post
       res.status(200).json(posts);
     } catch (error) {
+      console.error("Error fetching posts:", error);
       res
         .status(500)
         .json({ message: "Error fetching posts", error: error.message });
