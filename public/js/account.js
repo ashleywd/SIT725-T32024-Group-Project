@@ -21,6 +21,17 @@ const fetchAccountDetails = async () => {
     }
 };
 
+async function fetchUserPoints() {
+    try {
+        const response = await fetch('/account/points');
+        if (!response.ok) throw new Error('Failed to fetch points');
+        const data = await response.json();
+        document.getElementById('userPoints').innerText = `${data.points} pts`;
+    } catch (error) {
+        console.error('Error fetching user points:', error);
+    }
+}
+
 document.getElementById('updateForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -69,3 +80,5 @@ document.getElementById('deleteAccountBtn').addEventListener('click', async () =
 });
 
 fetchAccountDetails();
+// Fetch points on page load
+fetchUserPoints();

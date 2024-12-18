@@ -1,7 +1,15 @@
-<div style="display: flex; justify-content: space-between; align-items: center;">
+<% layout('layout') -%>
+
+<div class ="account-form-container">
+    <form class="col s6 login-form">
+        <h3>Manage Account </h3>
+    </form>
+</div>
+
+<!-- <div style="display: flex; justify-content: space-between; align-items: center;">
     <h3>User Points</h3>
     <span id="userPoints" style="font-size: 18px; font-weight: bold; color: #007bff;">0 pts</span>
-</div>
+</div> -->
 
 <script>
     async function fetchUserPoints() {
