@@ -1,5 +1,7 @@
-<div>
-    <h2>Account Management</h2>
+<% layout('layout') -%>
+
+<div class="account-form-container">
+    <h3>Account Management</h3>
 
     <!-- View Account Details -->
     <div id="accountDetails">
@@ -11,14 +13,16 @@
 
     <!-- Update Account Details -->
     <h4>Update Account</h4>
-    <form id="updateForm">
+    <form id="updateForm" class="col s6">
         <input type="text" name="name" placeholder="New Name" />
         <input type="email" name="email" placeholder="New Email" />
-        <button type="submit">Update</button>
+        <button type="submit" class="btn modal-trigger">Update</button>
     </form>
 
-    <!-- Delete Account -->
-    <button id="deleteAccountBtn" style="color: red;">Delete Account</button>
+    <!-- Delete Account -->    
+     <div class="row">
+    <button id="deleteAccountBtn" class="btn modal-trigger teal lighten-2">Delete Account</button>
+    </div>
 </div>
 
 
