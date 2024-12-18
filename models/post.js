@@ -14,7 +14,7 @@ const postSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['open', 'accepted', 'completed'],
+        enum: ['open', 'pending', 'accepted', 'rejected', 'completed'],
         default: 'open'
     },
     description: {
@@ -30,11 +30,28 @@ const postSchema = new mongoose.Schema({
         required: true,
         min: 1
     },
+    offers: [{
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        message: String,
+        status: {
+            type: String,
+            enum: ['pending', 'accepted', 'rejected'],
+            default: 'pending'
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     acceptedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         default: null
-    }
+    },
+    responseMessage: String
 }, {
     timestamps: true
 });

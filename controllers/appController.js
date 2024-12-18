@@ -15,11 +15,11 @@ const appController = {
     });
   },
 
-  renderViewpost: (_, res) => {
-    res.render("../views/viewpost", {
-      title: "Viewpost",
-      viewScript: "viewpost.js",
-      viewStyle: "viewpost.css",
+  renderMyPosts: (_, res) => {
+    res.render("../views/my-posts", {
+        title: "My Posts",
+        viewScript: "my-posts.js",
+        viewStyle: "dashboard.css",
     });
   },
 
@@ -47,6 +47,8 @@ const appController = {
   handle404: (_, res) => {
     res.status(404).send("Sorry can't find that!");
   },
+
+
 };
 
 module.exports = appController;

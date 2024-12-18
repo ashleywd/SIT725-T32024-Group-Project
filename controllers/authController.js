@@ -47,7 +47,11 @@ const authController = {
       const token = jwt.sign({ userId: user._id }, SESSION_SECRET, {
         expiresIn: "1h",
       });
-      res.status(201).json({ message: "User registered successfully", token });
+      res.status(201).json({ 
+        message: "User registered successfully", 
+        token,
+        userId: user._id  // Added userId to registration response
+      });
     } catch (error) {
       console.error("Registration error:", error);
       res.status(500).json({ error: "Registration failed" });
@@ -76,7 +80,10 @@ const authController = {
       const token = jwt.sign({ userId: user._id }, SESSION_SECRET, {
         expiresIn: "1h",
       });
-      res.status(200).json({ token });
+      res.status(200).json({ 
+        token,
+        userId: user._id  // Added userId to login response
+      });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Login failed" });
