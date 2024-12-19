@@ -29,7 +29,7 @@ const getAccountDetails = async (req, res) => {
 const updateAccountDetails = async (req, res) => {
     try {
         const { userId } = req;
-        const { name, email } = req.body;
+        const { username, email } = req.body;
 
         // Validate userId
         if (!userId || !isValidObjectId(userId)) {
@@ -37,14 +37,19 @@ const updateAccountDetails = async (req, res) => {
         }
 
         // Validate required fields
-        if (!name && !email) {
+        if (!username && !email) {
             return res.status(400).json({ error: 'At least one field (name or email) must be provided for update' });
         }
+
+        // Construct the update object
+        const updateFields = {};
+        if (username) updateFields.username = username; 
+        if (email) updateFields.email = email;
 
         // Update user details
         const updatedUser = await UserModel.findByIdAndUpdate(
             userId,
-            { ...(name && { name }), ...(email && { email }) },
+            { $set: updateFields },
             { new: true, runValidators: true } // Return updated user and apply schema validation
         );
 
@@ -57,6 +62,7 @@ const updateAccountDetails = async (req, res) => {
             user: updatedUser,
         });
     } catch (err) {
+        console.error('Error updating account:', err); // Log the error
         res.status(500).json({ error: 'Internal server error' });
     }
 };

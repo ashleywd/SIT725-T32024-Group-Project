@@ -34,26 +34,27 @@ const fetchAccountDetails = async () => {
     }
 };
 
+document.getElementById('editAccountBtn').addEventListener('click', () => {
+    const accountName = document.getElementById('accountName').innerText;
+    const accountEmail = document.getElementById('accountEmail').innerText;
 
-async function fetchUserPoints() {
-    try {
-        const response = await fetch('/account/points');
-        if (!response.ok) throw new Error('Failed to fetch points');
-        const data = await response.json();
-        document.getElementById('userPoints').innerText = `${data.points} pts`;
-    } catch (error) {
-        console.error('Error fetching user points:', error);
-    }
-}
+    document.getElementById('editName').value = accountName;
+    document.getElementById('editEmail').value = accountEmail;
+
+    document.getElementById('accountDetails').style.display = 'none';
+    document.getElementById('editAccountBtn').style.display = 'none';
+    document.getElementById('updateForm').style.display = 'block';
+});
 
 document.getElementById('updateForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    console.log('insdie updateForm');
 
     const formData = new FormData(e.target);
     const body = JSON.stringify(Object.fromEntries(formData));
 
     try {
-        const response = await fetch('/account', {
+        const response = await fetch('/api/account', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -67,6 +68,10 @@ document.getElementById('updateForm').addEventListener('submit', async (e) => {
 
         M.toast({ html: 'Account updated successfully!' });
         fetchAccountDetails(); // Refresh the account details
+
+        document.getElementById('accountDetails').style.display = 'block';
+        document.getElementById('editAccountBtn').style.display = 'block';
+        document.getElementById('updateForm').style.display = 'none';
     } catch (error) {
         console.error('Update error:', error);
         M.toast({ html: error.message, classes: 'red' });
@@ -95,5 +100,3 @@ document.getElementById('deleteAccountBtn').addEventListener('click', async () =
 
 // Fetch account details on page load
 fetchAccountDetails();
-// Fetch points on page load
-//fetchUserPoints();

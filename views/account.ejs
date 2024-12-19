@@ -9,27 +9,19 @@
         <p><strong>Points:</strong> <span id="accountPoints"></span></p>
     </div>
 
+    <!-- Edit Account Details -->
+    <button id="editAccountBtn" class="btn modal-trigger">Edit</button>
+
     <!-- Update Account Details -->
-    <h4>Update Account</h4>
-    <form id="updateForm" class="col s6">
-        <input type="text" name="name" placeholder="New Name" />
-        <input type="email" name="email" placeholder="New Email" />
-        <button type="submit" class="btn modal-trigger">Update</button>
+    <form id="updateForm" class="col s6" style="display: none;">
+        <input type="text" name="username" id="editName" placeholder="New Name" />
+        <input type="email" name="email" id="editEmail" placeholder="New Email" />
+        <button type="submit" id="updateBtn" class="btn modal-trigger">Submit</button>
     </form>
 
     <!-- Delete Account -->    
-     <div class="row">
-    <button id="deleteAccountBtn" class="btn modal-trigger teal lighten-2">Delete Account</button>
-    </div>
-</div>
-
-<div id="errorModal" class="modal">
-    <div class="modal-content">
-        <h4>Error</h4>
-        <p id="errorMessage">Unable to retrieve account details. Please try again.</p>
-    </div>
-    <div class="modal-footer">
-        <a href="#!" class="modal-close waves-effect waves-green btn-flat">OK</a>
+    <div class="row">
+        <button id="deleteAccountBtn" class="btn modal-trigger teal lighten-2">Delete Account</button>
     </div>
 </div>
 
