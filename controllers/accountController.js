@@ -4,8 +4,6 @@ const UserModel = require('../models/user');
 
 const getAccountDetails = async (req, res) => {
     try {
-        console.log('req.userId:', req.userId); // Add logging
-
         if (!req.userId || !isValidObjectId(req.userId)) {
             return res.status(400).json({ error: 'Invalid userId format' });
         }
@@ -17,23 +15,12 @@ const getAccountDetails = async (req, res) => {
         }
 
         const userDetails = {
-            name: user.name,
+            name: user.username,
             email: user.email,
             points: user.points,
         };
 
-        console.log('userDetails:', userDetails); // Add logging
-
-        if (req.headers.accept && req.headers.accept.includes('application/json')) {
-            res.status(200).json(userDetails);
-        } else {
-            res.render('account', {
-                title: 'Account',
-                viewScript: 'account.js',
-                viewStyle: 'account.css',
-                user: userDetails,
-            });
-        }
+        res.status(200).json(userDetails);
     } catch (err) {
         res.status(500).json({ error: 'Internal server error' });
     }
