@@ -82,7 +82,7 @@ document.getElementById('deleteAccountBtn').addEventListener('click', async () =
     if (!confirm('Are you sure you want to delete your account?')) return;
 
     try {
-        const response = await fetch('/account', {
+        const response = await fetch('/api/account', {
             method: 'DELETE',
             headers: { Authorization: localStorage.getItem('token') },
         });
