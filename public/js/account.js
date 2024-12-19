@@ -1,25 +1,39 @@
 checkAuth();
-var elems = document.querySelectorAll("select");
-M.FormSelect.init(elems);
 
-var modals = document.querySelectorAll(".modal");
-M.Modal.init(modals);
+document.addEventListener('DOMContentLoaded', function() {
+    var elems = document.querySelectorAll("select");
+    M.FormSelect.init(elems);
+    
+    var modals = document.querySelectorAll(".modal");
+    M.Modal.init(modals);    
+});
 
 const fetchAccountDetails = async () => {
     try {
-        const response = await fetch('/account', {
-            headers: { Authorization: localStorage.getItem('token') },
+        const token = localStorage.getItem('token');        
+        const response = await fetch('/api/account', {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: token,
+            },
         });
-        const data = await response.json();
 
-        document.getElementById('accountName').innerText = data.name;
-        document.getElementById('accountEmail').innerText = data.email;
-        document.getElementById('accountPoints').innerText = data.points;
-    } catch (error) {
-        console.error('Failed to fetch account details', error);
-        M.toast({ html: 'Error fetching account details', classes: 'red' });
+        if (!response.ok) {
+            throw new Error('Failed to fetch account details');
+        }
+
+        const data = await response.json();
+        document.getElementById('accountName').innerText = data.name || 'N/A';
+        document.getElementById('accountEmail').innerText = data.email || 'N/A';
+        document.getElementById('accountPoints').innerText = data.points || 0;
+    } catch (err) {
+        console.error('Error fetching account details:', err.message);
+        var instance = M.Modal.getInstance(document.getElementById("errorModal"));
+        instance.open();
     }
 };
+
 
 async function fetchUserPoints() {
     try {
@@ -79,6 +93,7 @@ document.getElementById('deleteAccountBtn').addEventListener('click', async () =
     }
 });
 
+// Fetch account details on page load
 fetchAccountDetails();
 // Fetch points on page load
-fetchUserPoints();
+//fetchUserPoints();
