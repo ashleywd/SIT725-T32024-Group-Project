@@ -5,10 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     M.FormSelect.init(elems);
     
     var modals = document.querySelectorAll(".modal");
-    M.Modal.init(modals);    
-
-    // Fetch points and update badge on page load
-    fetchUserPoints();
+    M.Modal.init(modals);        
 });
 
 const fetchAccountDetails = async () => {
