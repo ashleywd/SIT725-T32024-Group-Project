@@ -14,7 +14,7 @@ const postSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['open', 'pending', 'accepted', 'rejected', 'completed'],
+        enum: ['open', 'active', 'completed', 'cancelled'],  // Updated status options
         default: 'open'
     },
     description: {

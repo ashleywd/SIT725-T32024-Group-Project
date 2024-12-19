@@ -1,97 +1,221 @@
+/* Modal Styles */
 .modal {
-    max-height: none !important;
-    overflow: visible !important;
+  max-height: none !important;
+  overflow: visible !important;
 }
 
 .modal .modal-content {
-    overflow: visible !important;
-    padding-bottom: 1rem !important;
+  overflow: visible !important;
+  padding-bottom: 1rem !important;
 }
 
 .modal.open {
-    width: 80% !important;
-    max-height: none !important;
-    height: auto !important;
-    top: 5% !important;
+  width: 80% !important;
+  max-height: none !important;
+  height: auto !important;
+  top: 5% !important;
 }
 
 .cancel-button {
-    margin-left: 10px;
+  margin-left: 10px;
+}
+
+/* Card Styles */
+.card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .card .description {
-    margin-top: 15px;
-    white-space: pre-wrap;
-  }
-  
-  .card-title i {
-    margin-right: 10px;
-  }
-  
-  .card {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .card-content {
-    flex-grow: 1;
-  }
-  
-  .card-action {
-    border-top: 1px solid rgba(160,160,160,0.2);
-    padding: 16px;
-  }
-  
-  #postsContainer, #myPostsContainer {
-    margin-top: 20px;
-  }
-  
-  .btn {
-    margin-right: 10px;
-  }
+  margin-top: 15px;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
 
-  .offers-section {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid #e0e0e0;
+.card-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.card-title i {
+  margin-right: 10px;
+}
+
+.card-content {
+  flex-grow: 1;
+  padding: 24px !important;
+}
+
+.card-action {
+  border-top: 1px solid rgba(160,160,160,0.2);
+  padding: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Container Spacing */
+#postsContainer, #myPostsContainer {
+  margin-top: 20px;
+}
+
+#postsContent {
+  min-height: 200px;
+}
+
+/* Button Styles */
+.btn {
+  margin-right: 10px;
+  text-transform: none;
+  border-radius: 4px;
+}
+
+.btn:last-child {
+  margin-right: 0;
+}
+
+/* Offers Section Styles */
+.offers-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
 }
 
 .offer-card {
-    background: #f5f5f5;
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 4px;
+  background: #f5f5f5;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.offer-card:hover {
+  background: #f0f0f0;
 }
 
 .offer-message {
-    margin: 5px 0;
+  margin: 5px 0;
+  line-height: 1.4;
 }
 
 .offer-status {
-    color: #666;
-    font-size: 0.9em;
+  font-size: 0.9em;
+  font-weight: 500;
+  margin: 8px 0;
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.05);
 }
 
 .offer-actions {
-    margin-top: 10px;
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
 }
 
 .offer-actions button {
-    margin-right: 10px;
+  margin-right: 10px;
+  flex: 1;
 }
 
+/* Message Section Styles */
 .message-section {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #e0e0e0;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
 }
 
 .message {
-    font-style: italic;
-    color: #666;
+  font-style: italic;
+  color: #666;
+  line-height: 1.4;
+  padding: 8px;
+  background: #f9f9f9;
+  border-radius: 4px;
 }
 
-#postsContainer {
-  margin-top: 2rem;
+/* Status Colors */
+.green-text {
+  color: #4CAF50 !important;
+  font-weight: 500;
+}
+
+.orange-text {
+  color: #FF9800 !important;
+  font-weight: 500;
+}
+
+.blue-text {
+  color: #2196F3 !important;
+  font-weight: 500;
+}
+
+.grey-text {
+  color: #9E9E9E !important;
+  font-weight: 500;
+}
+
+/* Loading and Error States */
+#loadingIndicator {
+  padding: 40px 0;
+}
+
+#errorContainer {
+  margin: 20px 0;
+}
+
+.card-panel {
+  border-radius: 4px;
+  padding: 20px;
+}
+
+/* Section Dividers */
+.section {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.divider {
+  margin: 30px 0;
+  opacity: 0.7;
+}
+
+/* Filter Section */
+.filter-section {
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.filter-section .input-field {
+  margin-top: 0;
+}
+
+/* Responsive Adjustments */
+@media only screen and (max-width: 600px) {
+  .card-action {
+      flex-direction: column;
+  }
+
+  .card-action .btn {
+      margin: 5px 0;
+      width: 100%;
+  }
+
+  .offer-actions {
+      flex-direction: column;
+  }
+
+  .filter-section .input-field {
+      margin-bottom: 10px;
+  }
 }
