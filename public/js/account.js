@@ -66,6 +66,7 @@ document.getElementById('editAccountBtn').addEventListener('click', () => {
 
     document.getElementById('accountDetails').style.display = 'none';
     document.getElementById('editAccountBtn').style.display = 'none';
+    document.getElementById('deleteAccountBtn').style.display = 'none'; // Hide the delete button
     document.getElementById('updateForm').style.display = 'block';
 });
 
@@ -92,6 +93,7 @@ document.getElementById('updateForm').addEventListener('submit', async (e) => {
 
         document.getElementById('accountDetails').style.display = 'block';
         document.getElementById('editAccountBtn').style.display = 'block';
+        document.getElementById('deleteAccountBtn').style.display = 'block'; // Show the delete button
         document.getElementById('updateForm').style.display = 'none';
     } catch (error) {
         console.error('Update error:', error);
