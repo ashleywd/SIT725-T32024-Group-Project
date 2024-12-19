@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     var modals = document.querySelectorAll(".modal");
     M.Modal.init(modals);    
+
+    // Fetch points and update badge on page load
+    fetchUserPoints();
 });
 
 const fetchAccountDetails = async () => {
@@ -34,6 +37,28 @@ const fetchAccountDetails = async () => {
     }
 };
 
+const fetchUserPoints = async () => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/account/points', {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: token,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch user points');
+        }
+
+        const data = await response.json();
+        document.getElementById('pointsBadge').innerText = data.points || 0;
+    } catch (err) {
+        console.error('Error fetching user points:', err.message);
+    }
+};
+
 document.getElementById('editAccountBtn').addEventListener('click', () => {
     const accountName = document.getElementById('accountName').innerText;
     const accountEmail = document.getElementById('accountEmail').innerText;
@@ -48,7 +73,7 @@ document.getElementById('editAccountBtn').addEventListener('click', () => {
 
 document.getElementById('updateForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    console.log('insdie updateForm');
+    console.log('inside updateForm');
 
     const formData = new FormData(e.target);
     const body = JSON.stringify(Object.fromEntries(formData));
