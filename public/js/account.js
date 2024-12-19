@@ -1,11 +1,12 @@
 checkAuth();
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {   
     var elems = document.querySelectorAll("select");
-    M.FormSelect.init(elems);
-    
+    var instances = M.FormSelect.init(elems);
+
     var modals = document.querySelectorAll(".modal");
-    M.Modal.init(modals);        
+    M.Modal.init(modals);  
+
 });
 
 const fetchAccountDetails = async () => {
@@ -56,9 +57,9 @@ const fetchUserPoints = async () => {
     }
 };
 
-document.getElementById('editAccountBtn').addEventListener('click', () => {
+document.getElementById('editAccountBtn').addEventListener('click', () => {  
     const accountName = document.getElementById('accountName').innerText;
-    const accountEmail = document.getElementById('accountEmail').innerText;
+    const accountEmail = document.getElementById('accountEmail').innerText;    
 
     document.getElementById('editName').value = accountName;
     document.getElementById('editEmail').value = accountEmail;
@@ -70,8 +71,6 @@ document.getElementById('editAccountBtn').addEventListener('click', () => {
 
 document.getElementById('updateForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    console.log('inside updateForm');
-
     const formData = new FormData(e.target);
     const body = JSON.stringify(Object.fromEntries(formData));
 
