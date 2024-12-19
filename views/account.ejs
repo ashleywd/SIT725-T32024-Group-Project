@@ -9,8 +9,11 @@
         <p><strong>Points:</strong> <span id="accountPoints"></span></p>
     </div>
 
-    <!-- Edit Account Details -->
-    <button id="editAccountBtn" class="btn modal-trigger">Edit</button>
+    <!-- Edit and Delete Account Buttons -->
+    <div class="button-container">
+        <button id="editAccountBtn" class="btn modal-trigger">Edit</button>
+        <button id="deleteAccountBtn" class="btn modal-trigger teal lighten-2">Delete Account</button>
+    </div>
 
     <!-- Update Account Details -->
     <form id="updateForm" class="col s6" style="display: none;">
@@ -18,11 +21,6 @@
         <input type="email" name="email" id="editEmail" placeholder="New Email" />
         <button type="submit" id="updateBtn" class="btn modal-trigger">Submit</button>
     </form>
-
-    <!-- Delete Account -->    
-    <div class="row">
-        <button id="deleteAccountBtn" class="btn modal-trigger teal lighten-2">Delete Account</button>
-    </div>
 </div>
 
 <!-- Error Modal -->
