@@ -101,6 +101,13 @@ document.getElementById('updateForm').addEventListener('submit', async (e) => {
     }
 });
 
+document.getElementById('cancelBtn').addEventListener('click', () => {
+    document.getElementById('accountDetails').style.display = 'block';
+    document.getElementById('editAccountBtn').style.display = 'block';
+    document.getElementById('deleteAccountBtn').style.display = 'block'; // Show the delete button
+    document.getElementById('updateForm').style.display = 'none';
+});
+
 document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
     if (!confirm('Are you sure you want to delete your account?')) return;
 
