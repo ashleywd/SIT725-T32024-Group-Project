@@ -1,3 +1,5 @@
+checkAuth();
+
 let allPosts = []; // Store all posts for reference
 let currentEditPostId = null;
 
@@ -28,19 +30,57 @@ const getStatusClass = (status) => {
     return statusClasses[status] || '';
 };
 
-const renderPostCard = (post, type = 'created') => {
-    const offersSection = type === 'created' && post.offers && post.offers.length > 0 ? `
-        <div class="offers-section">
-            ${post.status === 'active' ? 
-                `<p><strong>Offer Accepted</strong></p>` :
-                `<p><strong>Offers:</strong></p>
+const renderMyPosts = (posts) => {
+    const currentUserId = localStorage.getItem('userId');
+
+    // Sort posts into categories
+    const createdPosts = posts.filter(post => {
+        const postUserId = post.userId._id || post.userId;
+        return postUserId === currentUserId;
+    });
+
+    const acceptedPosts = posts.filter(post => {
+        const acceptedById = post.acceptedBy?._id || post.acceptedBy;
+        return acceptedById === currentUserId;
+    });
+
+    const pendingOffers = posts.filter(post => {
+        return post.offers?.some(offer => 
+            (offer.userId._id === currentUserId || offer.userId === currentUserId) && 
+            offer.status === 'pending'
+        );
+    });
+
+    // Render each section
+    document.getElementById('myCreatedPosts').innerHTML = createdPosts.length > 0 
+        ? createdPosts.map(post => renderPostCard(post, 'created')).join('')
+        : '<div class="col s12"><p>No posts created yet.</p></div>';
+
+    document.getElementById('myAcceptedPosts').innerHTML = acceptedPosts.length > 0
+        ? acceptedPosts.map(post => renderPostCard(post, 'accepted')).join('')
+        : '<div class="col s12"><p>No posts accepted yet.</p></div>';
+
+    document.getElementById('myPendingOffers').innerHTML = pendingOffers.length > 0
+        ? pendingOffers.map(post => renderPostCard(post, 'pending')).join('')
+        : '<div class="col s12"><p>No pending offers.</p></div>';
+};
+
+const renderPostCard = (post, type) => {
+    const currentUserId = localStorage.getItem('userId');
+    const isOwnPost = (post.userId._id === currentUserId) || (post.userId === currentUserId);
+
+    const renderOffers = () => {
+        if (!isOwnPost || !post.offers || post.offers.length === 0) return '';
+
+        return `
+            <div class="offers-section">
+                <p><strong>Offers (${post.offers.length}):</strong></p>
                 ${post.offers.map(offer => `
                     <div class="offer-card">
+                        <p><strong>${offer.userId.username}</strong></p>
                         <p class="offer-message">${offer.message}</p>
                         <p class="offer-status ${getStatusClass(offer.status)}">
-                            Status: ${offer.status === 'accepted' ? 'Accepted' : 
-                                    offer.status === 'rejected' ? 'Rejected' : 
-                                    offer.status === 'cancelled' ? 'Cancelled' : 'Pending'}
+                            Status: ${offer.status.charAt(0).toUpperCase() + offer.status.slice(1)}
                         </p>
                         ${offer.status === 'pending' ? `
                             <div class="offer-actions">
@@ -56,58 +96,59 @@ const renderPostCard = (post, type = 'created') => {
                         ` : ''}
                     </div>
                 `).join('')}
-            `}
-        </div>
-    ` : '';
+            </div>
+        `;
+    };
 
-    const responseMessage = post.responseMessage ? `
-        <div class="message-section">
-            <p><strong>Response Message:</strong></p>
-            <p class="message">${post.responseMessage}</p>
-        </div>
-    ` : '';
-
-    let actionButtons = '';
-    if (type === 'created') {
-        if (post.status === 'open') {
-            actionButtons = `
-                <button class="btn waves-effect waves-light blue"
-                        onclick="editPost('${post._id}')">
-                    <i class="material-icons left">edit</i>
-                    Edit
-                </button>
+    const renderActions = () => {
+        if (isOwnPost) {
+            if (post.status === 'open') {
+                return `
+                    <button class="btn waves-effect waves-light blue"
+                            onclick="editPost('${post._id}')">
+                        <i class="material-icons left">edit</i>Edit
+                    </button>
+                    <button class="btn waves-effect waves-light red"
+                            onclick="cancelPost('${post._id}')">
+                        <i class="material-icons left">cancel</i>Cancel
+                    </button>
+                `;
+            } else if (post.status === 'active') {
+                return `
+                    <button class="btn waves-effect waves-light green"
+                            onclick="markCompleted('${post._id}')">
+                        <i class="material-icons left">check_circle</i>Mark Completed
+                    </button>
+                `;
+            }
+            return '';
+        }
+    
+        // For posts in the "Posts I've Accepted" section
+        if (type === 'accepted') {
+            return `
                 <button class="btn waves-effect waves-light red"
-                        onclick="cancelPost('${post._id}')">
-                    <i class="material-icons left">cancel</i>
-                    Cancel Post
-                </button>
-            `;
-        } else if (post.status === 'active') {
-            actionButtons = `
-                <button class="btn waves-effect waves-light green"
-                        onclick="markCompleted('${post._id}')">
-                    <i class="material-icons left">check_circle</i>
-                    Mark Completed
+                        onclick="cancelAcceptance('${post._id}')">
+                    <i class="material-icons left">remove_circle</i>Cancel Acceptance
                 </button>
             `;
         }
-    } else if (type === 'pending') {
-        actionButtons = `
-            <button class="btn waves-effect waves-light red"
-                    onclick="cancelOffer('${post._id}')">
-                <i class="material-icons left">cancel</i>
-                Cancel Offer
-            </button>
-        `;
-    } else if (type === 'accepted' && post.status === 'active') {
-        actionButtons = `
-            <button class="btn waves-effect waves-light red"
-                    onclick="cancelAcceptance('${post._id}')">
-                <i class="material-icons left">cancel</i>
-                Cancel Acceptance
-            </button>
-        `;
-    }
+    
+        const userOffer = post.offers?.find(offer => 
+            offer.userId._id === currentUserId || offer.userId === currentUserId
+        );
+    
+        if (userOffer) {
+            return `
+                <button class="btn waves-effect waves-light red"
+                        onclick="cancelOffer('${post._id}')">
+                    <i class="material-icons left">remove_circle</i>Cancel Offer
+                </button>
+            `;
+        }
+    
+        return '';
+    };
 
     return `
         <div class="col s12 m6 l4">
@@ -118,60 +159,27 @@ const renderPostCard = (post, type = 'created') => {
                             ${post.type === 'offer' ? 'person_outline' : 'child_care'}
                         </i>
                         ${post.type === 'offer' ? 'Babysitting Offer' : 'Babysitter Request'}
+                        ${post.status !== 'open' ? `
+                            <span class="badge ${getStatusClass(post.status)}">
+                                ${post.status.toUpperCase()}
+                            </span>
+                        ` : ''}
                     </span>
+                    <p><strong>Posted by:</strong> ${post.userId.username}</p>
                     <p><strong>Date:</strong> ${new Date(post.dateTime).toLocaleString()}</p>
                     <p><strong>Hours:</strong> ${post.hoursNeeded}</p>
-                    <p><strong>Status:</strong> <span class="${getStatusClass(post.status)}">
-                        ${post.status.charAt(0).toUpperCase() + post.status.slice(1)}
-                    </span></p>
                     <p class="description">${post.description}</p>
-                    ${responseMessage}
-                    ${offersSection}
+                    ${post.acceptedBy ? `
+                        <p><strong>Accepted By:</strong> ${post.acceptedBy.username}</p>
+                    ` : ''}
+                    ${renderOffers()}
                 </div>
                 <div class="card-action">
-                    ${actionButtons}
+                    ${renderActions()}
                 </div>
             </div>
         </div>
     `;
-};
-
-const renderMyPosts = (posts) => {
-    const currentUserId = localStorage.getItem('userId');
-    
-    const myCreatedPosts = posts.filter(post => 
-        post.userId._id === currentUserId || post.userId === currentUserId
-    );
-    const myAcceptedPosts = posts.filter(post => 
-        post.acceptedBy?._id === currentUserId || post.acceptedBy === currentUserId
-    );
-    const myPendingOffers = posts.filter(post => 
-        post.offers?.some(offer => 
-            (offer.userId._id === currentUserId || offer.userId === currentUserId) && 
-            offer.status === 'pending'
-        )
-    );
-
-    const createdPostsEl = document.getElementById('myCreatedPosts');
-    if (createdPostsEl) {
-        createdPostsEl.innerHTML = myCreatedPosts.length ? 
-            myCreatedPosts.map(post => renderPostCard(post, 'created')).join('') :
-            '<div class="col s12"><p>No posts created yet.</p></div>';
-    }
-
-    const acceptedPostsEl = document.getElementById('myAcceptedPosts');
-    if (acceptedPostsEl) {
-        acceptedPostsEl.innerHTML = myAcceptedPosts.length ?
-            myAcceptedPosts.map(post => renderPostCard(post, 'accepted')).join('') :
-            '<div class="col s12"><p>No posts accepted yet.</p></div>';
-    }
-
-    const pendingOffersEl = document.getElementById('myPendingOffers');
-    if (pendingOffersEl) {
-        pendingOffersEl.innerHTML = myPendingOffers.length ?
-            myPendingOffers.map(post => renderPostCard(post, 'pending')).join('') :
-            '<div class="col s12"><p>No pending offers.</p></div>';
-    }
 };
 
 const editPost = async (postId) => {
@@ -236,13 +244,68 @@ const handleOffer = async (postId, offerId, action) => {
             const errorData = await response.json();
             throw new Error(errorData.message || 'Failed to handle offer');
         }
-
-        M.toast({html: `Offer has been ${action === 'accept' ? 'accepted' : 'rejected'}`});
+        
         getMyPosts();
+        M.toast({html: `Offer ${action}ed successfully`});
     } catch (error) {
+        console.error('Error handling offer:', error);
         M.toast({html: error.message, classes: 'red'});
     }
 };
+
+// const getPosts = async () => {
+//     try {
+//         document.getElementById('loadingIndicator').style.display = 'block';
+//         document.getElementById('errorContainer').style.display = 'none';
+//         document.getElementById('postsContent').style.display = 'none';
+
+//         const token = localStorage.getItem("token");
+//         const currentUserId = localStorage.getItem("userId");
+
+//         const response = await fetch("/api/posts", {
+//             headers: {
+//                 "Authorization": `Bearer ${token}`,
+//                 "Content-Type": "application/json"
+//             }
+//         });
+        
+//         if (!response.ok) {
+//             if (response.status === 401) {
+//                 localStorage.removeItem('token');
+//                 localStorage.removeItem('userId');
+//                 window.location.href = '/login';
+//                 return;
+//             }
+//             throw new Error('Failed to fetch posts');
+//         }
+        
+//         const allPosts = await response.json();
+        
+//         // Filter for user's own posts
+//         const myPosts = allPosts.filter(post => {
+//             const postUserId = post.userId._id || post.userId;
+//             return postUserId === currentUserId;
+//         });
+
+//         // Render posts
+//         const postsContainer = document.getElementById('postsContent');
+//         if (myPosts.length > 0) {
+//             const html = myPosts.map(post => renderPostCard(post)).join('');
+//             postsContainer.innerHTML = html;
+//         } else {
+//             postsContainer.innerHTML = '<p>You have no posts yet.</p>';
+//         }
+        
+//         document.getElementById('loadingIndicator').style.display = 'none';
+//         document.getElementById('postsContent').style.display = 'block';
+//     } catch (error) {
+//         console.error("Failed to fetch posts", error);
+//         document.getElementById('loadingIndicator').style.display = 'none';
+//         document.getElementById('errorContainer').style.display = 'block';
+//         document.getElementById('errorMessage').textContent = 'Failed to load posts. Please try again.';
+//         M.toast({html: 'Failed to load posts', classes: 'red'});
+//     }
+// };
 
 const cancelOffer = async (postId) => {
     try {
@@ -322,7 +385,7 @@ const getMyPosts = async () => {
                 "Content-Type": "application/json"
             }
         });
-
+        
         if (!response.ok) {
             if (response.status === 401) {
                 localStorage.removeItem('token');
@@ -334,12 +397,16 @@ const getMyPosts = async () => {
         }
 
         const posts = await response.json();
-        allPosts = posts; // Store posts globally
+        
+        // Store posts globally
+        allPosts = posts;
+        
+        // Render posts
         renderMyPosts(posts);
         
         document.getElementById('loadingIndicator').style.display = 'none';
     } catch (error) {
-        console.error("Failed to fetch posts", error);
+        console.error("Failed to fetch posts:", error);
         document.getElementById('loadingIndicator').style.display = 'none';
         document.getElementById('errorContainer').style.display = 'block';
         document.getElementById('errorMessage').textContent = 'Failed to load posts. Please try again.';

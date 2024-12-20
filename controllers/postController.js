@@ -28,76 +28,103 @@ const postController = {
     },
 
     editPost: async (req, res) => {
-        try {
-            const { type, hoursNeeded, description, dateTime } = req.body;
-            const post = await Post.findById(req.params.postId);
-            
-            if (!post) {
-                return res.status(404).json({ message: "Post not found" });
-            }
-            
-            if (post.userId.toString() !== req.userId) {
-                return res.status(403).json({ message: "Not authorized to edit this post" });
-            }
-            
-            if (post.status !== 'open') {
-                return res.status(400).json({ message: "Can only edit posts that are still open" });
-            }
+      try {
+          const { type, hoursNeeded, description, dateTime } = req.body;
+          const post = await Post.findById(req.params.postId);
+          
+          if (!post) {
+              return res.status(404).json({ message: "Post not found" });
+          }
 
-            post.type = type;
-            post.hoursNeeded = hoursNeeded;
-            post.description = description;
-            post.dateTime = dateTime;
-
-            await post.save();
-            
-            const populatedPost = await Post.findById(post._id)
-                .populate("userId", "username");
-            
-            res.status(200).json(populatedPost);
-        } catch (error) {
-            res.status(500).json({ message: "Error editing post", error: error.message });
-        }
+          const postUserIdStr = post.userId.toString();
+          const reqUserIdStr = req.userId.toString();
+          
+          if (postUserIdStr !== reqUserIdStr) {
+              return res.status(403).json({ 
+                  message: "Not authorized to edit this post",
+                  debug: {
+                      postUserId: postUserIdStr,
+                      requestUserId: reqUserIdStr
+                  }
+              });
+          }
+          
+          if (post.status !== 'open') {
+              return res.status(400).json({ message: "Can only edit posts that are still open" });
+          }
+  
+          // Update post fields
+          const updateFields = { type, hoursNeeded, description, dateTime };
+  
+          const updatedPost = await Post.findByIdAndUpdate(
+              req.params.postId,
+              updateFields,
+              { 
+                  new: true,
+                  runValidators: true 
+              }
+          ).populate("userId", "username");
+          
+          res.status(200).json(updatedPost);
+      } catch (error) {
+          console.error("Error editing post:", error);
+          res.status(500).json({ message: "Error editing post", error: error.message });
+      }
     },
 
     getAllPosts: async (req, res) => {
-        try {
-            const posts = await Post.find({ 
-                userId: { $ne: req.userId },
-                status: { $in: ['open', 'active'] }  // Only show open or active posts
-            })
-                .populate("userId", "username")
-                .populate("acceptedBy", "username")
-                .populate("offers.userId", "username")
-                .sort({ createdAt: -1 });
-            
-            res.status(200).json(posts);
-        } catch (error) {
-            console.error("Error in getAllPosts:", error);
-            res.status(500).json({ message: "Error fetching posts", error: error.message });
-        }
-    },
+      try {
+          const posts = await Post.find()
+              .populate("userId", "username")
+              .populate("acceptedBy", "username")
+              .populate("offers.userId", "username")
+              .sort({ createdAt: -1 });
+          
+          // Filter offers based on ownership
+          const filteredPosts = posts.map(post => {
+              const postObject = post.toObject();
+              
+              // If it's the user's own post, keep all offers
+              if (postObject.userId._id.toString() === req.userId) {
+                  return postObject;
+              }
+              
+              // For others' posts, only show the user's own offers
+              postObject.offers = postObject.offers.filter(
+                  offer => offer.userId._id.toString() === req.userId
+              );
+              
+              return postObject;
+          });
+          
+          res.status(200).json(filteredPosts);
+      } catch (error) {
+          console.error("Error in getAllPosts:", error);
+          res.status(500).json({ message: "Error fetching posts" });
+      }
+    }, 
 
     getUserPosts: async (req, res) => {
-        try {
-            const posts = await Post.find({
-                $or: [
-                    { userId: req.userId },
-                    { acceptedBy: req.userId },
-                    { "offers.userId": req.userId }
-                ]
-            })
-                .populate("userId", "username")
-                .populate("acceptedBy", "username")
-                .populate("offers.userId", "username")
-                .sort({ createdAt: -1 });
-
-            res.status(200).json(posts);
-        } catch (error) {
-            console.error("Error fetching user posts:", error);
-            res.status(500).json({ message: "Error fetching user posts", error: error.message });
-        }
-    },
+      try {
+          
+          const posts = await Post.find({
+              $or: [
+                  { userId: req.userId },              // Posts created by user
+                  { acceptedBy: req.userId },          // Posts accepted by user
+                  { "offers.userId": req.userId }      // Posts user has offered on
+              ]
+          })
+              .populate("userId", "username")
+              .populate("acceptedBy", "username")
+              .populate("offers.userId", "username")
+              .sort({ createdAt: -1 });
+  
+          res.status(200).json(posts);
+      } catch (error) {
+          console.error("Error fetching user posts:", error);
+          res.status(500).json({ message: "Error fetching user posts", error: error.message });
+      }
+  },
 
     offerHelp: async (req, res) => {
         try {
@@ -140,55 +167,59 @@ const postController = {
     },
 
     handleOffer: async (req, res) => {
-        try {
-            const { postId } = req.params;
-            const { offerId, action } = req.body;
-            
-            const post = await Post.findById(postId)
-                .populate("offers.userId", "username");
-            
-            if (!post) {
-                return res.status(404).json({ message: "Post not found" });
-            }
-            
-            if (post.userId.toString() !== req.userId) {
-                return res.status(403).json({ message: "Not authorized to handle offers on this post" });
-            }
+      try {
+          const { postId } = req.params;
+          const { offerId, action } = req.body;
+          
+          const post = await Post.findById(postId)
+              .populate("offers.userId", "username");
+          
+          if (!post) {
+              return res.status(404).json({ message: "Post not found" });
+          }
+          
+          if (post.userId.toString() !== req.userId) {
+              return res.status(403).json({ message: "Not authorized to handle offers on this post" });
+          }
 
-            const offer = post.offers.id(offerId);
-            if (!offer) {
-                return res.status(404).json({ message: "Offer not found" });
-            }
+          const offer = post.offers.id(offerId);
+          if (!offer) {
+              return res.status(404).json({ message: "Offer not found" });
+          }
 
-            if (action === 'accept') {
-                offer.status = 'accepted';
-                offer.respondedAt = new Date();
-                post.status = 'active';
-                post.acceptedBy = offer.userId;
-                post.acceptedAt = new Date();
-                // Set all other offers to rejected
-                post.offers.forEach(o => {
-                    if (o._id.toString() !== offerId) {
-                        o.status = 'rejected';
-                        o.respondedAt = new Date();
-                    }
-                });
-            } else if (action === 'reject') {
-                offer.status = 'rejected';
-                offer.respondedAt = new Date();
-            }
+          if (action === 'accept') {
+              // Update the accepted offer
+              offer.status = 'accepted';
+              offer.respondedAt = new Date();
+              
+              // Update post status
+              post.status = 'active';
+              post.acceptedBy = offer.userId;
+              post.acceptedAt = new Date();
+              
+              // Reject all other offers
+              post.offers.forEach(o => {
+                  if (o._id.toString() !== offerId) {
+                      o.status = 'rejected';
+                      o.respondedAt = new Date();
+                  }
+              });
+          } else if (action === 'reject') {
+              offer.status = 'rejected';
+              offer.respondedAt = new Date();
+          }
 
-            await post.save();
-            
-            const populatedPost = await Post.findById(post._id)
-                .populate("userId", "username")
-                .populate("acceptedBy", "username")
-                .populate("offers.userId", "username");
-            
-            res.status(200).json(populatedPost);
-        } catch (error) {
-            res.status(500).json({ message: "Error handling offer", error: error.message });
-        }
+          await post.save();
+          
+          const populatedPost = await Post.findById(post._id)
+              .populate("userId", "username")
+              .populate("acceptedBy", "username")
+              .populate("offers.userId", "username");
+          
+          res.status(200).json(populatedPost);
+      } catch (error) {
+          res.status(500).json({ message: "Error handling offer" });
+      }
     },
 
     cancelPost: async (req, res) => {
@@ -222,7 +253,6 @@ const postController = {
       }
     },
 
-    // In postController.js
     acceptPost: async (req, res) => {
       try {
           const post = await Post.findById(req.params.postId)
@@ -328,41 +358,43 @@ const postController = {
     },
 
     completePost: async (req, res) => {
-        try {
-            const post = await Post.findById(req.params.postId);
-            
-            if (!post) {
-                return res.status(404).json({ message: "Post not found" });
-            }
-            
-            if (post.userId.toString() !== req.userId) {
-                return res.status(403).json({ message: "Not authorized to complete this post" });
-            }
-            
-            if (post.status !== 'active') {
-                return res.status(400).json({ message: "Post must be active before being completed" });
-            }
-            
-            post.status = 'completed';
-            post.completedAt = new Date();
+      try {
+          const post = await Post.findById(req.params.postId);
+          
+          if (!post) {
+              return res.status(404).json({ message: "Post not found" });
+          }
+          
+          if (post.userId.toString() !== req.userId) {
+              return res.status(403).json({ message: "Not authorized to complete this post" });
+          }
+          
+          if (post.status !== 'active') {
+              return res.status(400).json({ message: "Post must be active before being completed" });
+          }
+          
+          post.status = 'completed';
+          post.completedAt = new Date();
 
-            // Update the accepted offer status
-            const acceptedOffer = post.offers.find(o => o.status === 'accepted');
-            if (acceptedOffer) {
-                acceptedOffer.status = 'completed';
-            }
+          // Update the accepted offer status
+          const acceptedOffer = post.offers?.find(o => o.status === 'accepted');
+          if (acceptedOffer) {
+              acceptedOffer.status = 'completed';
+          }
 
-            await post.save();
-            
-            const populatedPost = await Post.findById(post._id)
-                .populate("userId", "username")
-                .populate("acceptedBy", "username");
-            
-            res.status(200).json(populatedPost);
-        } catch (error) {
-            res.status(500).json({ message: "Error completing post", error: error.message });
-        }
-    }
+          await post.save();
+          
+          const populatedPost = await Post.findById(post._id)
+              .populate("userId", "username")
+              .populate("acceptedBy", "username")
+              .populate("offers.userId", "username");
+          
+          res.status(200).json(populatedPost);
+      } catch (error) {
+          console.error("Error completing post:", error);
+          res.status(500).json({ message: "Error completing post", error: error.message });
+      }
+  }
 };
 
 module.exports = postController;

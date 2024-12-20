@@ -2,3 +2,76 @@
   margin-right: 10px;
   color: white !important;
 }
+
+/* Offers Section Styles - Updated */
+.offers-section {
+  margin-top: 25px;
+  padding: 20px;
+  border-top: 2px solid #e0e0e0;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.offer-card {
+  background: white;
+  padding: 20px;
+  margin: 15px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border: 1px solid #eee;
+}
+
+.offer-message {
+  margin: 10px 0;
+  font-size: 1.1em;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* Status Indicators - Updated */
+.offer-status {
+  font-size: 0.95em;
+  font-weight: 600;
+  margin: 10px 0;
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+.offer-status.pending {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.offer-status.accepted {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.offer-status.rejected {
+  background: #ffebee;
+  color: #c62828;
+}
+
+/* Username Display */
+.offer-username {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #1565c0;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  background: #e3f2fd;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.offer-card .user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.offer-card .user-info i {
+  margin-right: 8px;
+  color: #1565c0;
+}

@@ -1,4 +1,3 @@
-// models/post.js
 const mongoose = require('mongoose');
 
 const postSchema = new mongoose.Schema({
@@ -14,7 +13,7 @@ const postSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['open', 'active', 'completed', 'cancelled'],  // Updated status options
+        enum: ['open', 'active', 'completed', 'cancelled'],
         default: 'open'
     },
     description: {
@@ -38,7 +37,7 @@ const postSchema = new mongoose.Schema({
         message: String,
         status: {
             type: String,
-            enum: ['pending', 'accepted', 'rejected'],
+            enum: ['pending', 'accepted', 'rejected', 'completed'],
             default: 'pending'
         },
         createdAt: {
