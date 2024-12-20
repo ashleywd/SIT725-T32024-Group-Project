@@ -1,87 +1,175 @@
 <% layout('layout') -%>
-<h1>Welcome to BabySwap</h1>
-<p>A community-driven babysitting exchange platform</p>
+<div class="container">
+    <h1>Welcome to BabySwap</h1>
+    <p>A community-driven babysitting exchange platform</p>
 
-<!-- Button to Trigger Modal -->
-<button data-target="modalForm" class="btn modal-trigger teal lighten-2">
-  Create Post
-</button>
-
-<!-- Modal Structure -->
-<div id="modalForm" class="modal">
-  <div class="modal-content">
-    <h4>Create Babysitting Post</h4>
-    <form id="postForm">
-      <!-- Post Type -->
-      <div class="row">
-        <div class="input-field col s12">
-          <select id="type" name="type" required>
-            <option value="" disabled selected>Choose your option</option>
-            <option value="offer">Offering Babysitting</option>
-            <option value="request">Requesting Babysitter</option>
-          </select>
-          <label>Post Type</label>
+    <!-- Button row -->
+    <div class="row">
+        <div class="col s12">
+            <button data-target="modalForm" class="btn modal-trigger teal lighten-2">
+                Create Post
+            </button>
         </div>
-      </div>
+    </div>
 
-      <!-- Hours Needed -->
-      <div class="row">
-        <div class="input-field col s12">
-          <input
-            id="hoursNeeded"
-            name="hoursNeeded"
-            type="number"
-            min="1"
-            step="0.5"
-            required
-          />
-          <label for="hoursNeeded">Hours Needed</label>
-          <span class="helper-text"
-            >Enter number of hours (minimum 1 hour)</span
-          >
+    <!-- Filters Row -->
+    <div class="row">
+        <div class="input-field col s4">
+            <select id="filterType">
+                <option value="all">All Posts</option>
+                <option value="offer">Babysitting Offers</option>
+                <option value="request">Babysitter Requests</option>
+            </select>
+            <label>Filter by Type</label>
         </div>
-      </div>
+        <div class="input-field col s4">
+            <select id="filterStatus">
+                <option value="all">All Status</option>
+                <option value="open">Open</option>
+                <option value="pending">Pending</option>
+                <option value="accepted">Accepted</option>
+                <option value="completed">Completed</option>
+            </select>
+            <label>Filter by Status</label>
+        </div>
+        <div class="input-field col s4">
+            <select id="sortBy">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="hours-asc">Hours: Low to High</option>
+                <option value="hours-desc">Hours: High to Low</option>
+            </select>
+            <label>Sort by</label>
+        </div>
+    </div>
 
-      <!-- Date and Time -->
-      <div class="row">
-        <div class="input-field col s12">
-          <input type="datetime-local" id="dateTime" name="dateTime" required />
-          <label for="dateTime" class="active">Date and Time</label>
+    <!-- Posts Container -->
+    <div class="row" id="postsContainer">
+        <!-- Loading indicator -->
+        <div id="loadingIndicator" class="center-align" style="display: none;">
+            <div class="preloader-wrapper big active">
+                <div class="spinner-layer spinner-blue">
+                    <div class="circle-clipper left">
+                        <div class="circle"></div>
+                    </div>
+                    <div class="gap-patch">
+                        <div class="circle"></div>
+                    </div>
+                    <div class="circle-clipper right">
+                        <div class="circle"></div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
+        
+        <!-- Error message -->
+        <div id="errorContainer" class="col s12" style="display: none;">
+            <div class="card-panel red lighten-4 red-text text-darken-4">
+                <span id="errorMessage"></span>
+                <button class="btn-flat right" onclick="retryLoadPosts()">
+                    <i class="material-icons">refresh</i>
+                </button>
+            </div>
+        </div>
 
-      <!-- Description -->
-      <div class="row">
-        <div class="input-field col s12">
-          <textarea
-            id="description"
-            name="description"
-            class="materialize-textarea"
-            required
-          ></textarea>
-          <label for="description">Description</label>
-          <span class="helper-text"
-            >Please provide details about your babysitting needs or
-            services</span
-          >
-        </div>
-      </div>
+        <!-- Posts will be dynamically inserted here -->
+        <div id="postsContent"></div>
+    </div>
 
-      <div class="row">
-        <div class="col s12 center-align">
-          <button class="btn waves-effect waves-light" type="submit">
-            Submit
-            <i class="material-icons right">send</i>
-          </button>
-          <button
-            class="btn waves-effect waves-light red modal-close cancel-button"
-            type="button"
-          >
-            Cancel
-            <i class="material-icons right">close</i>
-          </button>
+    <!-- Create Post Modal -->
+    <div id="modalForm" class="modal">
+        <div class="modal-content">
+            <h4>Create Babysitting Post</h4>
+            <form id="postForm">
+                <!-- Post Type -->
+                <div class="row">
+                    <div class="input-field col s12">
+                        <select id="type" name="type" required>
+                            <option value="" disabled selected>Choose your option</option>
+                            <option value="offer">Offering Babysitting</option>
+                            <option value="request">Requesting Babysitter</option>
+                        </select>
+                        <label>Post Type</label>
+                    </div>
+                </div>
+
+                <!-- Hours Needed -->
+                <div class="row">
+                    <div class="input-field col s12">
+                        <input
+                            id="hoursNeeded"
+                            name="hoursNeeded"
+                            type="number"
+                            min="1"
+                            step="0.5"
+                            required
+                        />
+                        <label for="hoursNeeded">Hours Needed</label>
+                        <span class="helper-text">Enter number of hours (minimum 1 hour)</span>
+                    </div>
+                </div>
+
+                <!-- Date and Time -->
+                <div class="row">
+                    <div class="input-field col s12">
+                        <input type="datetime-local" id="dateTime" name="dateTime" required />
+                        <label for="dateTime" class="active">Date and Time</label>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="row">
+                    <div class="input-field col s12">
+                        <textarea
+                            id="description"
+                            name="description"
+                            class="materialize-textarea"
+                            required
+                        ></textarea>
+                        <label for="description">Description</label>
+                        <span class="helper-text">Please provide details about your babysitting needs or services</span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col s12 center-align">
+                        <button class="btn waves-effect waves-light" type="submit">
+                            Submit
+                            <i class="material-icons right">send</i>
+                        </button>
+                        <button
+                            class="btn waves-effect waves-light red modal-close cancel-button"
+                            type="button"
+                        >
+                            Cancel
+                            <i class="material-icons right">close</i>
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
-      </div>
-    </form>
-  </div>
+    </div>
+
+    <!-- Response Modal -->
+    <div id="responseModal" class="modal">
+        <div class="modal-content">
+            <h4 id="responseModalTitle">Your Message</h4>
+            <div class="row">
+                <div class="input-field col s12">
+                    <textarea id="responseMessage" class="materialize-textarea" required></textarea>
+                    <label for="responseMessage">Add a message to your response</label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn waves-effect waves-light" id="sendResponseButton">
+                Send
+                <i class="material-icons right">send</i>
+            </button>
+            <button class="btn waves-effect waves-light red modal-close">
+                Cancel
+                <i class="material-icons right">close</i>
+            </button>
+        </div>
+    </div>
 </div>

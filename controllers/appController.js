@@ -1,5 +1,13 @@
 const appController = {
-  renderHome: (_, res) => {
+  // renderHome: (_, res) => {
+  //   res.render("../views/dashboard", {
+  //     title: "Dashboard",
+  //     viewScript: "dashboard.js",
+  //     viewStyle: "dashboard.css",
+  //   });
+  // },
+
+  renderDashboard: (_, res) => {
     res.render("../views/dashboard", {
       title: "Dashboard",
       viewScript: "dashboard.js",
@@ -7,11 +15,11 @@ const appController = {
     });
   },
 
-  renderDashboard: (_, res) => {
-    res.render("../views/dashboard", {
-      title: "Dashboard",
-      viewScript: "dashboard.js",
-      viewStyle: "dashboard.css",
+  renderMyPosts: (_, res) => {
+    res.render("../views/my-posts", {
+        title: "My Posts",
+        viewScript: "my-posts.js",
+        viewStyle: "my-posts.css",
     });
   },
 
@@ -39,6 +47,8 @@ const appController = {
   handle404: (_, res) => {
     res.status(404).send("Sorry can't find that!");
   },
+
+
 };
 
 module.exports = appController;

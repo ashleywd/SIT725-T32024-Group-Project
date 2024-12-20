@@ -18,6 +18,7 @@ const login = async () => {
     if (response.status === 200) {
       M.toast({html: 'Login successful!', classes: 'green'});
       localStorage.setItem("token", data.token);
+      localStorage.setItem("userId", data.userId);
       window.location.href = "/dashboard";
     } else {
       M.toast({html: data.error || 'Login failed', classes: 'red'});
@@ -28,7 +29,6 @@ const login = async () => {
   }
 };
 
-// We can simplify the event listeners since they do the same thing
 const handleSubmit = (e) => {
   e.preventDefault();
   login();
