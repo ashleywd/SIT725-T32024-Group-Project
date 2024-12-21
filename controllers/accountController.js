@@ -43,19 +43,15 @@ const updateAccountDetails = async (req, res) => {
 
         // Construct the update object
         const updateFields = {};
-        if (username) updateFields.username = username; 
-        if (email) updateFields.email = email;
+        updateFields.username = username; 
+        updateFields.email = email;
 
         // Update user details
         const updatedUser = await UserModel.findByIdAndUpdate(
             userId,
             { $set: updateFields },
             { new: true, runValidators: true } // Return updated user and apply schema validation
-        );
-
-        if (!updatedUser) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+        );        
 
         res.status(200).json({
             message: 'Account updated successfully',
@@ -77,11 +73,7 @@ const deleteAccount = async (req, res) => {
         }
 
         // Delete user from the database
-        const deletedUser = await UserModel.findByIdAndDelete(userId);
-
-        if (!deletedUser) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+        const deletedUser = await UserModel.findByIdAndDelete(userId);        
 
         res.status(200).json({ message: 'Account deleted successfully' });
     } catch (err) {

@@ -1,13 +1,13 @@
 checkAuth();
 
-document.addEventListener('DOMContentLoaded', function() {   
-    var elems = document.querySelectorAll("select");
-    var instances = M.FormSelect.init(elems);
 
-    var modals = document.querySelectorAll(".modal");
-    M.Modal.init(modals);  
+var elems = document.querySelectorAll("select");
+var instances = M.FormSelect.init(elems);
 
-});
+var modals = document.querySelectorAll(".modal");
+M.Modal.init(modals);  
+
+
 
 const fetchAccountDetails = async () => {
     try {
@@ -25,9 +25,9 @@ const fetchAccountDetails = async () => {
         }
 
         const data = await response.json();
-        document.getElementById('accountName').innerText = data.name || 'N/A';
-        document.getElementById('accountEmail').innerText = data.email || 'N/A';
-        document.getElementById('accountPoints').innerText = data.points || 0;
+        document.getElementById('accountName').innerText = data.name;
+        document.getElementById('accountEmail').innerText = data.email;
+        document.getElementById('accountPoints').innerText = data.points;
     } catch (err) {
         console.error('Error fetching account details:', err.message);
         var instance = M.Modal.getInstance(document.getElementById("errorModal"));
@@ -72,6 +72,16 @@ document.getElementById('editAccountBtn').addEventListener('click', () => {
 
 document.getElementById('updateForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const username = document.getElementById('editName').value.trim();
+    const email = document.getElementById('editEmail').value.trim();
+    
+    //validate fiels to mmake sure they are not empty
+    if (username === '' || email === '') {
+        M.toast({ html: 'Please provide a new username or email address.', classes: 'red' });
+        return;
+    }
+    
     const formData = new FormData(e.target);
     const body = JSON.stringify(Object.fromEntries(formData));
 
