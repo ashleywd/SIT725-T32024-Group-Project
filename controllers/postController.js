@@ -24,9 +24,11 @@ const postController = {
         .json({ message: "Error creating post", error: error.message });
     }
   },
-  getAllPosts: async (_, res) => {
+  getAllPosts: async (req, res) => {
     try {
-      const posts = await Post.find();
+      const posts = await Post.find({
+        userId: { $ne: req.userId }, // Exclude current user's posts
+      }).populate("userId", "username");
       res.status(200).json(posts);
     } catch (error) {
       res

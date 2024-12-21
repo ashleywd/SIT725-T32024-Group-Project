@@ -2,9 +2,8 @@ checkAuth();
 
 // Initialize Materialize components
 var elems = document.querySelectorAll("select");
-var instances = M.FormSelect.init(elems);
+M.FormSelect.init(elems);
 
-// Initialize modals
 var modals = document.querySelectorAll(".modal");
 M.Modal.init(modals);
 
@@ -12,7 +11,6 @@ M.Modal.init(modals);
 const postForm = document.getElementById("postForm");
 postForm.addEventListener("submit", async function (e) {
   e.preventDefault();
-
   const formData = {
     type: document.getElementById("type").value,
     hoursNeeded: parseFloat(document.getElementById("hoursNeeded").value),
@@ -35,40 +33,86 @@ postForm.addEventListener("submit", async function (e) {
       throw new Error(`Server error: ${result.error || "Unknown error"}`);
     }
 
-    console.log("Server response:", result);
-
-    // Close the modal after successful submission
     const modal = M.Modal.getInstance(document.getElementById("modalForm"));
     modal.close();
-
     M.toast({ html: "Post created successfully!" });
     postForm.reset();
-
-    // Reinitialize select after form reset
-    M.FormSelect.init(elems);
+    M.FormSelect.init(document.querySelectorAll("select"));
+    getPosts(); // Refresh posts after creating new one
   } catch (error) {
-    console.error("Detailed error:", error);
-    M.toast({
-      html: `Error: ${error.message}`,
-      classes: "red",
-    });
+    console.error("Error creating post:", error);
+    M.toast({ html: error.message, classes: "red" });
   }
 });
 
 const getPosts = async () => {
   try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
+
+    document.getElementById("loadingIndicator").style.display = "block";
+    document.getElementById("postsContent").innerHTML = "";
+
     const response = await fetch("/api/posts", {
-      method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: localStorage.getItem("token"),
+        Authorization: token,
       },
     });
-    const data = await response.json();
-    console.log(data);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+        return;
+      }
+      throw new Error("Failed to fetch posts");
+    }
+
+    const posts = await response.json();
+    renderPosts(posts);
   } catch (error) {
-    console.error("Failed to fetch posts", error);
+    console.error("Failed to fetch posts:", error);
+    M.toast({ html: "Failed to load posts", classes: "red" });
+  } finally {
+    document.getElementById("loadingIndicator").style.display = "none";
   }
+};
+
+const renderPosts = (posts) => {
+  const postsHtml =
+    Array.isArray(posts) && posts.length > 0
+      ? posts
+          .map(
+            (post) => `
+            <div class="col s12 m6">
+                <div class="card">
+                    <div class="card-content">
+                        <span class="card-title">${
+                          post.type === "offer"
+                            ? "Babysitting Offer"
+                            : "Babysitter Request"
+                        }</span>
+                        <p><strong>Posted by:</strong> ${
+                          post.userId?.username || "Unknown"
+                        }</p>
+                        <p><strong>Hours:</strong> ${post.hoursNeeded}</p>
+                        <p><strong>Date:</strong> ${new Date(
+                          post.dateTime
+                        ).toLocaleString()}</p>
+                        <p>${post.description}</p>
+                    </div>
+                </div>
+            </div>
+        `
+          )
+          .join("")
+      : "<p>No posts available.</p>";
+
+  document.getElementById("postsContent").innerHTML = postsHtml;
 };
 
 getPosts();
