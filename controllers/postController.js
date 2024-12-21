@@ -34,6 +34,24 @@ const postController = {
         .json({ message: "Error fetching posts", error: error.message });
     }
   },
+  getUserPosts: async (req, res) => {
+    try {
+      const posts = await Post.find({
+        $or: [
+          { userId: req.userId }, // Posts created by user
+        ],
+      })
+        .populate("userId", "username")
+        .sort({ createdAt: -1 });
+
+      res.status(200).json(posts);
+    } catch (error) {
+      console.error("Error fetching user posts:", error);
+      res
+        .status(500)
+        .json({ message: "Error fetching user posts", error: error.message });
+    }
+  },
 };
 
 module.exports = postController;
