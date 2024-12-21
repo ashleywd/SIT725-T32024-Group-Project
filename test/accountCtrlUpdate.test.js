@@ -16,14 +16,13 @@ describe('updateAccountDetails Controller', () => {
         jest.clearAllMocks(); // Clear mock data after each test
     });
 
-
     it('should update account details successfully', async () => {
         // Arrange
         const validUserId = '5f50c31b8f8c7b1a6c8b4567';
-        const updatedUser = {name: 'Jane Doe', email: 'jane@example.com', points: 100};
+        const updatedUser = { username: 'Jane Doe', email: 'jane@example.com', points: 100 };
         jest.spyOn(UserModel, 'findByIdAndUpdate').mockResolvedValue(updatedUser);
 
-        const req = {userId: validUserId, body: {name: 'Jane Doe', email: 'jane@example.com'}};
+        const req = { userId: validUserId, body: { username: 'Jane Doe', email: 'jane@example.com' } };
         const res = mockResponse();
 
         // Act
@@ -32,33 +31,8 @@ describe('updateAccountDetails Controller', () => {
         // Assert
         expect(UserModel.findByIdAndUpdate).toHaveBeenCalledWith(
             validUserId,
-            {name: 'Jane Doe', email: 'jane@example.com'},
-            {new: true, runValidators: true}
-        );
-        expect(res.status).toHaveBeenCalledWith(200);
-        expect(res.json).toHaveBeenCalledWith({
-            message: 'Account updated successfully',
-            user: updatedUser,
-        });
-    });
-
-    it('should update account details successfully', async () => {
-        // Arrange
-        const validUserId = '5f50c31b8f8c7b1a6c8b4567';
-        const updatedUser = {name: 'Jane Doe', email: 'jane@example.com', points: 100};
-        jest.spyOn(UserModel, 'findByIdAndUpdate').mockResolvedValue(updatedUser);
-
-        const req = {userId: validUserId, body: {name: 'Jane Doe', email: 'jane@example.com'}};
-        const res = mockResponse();
-
-        // Act
-        await updateAccountDetails(req, res);
-
-        // Assert
-        expect(UserModel.findByIdAndUpdate).toHaveBeenCalledWith(
-            validUserId,
-            {name: 'Jane Doe', email: 'jane@example.com'},
-            {new: true, runValidators: true}
+            { $set: { username: 'Jane Doe', email: 'jane@example.com' } },
+            { new: true, runValidators: true }
         );
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.json).toHaveBeenCalledWith({
@@ -70,7 +44,7 @@ describe('updateAccountDetails Controller', () => {
     it('should return 400 if no fields are provided for update', async () => {
         // Arrange
         const validUserId = '5f50c31b8f8c7b1a6c8b4567';
-        const req = {userId: validUserId, body: {}};
+        const req = { userId: validUserId, body: {} };
         const res = mockResponse();
 
         // Act
@@ -78,7 +52,7 @@ describe('updateAccountDetails Controller', () => {
 
         // Assert
         expect(res.status).toHaveBeenCalledWith(400);
-        expect(res.json).toHaveBeenCalledWith({error: 'At least one field (name or email) must be provided for update'});
+        expect(res.json).toHaveBeenCalledWith({ error: 'At least one field (name or email) must be provided for update' });
     });
 
     it('should return 404 if user is not found', async () => {
@@ -86,7 +60,7 @@ describe('updateAccountDetails Controller', () => {
         const validUserId = '5f50c31b8f8c7b1a6c8b4567';
         jest.spyOn(UserModel, 'findByIdAndUpdate').mockResolvedValue(null); // Simulate user not found
 
-        const req = {userId: validUserId, body: {name: 'Jane Doe'}};
+        const req = { userId: validUserId, body: { username: 'Jane Doe' } };
         const res = mockResponse();
 
         // Act
@@ -94,7 +68,7 @@ describe('updateAccountDetails Controller', () => {
 
         // Assert
         expect(res.status).toHaveBeenCalledWith(404);
-        expect(res.json).toHaveBeenCalledWith({error: 'User not found'});
+        expect(res.json).toHaveBeenCalledWith({ error: 'User not found' });
     });
 
     it('should return 500 on internal server error', async () => {
@@ -102,7 +76,7 @@ describe('updateAccountDetails Controller', () => {
         const validUserId = '5f50c31b8f8c7b1a6c8b4567';
         jest.spyOn(UserModel, 'findByIdAndUpdate').mockRejectedValue(new Error('Database error'));
 
-        const req = {userId: validUserId, body: {name: 'Jane Doe'}};
+        const req = { userId: validUserId, body: { username: 'Jane Doe' } };
         const res = mockResponse();
 
         // Act
@@ -110,6 +84,6 @@ describe('updateAccountDetails Controller', () => {
 
         // Assert
         expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.json).toHaveBeenCalledWith({error: 'Internal server error'});
+        expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' });
     });
 });
