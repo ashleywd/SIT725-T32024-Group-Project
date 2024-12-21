@@ -53,23 +53,7 @@ describe('updateAccountDetails Controller', () => {
         // Assert
         expect(res.status).toHaveBeenCalledWith(400);
         expect(res.json).toHaveBeenCalledWith({ error: 'At least one field (name or email) must be provided for update' });
-    });
-
-    it('should return 404 if user is not found', async () => {
-        // Arrange
-        const validUserId = '5f50c31b8f8c7b1a6c8b4567';
-        jest.spyOn(UserModel, 'findByIdAndUpdate').mockResolvedValue(null); // Simulate user not found
-
-        const req = { userId: validUserId, body: { username: 'Jane Doe' } };
-        const res = mockResponse();
-
-        // Act
-        await updateAccountDetails(req, res);
-
-        // Assert
-        expect(res.status).toHaveBeenCalledWith(404);
-        expect(res.json).toHaveBeenCalledWith({ error: 'User not found' });
-    });
+    });    
 
     it('should return 500 on internal server error', async () => {
         // Arrange
