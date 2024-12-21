@@ -24,14 +24,34 @@ const postController = {
         .json({ message: "Error creating post", error: error.message });
     }
   },
-  getAllPosts: async (_, res) => {
+  getAllPosts: async (req, res) => {
     try {
-      const posts = await Post.find();
+      const posts = await Post.find({
+        userId: { $ne: req.userId }, // Exclude current user's posts
+      }).populate("userId", "username");
       res.status(200).json(posts);
     } catch (error) {
       res
         .status(500)
         .json({ message: "Error fetching posts", error: error.message });
+    }
+  },
+  getUserPosts: async (req, res) => {
+    try {
+      const posts = await Post.find({
+        $or: [
+          { userId: req.userId }, // Posts created by user
+        ],
+      })
+        .populate("userId", "username")
+        .sort({ createdAt: -1 });
+
+      res.status(200).json(posts);
+    } catch (error) {
+      console.error("Error fetching user posts:", error);
+      res
+        .status(500)
+        .json({ message: "Error fetching user posts", error: error.message });
     }
   },
 };
