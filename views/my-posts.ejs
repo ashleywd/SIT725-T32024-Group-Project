@@ -1,0 +1,30 @@
+<% layout('layout') -%>
+<div class="container">
+  <div class="row">
+    <div class="col s12">
+      <h3>My Posts</h3>
+      <p>View and manage your babysitting activity</p>
+
+      <div class="row">
+        <div class="col s12">
+          <a
+            href="/dashboard"
+            class="btn waves-effect waves-light blue lighten-2"
+          >
+            <i class="material-icons left">arrow_back</i>
+            Back to Dashboard
+          </a>
+        </div>
+      </div>
+
+      <!-- Posts Sections -->
+      <div class="section">
+        <h5>
+          <i class="material-icons left">create</i>
+          My Created Posts
+        </h5>
+        <div class="row" id="myCreatedPosts"></div>
+      </div>
+    </div>
+  </div>
+</div>
