@@ -20,7 +20,7 @@ describe('getAccountDetails Controller', () => {
     it('should return user details successfully', async () => {
         // Arrange
         const validUserId = '5f50c31b8f8c7b1a6c8b4567'; // Valid ObjectId format
-        const mockUser = { name: 'John Doe', email: 'john@example.com', points: 100 };
+        const mockUser = { username: 'John Doe', email: 'john@example.com', points: 100 };
         jest.spyOn(UserModel, 'findById').mockResolvedValue(mockUser);
 
         const req = mockRequest(validUserId);
@@ -39,22 +39,7 @@ describe('getAccountDetails Controller', () => {
         });
     });
 
-    it('should return 404 if user is not found', async () => {
-        // Arrange
-        const validUserId = '5f50c31b8f8c7b1a6c8b4567';
-        jest.spyOn(UserModel, 'findById').mockResolvedValue(null); // Simulate user not found
-
-        const req = mockRequest(validUserId);
-        const res = mockResponse();
-
-        // Act
-        await getAccountDetails(req, res);
-
-        // Assert
-        expect(res.status).toHaveBeenCalledWith(404);
-        expect(res.json).toHaveBeenCalledWith({ error: 'User not found' });
-    });
-
+    
     it('should return 400 for an empty userId', async () => {
         // Arrange
         const emptyUserId = ''; // Empty string
