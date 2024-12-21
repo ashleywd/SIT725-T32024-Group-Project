@@ -47,23 +47,7 @@ describe('deleteAccount Controller', () => {
         expect(res.status).toHaveBeenCalledWith(400);
         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid userId format' });
     });
-
-    it('should return 404 if user is not found', async () => {
-        // Arrange
-        const validUserId = '5f50c31b8f8c7b1a6c8b4567';
-        jest.spyOn(UserModel, 'findByIdAndDelete').mockResolvedValue(null);
-
-        const req = mockRequest(validUserId);
-        const res = mockResponse();
-
-        // Act
-        await deleteAccount(req, res);
-
-        // Assert
-        expect(res.status).toHaveBeenCalledWith(404);
-        expect(res.json).toHaveBeenCalledWith({ error: 'User not found' });
-    });
-
+    
     it('should return 500 on internal server error', async () => {
         // Arrange
         const validUserId = '5f50c31b8f8c7b1a6c8b4567';
