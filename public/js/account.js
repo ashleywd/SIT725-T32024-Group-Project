@@ -43,10 +43,8 @@ const accountBtns = document.getElementById("accountBtns");
 const editBtns = document.getElementById("editBtns");
 
 const toggleAccountDetails = () => {
-    const formFields = document.querySelectorAll("#accountDetails input");
-    formFields.forEach((field) => {
-      field.disabled = !field.disabled;
-    });
+    const emailField = document.getElementById("accountEmail");
+    emailField.disabled = !emailField.disabled;
     accountBtns.classList.toggle("hide");
     editBtns.classList.toggle("hide");
 };
@@ -58,13 +56,12 @@ editAccountBtn.addEventListener("click", () => {
 accountDetails.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const username = document.getElementById("accountName").value.trim();
   const email = document.getElementById("accountEmail").value.trim();
 
-  //validate fiels to mmake sure they are not empty
-  if (username === "" || email === "") {
+  // Validate email field to make sure it is not empty
+  if (email === "") {
     M.toast({
-      html: "Please provide a new username or email address.",
+      html: "Please provide a new email address.",
       classes: "red",
     });
     return;
