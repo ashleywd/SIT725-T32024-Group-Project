@@ -73,7 +73,7 @@ const deleteAccount = async (req, res) => {
         }
 
         // Delete user from the database
-        const deletedUser = await UserModel.findByIdAndDelete(userId);        
+        const deletedUser = await UserModel.findByIdAndDelete(userId);
 
         res.status(200).json({ message: 'Account deleted successfully' });
     } catch (err) {

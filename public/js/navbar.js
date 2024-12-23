@@ -3,11 +3,13 @@ const registerMenu = document.querySelector("#register-menu");
 const logoutMenu = document.querySelector("#logout-menu");
 const dashboardMenu = document.querySelector("#dashboard-menu");
 const accountMenu = document.querySelector("#account-menu")
+const myPostsMenu = document.querySelector("#my-posts-menu");
 
 const toggleUnnecessaryMenu = () => {
   loginMenu.style.display = "none";
   registerMenu.style.display = "none";
   dashboardMenu.style.display = "block";
+  myPostsMenu.style.display = "block";
   logoutMenu.style.display = "block";
   accountMenu.style.display = "block";
 };

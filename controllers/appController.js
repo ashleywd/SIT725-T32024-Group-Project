@@ -15,6 +15,14 @@ const appController = {
     });
   },
 
+  renderMyPosts: (_, res) => {
+    res.render("../views/my-posts", {
+      title: "My Posts",
+      viewScript: "my-posts.js",
+      viewStyle: "dashboard.css", // fix this later
+    });
+  },
+
   renderLogin: (_, res) => {
     res.render("../views/login", {
       title: "Login",

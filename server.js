@@ -5,7 +5,7 @@ const app = express();
 const { appRoutes, authRoutes, postRoutes, accountRoutes } = require("./routes/");
 const { handleError, handle404 } = require("./controllers/appController");
 const { connectDB } = require("./config/db");
-const engine = require('ejs-mate')
+const engine = require("ejs-mate");
 
 // Set our server port
 const port = process.env.PORT || 3000;
@@ -20,8 +20,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Set the view engine
-app.engine('ejs', engine);
-app.set('view engine', 'ejs');
+app.engine("ejs", engine);
+app.set("view engine", "ejs");
 
 // Use the router
 app.use("/", appRoutes);

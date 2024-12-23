@@ -1,5 +1,5 @@
 #logout-menu {
-    display: none;
+  display: none;
 }
 
 #dashboard-menu {
@@ -9,3 +9,7 @@
 #account-menu{
     display: none;
 } 
+
+#my-posts-menu {
+  display: none;
+}
