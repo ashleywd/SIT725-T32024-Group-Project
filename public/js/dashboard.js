@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 const getPosts = async () => {
-  const loadingIndicator = document.getElementById("loadingIndicator");
   const postsContent = document.getElementById("postsContent");
 
   try {
@@ -60,7 +59,6 @@ const getPosts = async () => {
       return;
     }
 
-    loadingIndicator.style.display = "block";
     postsContent.innerHTML = "";
 
     const response = await fetch("/api/posts", {
@@ -84,8 +82,6 @@ const getPosts = async () => {
   } catch (error) {
     console.error("Failed to fetch posts:", error);
     M.toast({ html: "Failed to load posts", classes: "red" });
-  } finally {
-    loadingIndicator.style.display = "none";
   }
 };
 
@@ -141,7 +137,7 @@ const fetchUserPoints = async () => {
       
       const data = await response.json();
       const pointsBadge = document.getElementById('pointsBadge');
-      const points = data.points || 0;
+      const points = data.points;
       pointsBadge.innerText = `${points} points`;
   } catch (err) {
       console.error('Error fetching user points:', err.message);

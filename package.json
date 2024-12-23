@@ -6,6 +6,9 @@
     "test": "jest",
     "start": "nodemon server.js"
   },
+  "engines": {
+    "node": "22"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
