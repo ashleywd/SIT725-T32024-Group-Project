@@ -13,3 +13,8 @@
 #my-posts-menu {
   display: none;
 }
+
+#pointsBadge:hover {
+  cursor: auto;
+  background: none;
+}
