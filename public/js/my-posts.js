@@ -1,31 +1,11 @@
 checkAuth();
 
-const getMyPosts = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      window.location.href = "/login";
-      return;
-    }
-
-    const response = await fetch("/api/posts/my-posts", {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch posts");
-    }
-
-    const posts = await response.json();
-
-    const postsHtml =
-      posts.length > 0
-        ? posts
-            .map(
-              (post) => `
+const renderPosts = (posts) => {
+  const postsHtml =
+    Array.isArray(posts) && posts.length > 0
+      ? posts
+          .map(
+            (post) => `
             <div class="col s12 m6">
                 <div class="card">
                     <div class="card-content">
@@ -52,11 +32,34 @@ const getMyPosts = async () => {
                 </div>
             </div>
         `
-            )
-            .join("")
-        : "<p>You have no posts yet.</p>";
+          )
+          .join("")
+      : "<p>You have no posts yet.</p>";
 
-    document.getElementById("postsContent").innerHTML = postsHtml;
+  document.getElementById("postsContent").innerHTML = postsHtml;
+};
+
+const getMyPosts = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
+
+    const response = await fetch("/api/posts/my-posts", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch posts");
+    }
+
+    const posts = await response.json();
+    renderPosts(posts);
   } catch (error) {
     console.error("Failed to fetch posts:", error);
     M.toast({ html: "Failed to load posts", classes: "red" });

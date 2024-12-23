@@ -46,6 +46,9 @@ postForm.addEventListener("submit", async function (e) {
 });
 
 const getPosts = async () => {
+  const loadingIndicator = document.getElementById("loadingIndicator");
+  const postsContent = document.getElementById("postsContent");
+
   try {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -53,8 +56,8 @@ const getPosts = async () => {
       return;
     }
 
-    document.getElementById("loadingIndicator").style.display = "block";
-    document.getElementById("postsContent").innerHTML = "";
+    loadingIndicator.style.display = "block";
+    postsContent.innerHTML = "";
 
     const response = await fetch("/api/posts", {
       headers: {
@@ -78,7 +81,7 @@ const getPosts = async () => {
     console.error("Failed to fetch posts:", error);
     M.toast({ html: "Failed to load posts", classes: "red" });
   } finally {
-    document.getElementById("loadingIndicator").style.display = "none";
+    loadingIndicator.style.display = "none";
   }
 };
 
