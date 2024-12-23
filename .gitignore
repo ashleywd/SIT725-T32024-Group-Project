@@ -1,3 +1,6 @@
 node_modules/
 .env
 .DS_Store
+.idea/modules.xml
+.idea/SIT725-T32024-Group-Project.iml
+.idea/vcs.xml

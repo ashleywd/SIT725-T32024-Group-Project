@@ -38,6 +38,13 @@ const appController = {
       viewStyle: "register.css",
     });
   },
+  renderAccount: (_, res) => {
+    res.render("../views/account", {
+      title: "Account",
+      viewScript: "account.js",
+      viewStyle: "account.css",
+    });
+  },
 
   handleError: (err, _, res, __) => {
     console.error(err.stack);

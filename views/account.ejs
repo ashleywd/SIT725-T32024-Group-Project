@@ -1,0 +1,63 @@
+<% layout('layout') -%>
+
+<div class="account-form-container">
+  <!-- View Account Details -->
+  <div class="row" id="accountDetails">
+    <h3>Account Details:</h3>
+    <form id="accountDetails" class="col s6">
+      <div class="row">
+        <div class="input-field col s12">
+          <input
+            disabled
+            type="text"
+            class="validate"
+            name="username"
+            id="accountName"
+            placeholder="New Name"
+          />
+          <label for="Name">Name</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s12">
+          <input
+            disabled
+            type="email"
+            class="validate"
+            name="email"
+            id="accountEmail"
+            placeholder="New Email"
+          />
+          <label for="email">Email</label>
+        </div>
+      </div>
+      <p>Points: <strong id="accountPoints"></strong></p>
+      <div class="row">
+        <div class="col s12" id="accountBtns">
+          <button id="editAccountBtn" class="btn" type="button">Edit</button>
+          <button id="deleteAccountBtn" class="btn teal lighten-2">
+            Delete Account
+          </button>
+        </div>
+        <div class="col s12 hide" id="editBtns">
+            <button type="button" id="cancelBtn" class="btn red lighten-2">
+                Cancel
+            </button>
+            <button type="submit" id="updateBtn" class="btn">Submit</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+<!-- Error Modal -->
+<div id="errorModal" class="modal">
+  <div class="modal-content">
+    <h4>Error</h4>
+    <p id="errorMessage">
+      Unable to retrieve account details. Please try again.
+    </p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close waves-effect waves-green btn-flat">OK</a>
+  </div>
+</div>

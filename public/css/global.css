@@ -6,6 +6,15 @@
   display: none;
 }
 
+#account-menu {
+  display: none;
+}
+
 #my-posts-menu {
   display: none;
+}
+
+#pointsBadge:hover {
+  cursor: auto;
+  background: none;
 }

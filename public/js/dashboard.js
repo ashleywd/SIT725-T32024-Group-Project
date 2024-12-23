@@ -46,7 +46,6 @@ postForm.addEventListener("submit", async function (e) {
 });
 
 const getPosts = async () => {
-  const loadingIndicator = document.getElementById("loadingIndicator");
   const postsContent = document.getElementById("postsContent");
 
   try {
@@ -56,7 +55,6 @@ const getPosts = async () => {
       return;
     }
 
-    loadingIndicator.style.display = "block";
     postsContent.innerHTML = "";
 
     const response = await fetch("/api/posts", {
@@ -80,8 +78,6 @@ const getPosts = async () => {
   } catch (error) {
     console.error("Failed to fetch posts:", error);
     M.toast({ html: "Failed to load posts", classes: "red" });
-  } finally {
-    loadingIndicator.style.display = "none";
   }
 };
 

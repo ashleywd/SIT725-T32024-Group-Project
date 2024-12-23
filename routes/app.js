@@ -8,5 +8,6 @@ router.get("/dashboard", appController.renderDashboard);
 router.get("/my-posts", appController.renderMyPosts);
 router.get("/login", appController.renderLogin);
 router.get("/register", appController.renderRegister);
+router.get('/account', appController.renderAccount);
 
 module.exports = router;
