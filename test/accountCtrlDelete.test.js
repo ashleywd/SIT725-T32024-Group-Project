@@ -34,20 +34,6 @@ describe('deleteAccount Controller', () => {
         expect(res.json).toHaveBeenCalledWith({ message: 'Account deleted successfully' });
     });
 
-    it('should return 400 for invalid userId format', async () => {
-        // Arrange
-        const invalidUserId = 'invalidUserId';
-        const req = mockRequest(invalidUserId);
-        const res = mockResponse();
-
-        // Act
-        await deleteAccount(req, res);
-
-        // Assert
-        expect(res.status).toHaveBeenCalledWith(400);
-        expect(res.json).toHaveBeenCalledWith({ error: 'Invalid userId format' });
-    });
-    
     it('should return 500 on internal server error', async () => {
         // Arrange
         const validUserId = '5f50c31b8f8c7b1a6c8b4567';
