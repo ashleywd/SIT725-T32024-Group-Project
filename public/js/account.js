@@ -37,28 +37,6 @@ const fetchAccountDetails = async () => {
   }
 };
 
-const fetchUserPoints = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    const response = await fetch("/api/account/points", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch user points");
-    }
-
-    const data = await response.json();
-    document.getElementById("pointsBadge").innerText = data.points;
-  } catch (err) {
-    console.error("Error fetching user points:", err.message);
-  }
-};
-
 const accountDetails = document.getElementById("accountDetails");
 const editAccountBtn = document.getElementById("editAccountBtn");
 const accountBtns = document.getElementById("accountBtns");

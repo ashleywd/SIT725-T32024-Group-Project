@@ -32,3 +32,29 @@ const logout = (e) => {
 };
 
 logoutMenu.addEventListener("click", logout);
+
+const fetchUserPoints = async () => {
+  try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/account/points', {
+          method: "GET",
+          headers: {
+              "Content-Type": "application/json",
+              Authorization: token,
+          },
+      });
+
+      if (!response.ok) {
+          throw new Error('Failed to fetch user points');
+      }     
+      
+      const data = await response.json();
+      const pointsBadge = document.getElementById('pointsBadge');
+      const points = data.points;
+      pointsBadge.innerText = `${points} pts`;
+  } catch (err) {
+      console.error('Error fetching user points:', err.message);
+  }
+};
+
+fetchUserPoints();
