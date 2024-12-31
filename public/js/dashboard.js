@@ -115,3 +115,5 @@ const renderPosts = (posts) => {
 };
 
 getPosts();
+
+const socket = io();
