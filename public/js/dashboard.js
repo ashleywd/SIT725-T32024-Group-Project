@@ -1,4 +1,5 @@
 checkAuth();
+const userToken = localStorage.getItem("token");
 
 // Initialize Materialize components
 var elems = document.querySelectorAll("select");
@@ -23,7 +24,7 @@ postForm.addEventListener("submit", async function (e) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: localStorage.getItem("token"),
+        Authorization: userToken,
       },
       body: JSON.stringify(formData),
     });
@@ -100,13 +101,16 @@ const renderPosts = (posts) => {
                         }</p>
                         <p><strong>Hours:</strong> ${post.hoursNeeded}</p>
                         <p><strong>Date:</strong> ${new Date(
-                          post.dateTime
+                          post.dateTime,
                         ).toLocaleString()}</p>
                         <p>${post.description}</p>
+                        <button class="btn waves-effect waves-light" type="submit" name="action" onclick="offerHelp('${post._id}')">Offer Help
+                          <i class="material-icons right">send</i>
+                        </button>
                     </div>
                 </div>
             </div>
-        `
+        `,
           )
           .join("")
       : "<p>No posts available.</p>";
@@ -114,6 +118,16 @@ const renderPosts = (posts) => {
   document.getElementById("postsContent").innerHTML = postsHtml;
 };
 
+const offerHelp = async (postId) => {
+  console.log(postId);
+};
+
 getPosts();
 
-const socket = io();
+console.log({userToken})
+
+const socket = io({
+  extraHeaders: {
+    authorization: userToken,
+  },
+});
