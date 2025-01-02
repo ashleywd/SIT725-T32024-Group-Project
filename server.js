@@ -13,7 +13,8 @@ const {
 const { connectDB } = require("./config/db");
 const { Server } = require("socket.io");
 const { createServer } = require("node:http");
-const jwt = require("jsonwebtoken");
+const verifyToken = require("./middleware/socketMiddleware");
+const { handleEvents } = require("./controllers/socketController");
 
 connectDB();
 const server = createServer(app);
@@ -44,27 +45,8 @@ server.listen(port, () => {
   console.log(`App listening to: ${port}`);
 });
 
-io.engine.use((req, _, next) => {
-  const isHandshake = req._query.sid === undefined;
-  if (!isHandshake) {
-    return next();
-  }
-
-  const token = req.headers["authorization"];
-  jwt.verify(token, process.env.SESSION_SECRET, (err, decoded) => {
-    if (err) {
-      return next(new Error("invalid token"));
-    }
-    req.userId = decoded.userId;
-    next();
-  });
-});
-
-const usersConnected = new Map();
-
+// Setup socket io
+io.engine.use(verifyToken);
 io.on("connection", (socket) => {
-  // the user ID is used as a room
-  const userId = socket.request.userId;
-  socket.join(userId);
-  io.to(userId).emit("welcome-message", { userId });
+  handleEvents(socket, io);
 });

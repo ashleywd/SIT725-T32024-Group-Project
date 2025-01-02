@@ -34,7 +34,7 @@ const renderPosts = (posts) => {
             dateTime: post.dateTime,
             description: post.description,
           }),
-        )
+        ).join('')
       : "<p>You have no posts yet.</p>";
 
   document.getElementById("postsContent").innerHTML = postsHtml;

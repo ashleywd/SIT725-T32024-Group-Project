@@ -98,7 +98,7 @@ const createPost = ({
                 dateTime,
               ).toLocaleString()}</p>
               <p>${description}</p>
-              <button class="btn waves-effect waves-light" id="send-offer-button" data-post-id="{postId: ${postId}, }">
+              <button class="btn waves-effect waves-light" id="send-offer-button" data-post-info="${encodeURIComponent(JSON.stringify({postId, postedBy}))}">
                 Offer Help
                 <i class="material-icons right">send</i>
               </button>
@@ -107,10 +107,21 @@ const createPost = ({
   </div>
 `;
 
-const handleOfferHelp = (postId) => {
-  console.log(postId);
-  socket.emit("send-offer", {});
+const handleOfferHelp = (postInfo) => {
+  try {
+    const decodedData = decodeURIComponent(postInfo);
+    const parseData = JSON.parse(decodedData);
+    socket.emit("send-offer", parseData);
+  } catch (e) {
+    console.error(e);
+  }
 };
+
+const handleReceiveOffer = (data) => {
+  console.log(data);
+}
+
+socket.on("receive-offer", handleReceiveOffer);
 
 const initializeButtons = () => {
   const sendOfferButtons = document.querySelectorAll("#send-offer-button");
@@ -119,7 +130,7 @@ const initializeButtons = () => {
     sendOfferButtons.forEach((button) => {
       button.addEventListener("click", (e) => {
         if (e.target.matches("button")) {
-          const postId = e.target.dataset.postId;
+          const postId = e.target.dataset.postInfo;
           handleOfferHelp(postId);
         }
       });
@@ -130,19 +141,22 @@ const initializeButtons = () => {
 const renderPosts = (posts) => {
   const postsHtml =
     Array.isArray(posts) && posts.length > 0
-      ? posts.map((post) =>
-          createPost({
-            postId: post._id,
-            postedBy: post.postedBy,
-            type: post.type,
-            dateTime: post.dateTime,
-            description: post.description,
-            hoursNeeded: post.hoursNeeded,
-          }),
-        )
+      ? posts
+          .map((post) =>
+            createPost({
+              postId: post._id,
+              postedBy: post.postedBy,
+              type: post.type,
+              dateTime: post.dateTime,
+              description: post.description,
+              hoursNeeded: post.hoursNeeded,
+            }),
+          )
+          .join("")
       : "<p>No posts available.</p>";
 
-  document.getElementById("postsContent").innerHTML = postsHtml;
+  const postContentContainer = document.getElementById("postsContent");
+  postContentContainer.innerHTML = postsHtml;
 };
 
 getPosts();
