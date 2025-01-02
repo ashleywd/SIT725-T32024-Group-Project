@@ -1,4 +1,4 @@
-checkAuth();
+verifyUserAuthentication();
 
 const renderPosts = (posts) => {
   const postsHtml =

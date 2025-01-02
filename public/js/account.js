@@ -1,10 +1,4 @@
-checkAuth();
-
-var elems = document.querySelectorAll("select");
-var instances = M.FormSelect.init(elems);
-
-var modals = document.querySelectorAll(".modal");
-M.Modal.init(modals);
+verifyUserAuthentication();
 
 const populateData = (data) => {
   document.getElementById("accountName").value = data.name;
@@ -93,6 +87,7 @@ accountDetails.addEventListener("submit", async (e) => {
 });
 
 const cancelBtn = document.getElementById("cancelBtn");
+
 cancelBtn.addEventListener("click", () => {
   toggleAccountDetails();
   fetchAccountDetails();

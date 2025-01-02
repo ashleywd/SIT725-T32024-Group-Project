@@ -64,5 +64,7 @@ const usersConnected = new Map();
 
 io.on("connection", (socket) => {
   // the user ID is used as a room
-  console.log({ userId: socket.request.userId });
+  const userId = socket.request.userId;
+  socket.join(userId);
+  io.to(userId).emit("welcome-message", { userId });
 });

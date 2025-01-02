@@ -1,16 +1,8 @@
-checkAuth();
-const userToken = localStorage.getItem("token");
+verifyUserAuthentication();
+const socket = initializeWebSocket();
 
-// Initialize Materialize components
-var elems = document.querySelectorAll("select");
-M.FormSelect.init(elems);
-
-var modals = document.querySelectorAll(".modal");
-M.Modal.init(modals);
-
-// Form submission handler
 const postForm = document.getElementById("postForm");
-postForm.addEventListener("submit", async function (e) {
+const handleSubmitForm = async function (e) {
   e.preventDefault();
   const formData = {
     type: document.getElementById("type").value,
@@ -20,6 +12,7 @@ postForm.addEventListener("submit", async function (e) {
   };
 
   try {
+    const userToken = localStorage.getItem("token");
     const response = await fetch("/api/posts", {
       method: "POST",
       headers: {
@@ -44,7 +37,9 @@ postForm.addEventListener("submit", async function (e) {
     console.error("Error creating post:", error);
     M.toast({ html: error.message, classes: "red" });
   }
-});
+};
+
+postForm.addEventListener("submit", handleSubmitForm);
 
 const getPosts = async () => {
   const postsContent = document.getElementById("postsContent");
@@ -120,14 +115,11 @@ const renderPosts = (posts) => {
 
 const offerHelp = async (postId) => {
   console.log(postId);
+  socket.emit("send-offer", () => {});
 };
 
 getPosts();
 
-console.log({userToken})
-
-const socket = io({
-  extraHeaders: {
-    authorization: userToken,
-  },
+socket.on("welcome-message", (data) => {
+  console.log("Hi, your userId is", data.userId);
 });

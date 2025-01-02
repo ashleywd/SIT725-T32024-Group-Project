@@ -14,17 +14,6 @@ const toggleUnnecessaryMenu = () => {
   accountMenu.style.display = "block";
 };
 
-const checkAuth = () => {
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    window.location.href = "/login";
-    return;
-  }
-
-  toggleUnnecessaryMenu();
-};
-
 const logout = (e) => {
   e.preventDefault();
   localStorage.removeItem("token");
@@ -46,8 +35,8 @@ const fetchUserPoints = async () => {
 
       if (!response.ok) {
           throw new Error('Failed to fetch user points');
-      }     
-      
+      }
+
       const data = await response.json();
       const pointsBadge = document.getElementById('pointsBadge');
       const points = data.points;
@@ -56,5 +45,3 @@ const fetchUserPoints = async () => {
       console.error('Error fetching user points:', err.message);
   }
 };
-
-fetchUserPoints();
