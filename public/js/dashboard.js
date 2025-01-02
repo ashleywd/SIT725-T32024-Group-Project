@@ -160,7 +160,3 @@ const renderPosts = (posts) => {
 };
 
 getPosts();
-
-socket.on("welcome-message", (data) => {
-  console.log("Hi, your userId is", data.userId);
-});
