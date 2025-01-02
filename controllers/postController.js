@@ -8,7 +8,7 @@ const postController = {
       const userId = req.userId;
 
       const newPost = new Post({
-        userId,
+        postedBy: userId,
         type,
         hoursNeeded,
         description,
@@ -27,8 +27,9 @@ const postController = {
   getAllPosts: async (req, res) => {
     try {
       const posts = await Post.find({
-        userId: { $ne: req.userId }, // Exclude current user's posts
-      }).populate("userId", "username");
+        postedBy: { $ne: req.userId }, // Exclude current user's posts
+      }).populate({ path: "postedBy", select: "username" });
+
       res.status(200).json(posts);
     } catch (error) {
       res
@@ -40,10 +41,10 @@ const postController = {
     try {
       const posts = await Post.find({
         $or: [
-          { userId: req.userId }, // Posts created by user
+          { postedBy: req.userId }, // Posts created by user
         ],
       })
-        .populate("userId", "username")
+        .populate({ path: "postedBy", select: "username" })
         .sort({ createdAt: -1 });
 
       res.status(200).json(posts);

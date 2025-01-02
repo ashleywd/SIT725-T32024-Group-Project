@@ -71,51 +71,78 @@ const getPosts = async () => {
 
     const posts = await response.json();
     renderPosts(posts);
+    initializeButtons();
   } catch (error) {
     console.error("Failed to fetch posts:", error);
     M.toast({ html: "Failed to load posts", classes: "red" });
   }
 };
 
+const createPost = ({
+  postId,
+  postedBy,
+  type,
+  dateTime,
+  description,
+  hoursNeeded,
+}) => `
+  <div class="col s12 m6">
+      <div class="card">
+          <div class="card-content">
+              <span class="card-title">${
+                type === "offer" ? "Babysitting Offer" : "Babysitter Request"
+              }</span>
+              <p><strong>Posted by:</strong> ${postedBy?.username}</p>
+              <p><strong>Hours:</strong> ${hoursNeeded}</p>
+              <p><strong>Date:</strong> ${new Date(
+                dateTime,
+              ).toLocaleString()}</p>
+              <p>${description}</p>
+              <button class="btn waves-effect waves-light" id="send-offer-button" data-post-id="{postId: ${postId}, }">
+                Offer Help
+                <i class="material-icons right">send</i>
+              </button>
+          </div>
+      </div>
+  </div>
+`;
+
+const handleOfferHelp = (postId) => {
+  console.log(postId);
+  socket.emit("send-offer", {});
+};
+
+const initializeButtons = () => {
+  const sendOfferButtons = document.querySelectorAll("#send-offer-button");
+
+  if (sendOfferButtons.length > 0) {
+    sendOfferButtons.forEach((button) => {
+      button.addEventListener("click", (e) => {
+        if (e.target.matches("button")) {
+          const postId = e.target.dataset.postId;
+          handleOfferHelp(postId);
+        }
+      });
+    });
+  }
+};
+
 const renderPosts = (posts) => {
   const postsHtml =
     Array.isArray(posts) && posts.length > 0
-      ? posts
-          .map(
-            (post) => `
-            <div class="col s12 m6">
-                <div class="card">
-                    <div class="card-content">
-                        <span class="card-title">${
-                          post.type === "offer"
-                            ? "Babysitting Offer"
-                            : "Babysitter Request"
-                        }</span>
-                        <p><strong>Posted by:</strong> ${
-                          post.userId?.username || "Unknown"
-                        }</p>
-                        <p><strong>Hours:</strong> ${post.hoursNeeded}</p>
-                        <p><strong>Date:</strong> ${new Date(
-                          post.dateTime,
-                        ).toLocaleString()}</p>
-                        <p>${post.description}</p>
-                        <button class="btn waves-effect waves-light" type="submit" name="action" onclick="offerHelp('${post._id}')">Offer Help
-                          <i class="material-icons right">send</i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `,
-          )
-          .join("")
+      ? posts.map((post) =>
+          createPost({
+            postId: post._id,
+            postedBy: post.postedBy,
+            type: post.type,
+            dateTime: post.dateTime,
+            description: post.description,
+            hoursNeeded: post.hoursNeeded,
+          }),
+        )
       : "<p>No posts available.</p>";
 
   document.getElementById("postsContent").innerHTML = postsHtml;
-};
-
-const offerHelp = async (postId) => {
-  console.log(postId);
-  socket.emit("send-offer", () => {});
 };
 
 getPosts();

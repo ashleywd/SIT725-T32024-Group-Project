@@ -1,39 +1,40 @@
 verifyUserAuthentication();
 
+const createMyPost = ({ type, hoursNeeded, dateTime, description }) => `
+  <div class="col s12 m6">
+      <div class="card">
+          <div class="card-content">
+              <span class="card-title">
+                  <i class="material-icons left">
+                    ${type === "offer" ? "person_outline" : "child_care"}
+                  </i>
+                  ${
+                    type === "offer"
+                      ? "Babysitting Offer"
+                      : "Babysitter Request"
+                  }
+              </span>
+              <p><strong>Hours:</strong> ${hoursNeeded}</p>
+              <p><strong>Date:</strong> ${new Date(
+                dateTime,
+              ).toLocaleString()}</p>
+              <p>${description}</p>
+          </div>
+      </div>
+  </div>
+`;
+
 const renderPosts = (posts) => {
   const postsHtml =
     Array.isArray(posts) && posts.length > 0
-      ? posts
-          .map(
-            (post) => `
-            <div class="col s12 m6">
-                <div class="card">
-                    <div class="card-content">
-                        <span class="card-title">
-                            <i class="material-icons left">
-                                ${
-                                  post.type === "offer"
-                                    ? "person_outline"
-                                    : "child_care"
-                                }
-                            </i>
-                            ${
-                              post.type === "offer"
-                                ? "Babysitting Offer"
-                                : "Babysitter Request"
-                            }
-                        </span>
-                        <p><strong>Hours:</strong> ${post.hoursNeeded}</p>
-                        <p><strong>Date:</strong> ${new Date(
-                          post.dateTime
-                        ).toLocaleString()}</p>
-                        <p>${post.description}</p>
-                    </div>
-                </div>
-            </div>
-        `
-          )
-          .join("")
+      ? posts.map((post) =>
+          createMyPost({
+            type: post.type,
+            hoursNeeded: post.hoursNeeded,
+            dateTime: post.dateTime,
+            description: post.description,
+          }),
+        )
       : "<p>You have no posts yet.</p>";
 
   document.getElementById("postsContent").innerHTML = postsHtml;
