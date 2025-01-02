@@ -70,6 +70,7 @@ const getPosts = async () => {
     }
 
     const posts = await response.json();
+
     renderPosts(posts);
     initializeButtons();
   } catch (error) {
@@ -85,6 +86,7 @@ const createPost = ({
   dateTime,
   description,
   hoursNeeded,
+  status,
 }) => `
   <div class="col s12 m6">
       <div class="card">
@@ -98,30 +100,55 @@ const createPost = ({
                 dateTime,
               ).toLocaleString()}</p>
               <p>${description}</p>
-              <button class="btn waves-effect waves-light" id="send-offer-button" data-post-info="${encodeURIComponent(JSON.stringify({postId, postedBy}))}">
+              <p><strong>Status:</strong> ${String(status).toUpperCase()}</p>
+              ${
+                status === "open"
+                  ? `<button class="btn waves-effect waves-light" id="send-offer-button" data-post-info="${encodeURIComponent(JSON.stringify({ postId, postedBy }))}">
                 Accept
                 <i class="material-icons right">send</i>
-              </button>
+              </button>`
+                  : `<button class="btn waves-effect waves-light disabled">
+              Post Accepted
+              </button>`
+              }
           </div>
       </div>
   </div>
 `;
 
-const handleOfferHelp = (postInfo) => {
+const handleAcceptPost = async (postInfo) => {
+  const userToken = localStorage.getItem("token");
   try {
     const decodedData = decodeURIComponent(postInfo);
-    const parseData = JSON.parse(decodedData);
-    socket.emit("send-offer", parseData);
+    const { postId, postedBy } = JSON.parse(decodedData);
+
+    const response = await fetch("/api/posts", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: userToken,
+      },
+      body: JSON.stringify({ postId, postedBy, status: "accepted" }),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`Server error: ${result.error || "Unknown error"}`);
+    }
+    getPosts();
   } catch (e) {
     console.error(e);
   }
 };
 
-const handleReceiveOffer = (data) => {
-  console.log(data);
-}
+const handleNotifyAcceptPost = (data) => {
+  M.toast({
+    html: `Post accepted: ${data.updatedPost.description}`,
+    classes: "green",
+  });
+};
 
-socket.on("receive-offer", handleReceiveOffer);
+socket.on("notify-accept-post", handleNotifyAcceptPost);
 
 const initializeButtons = () => {
   const sendOfferButtons = document.querySelectorAll("#send-offer-button");
@@ -130,8 +157,8 @@ const initializeButtons = () => {
     sendOfferButtons.forEach((button) => {
       button.addEventListener("click", (e) => {
         if (e.target.matches("button")) {
-          const postId = e.target.dataset.postInfo;
-          handleOfferHelp(postId);
+          const postInfo = e.target.dataset.postInfo;
+          handleAcceptPost(postInfo);
         }
       });
     });
@@ -150,6 +177,7 @@ const renderPosts = (posts) => {
               dateTime: post.dateTime,
               description: post.description,
               hoursNeeded: post.hoursNeeded,
+              status: post.status,
             }),
           )
           .join("")

@@ -55,6 +55,31 @@ const postController = {
         .json({ message: "Error fetching user posts", error: error.message });
     }
   },
+  updatePostStatus: async (req, res) => {
+    try {
+      const { postId, postedBy, status } = req.body;
+      const userId = req.userId;
+      const post = await Post.findById(postId);
+
+      if (!post) {
+        return res
+          .status(404)
+          .json({ message: "Post not found", error: "Post not found" });
+      }
+
+      const updatedPost = await Post.findByIdAndUpdate(postId, {
+        status,
+        acceptedBy: userId,
+      });
+
+      const io = req.app.get("io");
+      io.to(postedBy._id).emit("notify-accept-post", { updatedPost });
+      res.status(201).json({ updatedPost });
+    } catch (error) {
+      console.error("Error updating post status:", error);
+      res.status(500).json({ message: "Error updating post status", error });
+    }
+  },
 };
 
 module.exports = postController;
