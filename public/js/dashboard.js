@@ -99,7 +99,7 @@ const createPost = ({
               ).toLocaleString()}</p>
               <p>${description}</p>
               <button class="btn waves-effect waves-light" id="send-offer-button" data-post-info="${encodeURIComponent(JSON.stringify({postId, postedBy}))}">
-                Offer Help
+                Accept
                 <i class="material-icons right">send</i>
               </button>
           </div>
