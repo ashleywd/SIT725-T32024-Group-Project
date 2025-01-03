@@ -22,11 +22,10 @@ const fetchAccountDetails = async () => {
     }
 
     const data = await response.json();
-
     populateData(data);
   } catch (err) {
     console.error("Error fetching account details:", err.message);
-    var instance = M.Modal.getInstance(document.getElementById("errorModal"));
+    const instance = M.Modal.getInstance(document.getElementById("errorModal"));
     instance.open();
   }
 };

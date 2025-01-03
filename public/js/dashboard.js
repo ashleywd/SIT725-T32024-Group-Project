@@ -85,13 +85,15 @@ const POST_LABEL = {
 };
 
 const acceptButtonComponent = ({ status, postId, postedBy }) => `
-  <button
-    id="accept-post-button"
-    class="btn waves-effect waves-light ${DISABLE_STATES.includes(status) && "disabled"}"
-    data-post-info="${encodeURIComponent(JSON.stringify({ postId, postedBy }))}"
-    >
-      ${POST_LABEL[status]}
-  </button>
+  <div class="center-align">
+    <button
+      id="accept-post-button"
+      class="btn waves-effect waves-light ${DISABLE_STATES.includes(status) && "disabled"}"
+      data-post-info="${encodeURIComponent(JSON.stringify({ postId, postedBy }))}"
+      >
+        ${POST_LABEL[status]}
+    </button>
+  </div>
 `;
 
 const createPost = ({
@@ -115,7 +117,8 @@ const createPost = ({
                 dateTime,
               ).toLocaleString()}</p>
               <p>${description}</p>
-              ${acceptButtonComponent({ status, postId, postedBy })}
+              <strong>Status:</strong> ${String(status).toUpperCase()}
+              ${status === "open" ? acceptButtonComponent({ status, postId, postedBy }) : ""}
           </div>
       </div>
   </div>

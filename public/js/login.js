@@ -13,8 +13,8 @@ const login = async () => {
       },
       body: JSON.stringify({ username, password }),
     });
-    const data = await response.json();
 
+    const data = await response.json();
     if (response.status === 200) {
       M.toast({ html: "Login successful!", classes: "green" });
       localStorage.setItem("token", data.token);

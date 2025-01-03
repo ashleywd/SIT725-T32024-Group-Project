@@ -1,10 +1,13 @@
 const initializeMaterializeComponent = () => {
   // Initialize Materialize components
-  var elems = document.querySelectorAll("select");
-  M.FormSelect.init(elems);
+  const selects = document.querySelectorAll("select");
+  M.FormSelect.init(selects);
 
-  var modals = document.querySelectorAll(".modal");
+  const modals = document.querySelectorAll(".modal");
   M.Modal.init(modals);
+
+  const sidenav = document.querySelectorAll('.sidenav');
+  M.Sidenav.init(sidenav);
 };
 
 initializeMaterializeComponent();

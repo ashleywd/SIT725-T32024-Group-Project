@@ -32,13 +32,13 @@ const getMyPosts = async () => {
 
 const completedButton = ({ postId, postedBy }) => `
   <div class="center-align">
-  <a
-    id="completed-button"
-    class="btn-flat blue-text"
-    data-post-info="${encodeURIComponent(JSON.stringify({ postId, postedBy }))}"
-  >
-    Mark as Completed
-  </a>
+    <a
+      id="completed-button"
+      class="btn-flat blue-text"
+      data-post-info="${encodeURIComponent(JSON.stringify({ postId, postedBy }))}"
+    >
+      Mark as Completed
+    </a>
   <div>
 `;
 

@@ -1,17 +1,17 @@
-const loginMenu = document.querySelector("#login-menu");
-const registerMenu = document.querySelector("#register-menu");
-const logoutMenu = document.querySelector("#logout-menu");
-const dashboardMenu = document.querySelector("#dashboard-menu");
-const accountMenu = document.querySelector("#account-menu");
-const myPostsMenu = document.querySelector("#my-posts-menu");
+const loginMenu = document.querySelectorAll("#login-menu");
+const registerMenu = document.querySelectorAll("#register-menu");
+const logoutMenu = document.querySelectorAll("#logout-menu");
+const dashboardMenu = document.querySelectorAll("#dashboard-menu");
+const accountMenu = document.querySelectorAll("#account-menu");
+const myPostsMenu = document.querySelectorAll("#my-posts-menu");
 
 const toggleUnnecessaryMenu = () => {
-  loginMenu.style.display = "none";
-  registerMenu.style.display = "none";
-  dashboardMenu.style.display = "block";
-  myPostsMenu.style.display = "block";
-  logoutMenu.style.display = "block";
-  accountMenu.style.display = "block";
+  loginMenu.forEach((menu) => menu.style.display = "none")
+  registerMenu.forEach((menu) => menu.style.display = "none");
+  dashboardMenu.forEach((menu) => menu.style.display = "block");
+  myPostsMenu.forEach((menu) => menu.style.display = "block");
+  logoutMenu.forEach((menu) => menu.style.display = "block");
+  accountMenu.forEach((menu) => menu.style.display = "block");
 };
 
 const logout = (e) => {
@@ -20,7 +20,7 @@ const logout = (e) => {
   window.location.href = "/";
 };
 
-logoutMenu.addEventListener("click", logout);
+logoutMenu.forEach((menu) => menu.addEventListener("click", logout));
 
 const fetchUserPoints = async () => {
   try {
