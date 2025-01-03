@@ -21,3 +21,8 @@ const verifyUserAuthentication = () => {
   toggleUnnecessaryMenu();
   fetchUserPoints();
 };
+
+const clearTokenAndRedirectToLogin = () => {
+  localStorage.removeItem("token");
+  window.location.href = "/login";
+};

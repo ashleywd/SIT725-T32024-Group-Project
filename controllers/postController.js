@@ -67,13 +67,22 @@ const postController = {
           .json({ message: "Post not found", error: "Post not found" });
       }
 
-      const updatedPost = await Post.findByIdAndUpdate(postId, {
-        status,
-        acceptedBy: userId,
+      const io = req.app.get("io");
+      const updatedPost = await Post.findByIdAndUpdate(
+        postId,
+        {
+          status,
+          acceptedBy: status === "accepted" ? userId : post.acceptedBy,
+        },
+        { new: true },
+      );
+
+      const notifyUser = status === "accepted" ? postedBy._id : post.acceptedBy;
+
+      io.to(notifyUser.toString()).emit("notify-post-status-update", {
+        updatedPost,
       });
 
-      const io = req.app.get("io");
-      io.to(postedBy._id).emit("notify-accept-post", { updatedPost });
       res.status(201).json({ updatedPost });
     } catch (error) {
       console.error("Error updating post status:", error);

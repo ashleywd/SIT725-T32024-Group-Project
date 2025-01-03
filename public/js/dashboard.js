@@ -1,7 +1,8 @@
 verifyUserAuthentication();
-const socket = initializeWebSocket();
+activateWebSocket();
 
 const postForm = document.getElementById("postForm");
+
 const handleSubmitForm = async function (e) {
   e.preventDefault();
   const formData = {
@@ -60,12 +61,8 @@ const getPosts = async () => {
       },
     });
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-        return;
-      }
+    if (!response.ok && response.status === 401) {
+      clearTokenAndRedirectToLogin();
       throw new Error("Failed to fetch posts");
     }
 
@@ -78,6 +75,24 @@ const getPosts = async () => {
     M.toast({ html: "Failed to load posts", classes: "red" });
   }
 };
+
+const DISABLE_STATES = ["accepted", "completed"];
+
+const POST_LABEL = {
+  open: "Accept",
+  accepted: "Pending completition",
+  completed: "Completed",
+};
+
+const acceptButtonComponent = ({ status, postId, postedBy }) => `
+  <button
+    id="accept-post-button"
+    class="btn waves-effect waves-light ${DISABLE_STATES.includes(status) && "disabled"}"
+    data-post-info="${encodeURIComponent(JSON.stringify({ postId, postedBy }))}"
+    >
+      ${POST_LABEL[status]}
+  </button>
+`;
 
 const createPost = ({
   postId,
@@ -100,17 +115,7 @@ const createPost = ({
                 dateTime,
               ).toLocaleString()}</p>
               <p>${description}</p>
-              <p><strong>Status:</strong> ${String(status).toUpperCase()}</p>
-              ${
-                status === "open"
-                  ? `<button class="btn waves-effect waves-light" id="send-offer-button" data-post-info="${encodeURIComponent(JSON.stringify({ postId, postedBy }))}">
-                Accept
-                <i class="material-icons right">send</i>
-              </button>`
-                  : `<button class="btn waves-effect waves-light disabled">
-              Post Accepted
-              </button>`
-              }
+              ${acceptButtonComponent({ status, postId, postedBy })}
           </div>
       </div>
   </div>
@@ -141,21 +146,12 @@ const handleAcceptPost = async (postInfo) => {
   }
 };
 
-const handleNotifyAcceptPost = (data) => {
-  M.toast({
-    html: `Post accepted: ${data.updatedPost.description}`,
-    classes: "green",
-  });
-};
-
-socket.on("notify-accept-post", handleNotifyAcceptPost);
-
 const initializeButtons = () => {
-  const sendOfferButtons = document.querySelectorAll("#send-offer-button");
+  const acceptPostButtons = document.querySelectorAll("#accept-post-button");
 
-  if (sendOfferButtons.length > 0) {
-    sendOfferButtons.forEach((button) => {
-      button.addEventListener("click", (e) => {
+  if (acceptPostButtons.length > 0) {
+    acceptPostButtons.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
         if (e.target.matches("button")) {
           const postInfo = e.target.dataset.postInfo;
           handleAcceptPost(postInfo);

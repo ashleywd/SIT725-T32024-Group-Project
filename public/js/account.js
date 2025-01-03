@@ -37,10 +37,10 @@ const accountBtns = document.getElementById("accountBtns");
 const editBtns = document.getElementById("editBtns");
 
 const toggleAccountDetails = () => {
-    const emailField = document.getElementById("accountEmail");
-    emailField.disabled = !emailField.disabled;
-    accountBtns.classList.toggle("hide");
-    editBtns.classList.toggle("hide");
+  const emailField = document.getElementById("accountEmail");
+  emailField.disabled = !emailField.disabled;
+  accountBtns.classList.toggle("hide");
+  editBtns.classList.toggle("hide");
 };
 
 editAccountBtn.addEventListener("click", () => {
@@ -95,24 +95,24 @@ cancelBtn.addEventListener("click", () => {
 
 const deleteAccountBtn = document.getElementById("deleteAccountBtn");
 deleteAccountBtn.addEventListener("click", async () => {
-    if (!confirm("Are you sure you want to delete your account?")) return;
+  if (!confirm("Are you sure you want to delete your account?")) return;
 
-    try {
-      const response = await fetch("/api/account", {
-        method: "DELETE",
-        headers: { Authorization: localStorage.getItem("token") },
-      });
-      const result = await response.json();
+  try {
+    const response = await fetch("/api/account", {
+      method: "DELETE",
+      headers: { Authorization: localStorage.getItem("token") },
+    });
+    const result = await response.json();
 
-      if (!response.ok) throw new Error(result.error || "Deletion failed");
+    if (!response.ok) throw new Error(result.error || "Deletion failed");
 
-      M.toast({ html: "Account deleted successfully!" });
-      window.location.href = "/login";
-    } catch (error) {
-      console.error("Deletion error:", error);
-      M.toast({ html: error.message, classes: "red" });
-    }
-  });
+    M.toast({ html: "Account deleted successfully!" });
+    window.location.href = "/login";
+  } catch (error) {
+    console.error("Deletion error:", error);
+    M.toast({ html: error.message, classes: "red" });
+  }
+});
 
 // Fetch account details on page load
 fetchAccountDetails();
