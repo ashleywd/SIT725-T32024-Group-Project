@@ -1,8 +1,7 @@
-// models/post.js
 const mongoose = require('mongoose');
 
 const postSchema = new mongoose.Schema({
-    userId: {
+    postedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
@@ -34,7 +33,7 @@ const postSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         default: null
-    }
+    },
 }, {
     timestamps: true
 });

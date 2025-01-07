@@ -8,7 +8,7 @@ const postController = {
       const userId = req.userId;
 
       const newPost = new Post({
-        userId,
+        postedBy: userId,
         type,
         hoursNeeded,
         description,
@@ -27,8 +27,9 @@ const postController = {
   getAllPosts: async (req, res) => {
     try {
       const posts = await Post.find({
-        userId: { $ne: req.userId }, // Exclude current user's posts
-      }).populate("userId", "username");
+        postedBy: { $ne: req.userId }, // Exclude current user's posts
+      }).populate({ path: "postedBy", select: "username" });
+
       res.status(200).json(posts);
     } catch (error) {
       res
@@ -40,10 +41,10 @@ const postController = {
     try {
       const posts = await Post.find({
         $or: [
-          { userId: req.userId }, // Posts created by user
+          { postedBy: req.userId }, // Posts created by user
         ],
       })
-        .populate("userId", "username")
+        .populate({ path: "postedBy", select: "username" })
         .sort({ createdAt: -1 });
 
       res.status(200).json(posts);
@@ -52,6 +53,40 @@ const postController = {
       res
         .status(500)
         .json({ message: "Error fetching user posts", error: error.message });
+    }
+  },
+  updatePostStatus: async (req, res) => {
+    try {
+      const { postId, postedBy, status } = req.body;
+      const userId = req.userId;
+      const post = await Post.findById(postId);
+
+      if (!post) {
+        return res
+          .status(404)
+          .json({ message: "Post not found", error: "Post not found" });
+      }
+
+      const io = req.app.get("io");
+      const updatedPost = await Post.findByIdAndUpdate(
+        postId,
+        {
+          status,
+          acceptedBy: status === "accepted" ? userId : post.acceptedBy,
+        },
+        { new: true },
+      );
+
+      const notifyUser = status === "accepted" ? postedBy._id : post.acceptedBy;
+
+      io.to(notifyUser.toString()).emit("notify-post-status-update", {
+        updatedPost,
+      });
+
+      res.status(201).json({ updatedPost });
+    } catch (error) {
+      console.error("Error updating post status:", error);
+      res.status(500).json({ message: "Error updating post status", error });
     }
   },
 };

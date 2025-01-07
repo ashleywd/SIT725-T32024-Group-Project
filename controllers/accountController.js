@@ -1,5 +1,3 @@
-// controllers/accountController.js
-
 const UserModel = require("../models/user");
 
 const getAccountDetails = async (req, res) => {

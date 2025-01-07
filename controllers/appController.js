@@ -1,9 +1,9 @@
 const appController = {
   renderHome: (_, res) => {
-    res.render("../views/dashboard", {
-      title: "Dashboard",
-      viewScript: "dashboard.js",
-      viewStyle: "dashboard.css",
+    res.render("../views/login", {
+      title: "Login",
+      viewScript: "login.js",
+      viewStyle: "login.css",
     });
   },
 
@@ -19,7 +19,7 @@ const appController = {
     res.render("../views/my-posts", {
       title: "My Posts",
       viewScript: "my-posts.js",
-      viewStyle: "dashboard.css", // fix this later
+      viewStyle: "my-post.css",
     });
   },
 

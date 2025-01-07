@@ -4,7 +4,7 @@ const loginForm = document.querySelector(".login-form");
 const login = async () => {
   const username = document.querySelector("#username").value;
   const password = document.querySelector("#password").value;
-  
+
   try {
     const response = await fetch("api/auth/login", {
       method: "POST",
@@ -13,18 +13,18 @@ const login = async () => {
       },
       body: JSON.stringify({ username, password }),
     });
+
     const data = await response.json();
-    
     if (response.status === 200) {
-      M.toast({html: 'Login successful!', classes: 'green'});
+      M.toast({ html: "Login successful!", classes: "green" });
       localStorage.setItem("token", data.token);
       window.location.href = "/dashboard";
     } else {
-      M.toast({html: data.error || 'Login failed', classes: 'red'});
+      M.toast({ html: data.error || "Login failed", classes: "red" });
     }
   } catch (error) {
     console.error("Login failed", error);
-    M.toast({html: 'Login failed. Please try again.', classes: 'red'});
+    M.toast({ html: "Login failed. Please try again.", classes: "red" });
   }
 };
 

@@ -1,10 +1,4 @@
-checkAuth();
-
-var elems = document.querySelectorAll("select");
-var instances = M.FormSelect.init(elems);
-
-var modals = document.querySelectorAll(".modal");
-M.Modal.init(modals);
+verifyUserAuthentication();
 
 const populateData = (data) => {
   document.getElementById("accountName").value = data.name;
@@ -28,11 +22,10 @@ const fetchAccountDetails = async () => {
     }
 
     const data = await response.json();
-
     populateData(data);
   } catch (err) {
     console.error("Error fetching account details:", err.message);
-    var instance = M.Modal.getInstance(document.getElementById("errorModal"));
+    const instance = M.Modal.getInstance(document.getElementById("errorModal"));
     instance.open();
   }
 };
@@ -43,10 +36,10 @@ const accountBtns = document.getElementById("accountBtns");
 const editBtns = document.getElementById("editBtns");
 
 const toggleAccountDetails = () => {
-    const emailField = document.getElementById("accountEmail");
-    emailField.disabled = !emailField.disabled;
-    accountBtns.classList.toggle("hide");
-    editBtns.classList.toggle("hide");
+  const emailField = document.getElementById("accountEmail");
+  emailField.disabled = !emailField.disabled;
+  accountBtns.classList.toggle("hide");
+  editBtns.classList.toggle("hide");
 };
 
 editAccountBtn.addEventListener("click", () => {
@@ -93,6 +86,7 @@ accountDetails.addEventListener("submit", async (e) => {
 });
 
 const cancelBtn = document.getElementById("cancelBtn");
+
 cancelBtn.addEventListener("click", () => {
   toggleAccountDetails();
   fetchAccountDetails();
@@ -100,24 +94,24 @@ cancelBtn.addEventListener("click", () => {
 
 const deleteAccountBtn = document.getElementById("deleteAccountBtn");
 deleteAccountBtn.addEventListener("click", async () => {
-    if (!confirm("Are you sure you want to delete your account?")) return;
+  if (!confirm("Are you sure you want to delete your account?")) return;
 
-    try {
-      const response = await fetch("/api/account", {
-        method: "DELETE",
-        headers: { Authorization: localStorage.getItem("token") },
-      });
-      const result = await response.json();
+  try {
+    const response = await fetch("/api/account", {
+      method: "DELETE",
+      headers: { Authorization: localStorage.getItem("token") },
+    });
+    const result = await response.json();
 
-      if (!response.ok) throw new Error(result.error || "Deletion failed");
+    if (!response.ok) throw new Error(result.error || "Deletion failed");
 
-      M.toast({ html: "Account deleted successfully!" });
-      window.location.href = "/login";
-    } catch (error) {
-      console.error("Deletion error:", error);
-      M.toast({ html: error.message, classes: "red" });
-    }
-  });
+    M.toast({ html: "Account deleted successfully!" });
+    window.location.href = "/login";
+  } catch (error) {
+    console.error("Deletion error:", error);
+    M.toast({ html: error.message, classes: "red" });
+  }
+});
 
 // Fetch account details on page load
 fetchAccountDetails();
