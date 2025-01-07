@@ -1,0 +1,8 @@
+#postsContent {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#post {
+    margin: 0;
+}

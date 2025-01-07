@@ -39,7 +39,7 @@ const completedButton = ({ postId, postedBy }) => `
     >
       Mark as Completed
     </a>
-  <div>
+  </div>
 `;
 
 const createMyPost = ({
@@ -51,7 +51,7 @@ const createMyPost = ({
   status,
   postedBy,
 }) => `
-  <div class="col s12 m6">
+  <div id="post" class="col s6">
       <div class="card">
           <div class="card-content">
               <span class="card-title">

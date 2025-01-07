@@ -19,7 +19,7 @@ const appController = {
     res.render("../views/my-posts", {
       title: "My Posts",
       viewScript: "my-posts.js",
-      viewStyle: "dashboard.css", // fix this later
+      viewStyle: "my-post.css",
     });
   },
 

@@ -1,7 +1,7 @@
 const initializeWebSocket = () => {
   const userToken = localStorage.getItem("token");
 
-  const socket = io("ws://localhost:3000", {
+  const socket = io({
     extraHeaders: {
       authorization: userToken,
     },
