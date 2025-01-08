@@ -12,6 +12,28 @@
     </div>
   </div>
 
+  <!-- Filter Row -->
+  <div class="row">
+    <div class="input-field col s12 m6">
+      <select id="typeFilter">
+        <option value="all">All Types</option>
+        <option value="offer">Offers Only</option>
+        <option value="request">Requests Only</option>
+      </select>
+      <label>Filter by Type</label>
+    </div>
+    <div class="input-field col s12 m6">
+      <select id="statusFilter">
+        <option value="all">All Statuses</option>
+        <option value="open">Open</option>
+        <option value="accepted">Accepted</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <label>Filter by Status</label>
+    </div>
+  </div>
+
   <!-- Posts Container -->
   <div class="row" id="postsContainer">
     <!-- Posts will be dynamically inserted here -->

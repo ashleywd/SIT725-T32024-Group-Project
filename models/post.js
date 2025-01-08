@@ -1,41 +1,44 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const postSchema = new mongoose.Schema({
+const postSchema = new mongoose.Schema(
+  {
     postedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
     type: {
-        type: String,
-        enum: ['offer', 'request'],
-        required: true
+      type: String,
+      enum: ["offer", "request"],
+      required: true,
     },
     status: {
-        type: String,
-        enum: ['open', 'accepted', 'completed'],
-        default: 'open'
+      type: String,
+      enum: ["open", "accepted", "completed", "cancelled"],
+      default: "open",
     },
     description: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     dateTime: {
-        type: Date,
-        required: true
+      type: Date,
+      required: true,
     },
     hoursNeeded: {
-        type: Number,
-        required: true,
-        min: 1
+      type: Number,
+      required: true,
+      min: 1,
     },
     acceptedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        default: null
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
-}, {
-    timestamps: true
-});
+  },
+  {
+    timestamps: true,
+  }
+);
 
-module.exports = mongoose.model('Post', postSchema);
+module.exports = mongoose.model("Post", postSchema);
