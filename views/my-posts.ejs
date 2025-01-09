@@ -10,3 +10,67 @@
     </div>
   </div>
 </div>
+
+<!-- Edit Post Modal -->
+<div id="editPostModal" class="modal">
+  <div class="modal-content">
+    <h4>Edit Post</h4>
+    <form id="editPostForm">
+      <!-- Post Type -->
+      <div class="row">
+        <div class="input-field col s12">
+          <select id="editType" name="type" required>
+            <option value="offer">Offering Babysitting</option>
+            <option value="request">Requesting Babysitter</option>
+          </select>
+          <label>Post Type</label>
+        </div>
+      </div>
+
+      <!-- Hours Needed -->
+      <div class="row">
+        <div class="input-field col s12">
+          <input
+            id="editHoursNeeded"
+            name="hoursNeeded"
+            type="number"
+            min="1"
+            step="0.5"
+            required
+          />
+          <label for="editHoursNeeded">Hours Needed</label>
+        </div>
+      </div>
+
+      <!-- Date and Time -->
+      <div class="row">
+        <div class="input-field col s12">
+          <input
+            type="datetime-local"
+            id="editDateTime"
+            name="dateTime"
+            required
+          />
+          <label for="editDateTime" class="active">Date and Time</label>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="row">
+        <div class="input-field col s12">
+          <textarea
+            id="editDescription"
+            name="description"
+            class="materialize-textarea"
+            required
+          ></textarea>
+          <label for="editDescription">Description</label>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button class="waves-effect waves-light btn-flat" id="saveEditButton">Save</button>
+    <button class="modal-close waves-effect waves-red btn-flat">Cancel</button>
+  </div>
+</div>

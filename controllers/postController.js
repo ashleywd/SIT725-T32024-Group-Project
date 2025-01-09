@@ -4,9 +4,8 @@ const postController = {
   createPost: async (req, res) => {
     try {
       const { type, hoursNeeded, description, dateTime } = req.body;
-      // Use userId from auth middleware
       const userId = req.userId;
-
+      
       const newPost = new Post({
         postedBy: userId,
         type,
@@ -14,57 +13,115 @@ const postController = {
         description,
         dateTime,
       });
-
+      
       const savedPost = await newPost.save();
       res.status(201).json(savedPost);
     } catch (error) {
       console.error("Error creating post:", error);
-      res
-        .status(500)
-        .json({ message: "Error creating post", error: error.message });
+      res.status(500).json({ message: "Error creating post", error: error.message });
     }
   },
+
   getAllPosts: async (req, res) => {
     try {
       const posts = await Post.find({
-        postedBy: { $ne: req.userId }, // Exclude current user's posts
+        postedBy: { $ne: req.userId },
       }).populate({ path: "postedBy", select: "username" });
-
       res.status(200).json(posts);
     } catch (error) {
-      res
-        .status(500)
-        .json({ message: "Error fetching posts", error: error.message });
+      res.status(500).json({ message: "Error fetching posts", error: error.message });
     }
   },
+
   getUserPosts: async (req, res) => {
     try {
       const posts = await Post.find({
-        $or: [
-          { postedBy: req.userId }, // Posts created by user
-        ],
+        postedBy: req.userId,
       })
         .populate({ path: "postedBy", select: "username" })
         .sort({ createdAt: -1 });
-
       res.status(200).json(posts);
     } catch (error) {
       console.error("Error fetching user posts:", error);
-      res
-        .status(500)
-        .json({ message: "Error fetching user posts", error: error.message });
+      res.status(500).json({ message: "Error fetching user posts", error: error.message });
     }
   },
+
+  editPost: async (req, res) => {
+    try {
+      const { postId } = req.params;
+      const { type, hoursNeeded, description, dateTime } = req.body;
+      const userId = req.userId;
+
+      const post = await Post.findById(postId);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      if (post.postedBy.toString() !== userId) {
+        return res.status(403).json({ message: "Unauthorized to edit this post" });
+      }
+
+      if (post.status !== "pending") {
+        return res.status(400).json({ 
+          message: "Cannot edit post that has been accepted or completed" 
+        });
+      }
+
+      const updatedPost = await Post.findByIdAndUpdate(
+        postId,
+        {
+          type,
+          hoursNeeded,
+          description,
+          dateTime
+        },
+        { new: true }
+      ).populate({ path: "postedBy", select: "username" });
+
+      res.status(200).json(updatedPost);
+    } catch (error) {
+      console.error("Error editing post:", error);
+      res.status(500).json({ message: "Error editing post", error: error.message });
+    }
+  },
+
+  deletePost: async (req, res) => {
+    try {
+      const { postId } = req.params;
+      const userId = req.userId;
+
+      const post = await Post.findById(postId);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      if (post.postedBy.toString() !== userId) {
+        return res.status(403).json({ message: "Unauthorized to delete this post" });
+      }
+
+      if (post.status !== "pending") {
+        return res.status(400).json({ 
+          message: "Cannot delete post that has been accepted or completed" 
+        });
+      }
+
+      await Post.findByIdAndDelete(postId);
+      res.status(200).json({ message: "Post deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      res.status(500).json({ message: "Error deleting post", error: error.message });
+    }
+  },
+
   updatePostStatus: async (req, res) => {
     try {
       const { postId, postedBy, status } = req.body;
       const userId = req.userId;
+      
       const post = await Post.findById(postId);
-
       if (!post) {
-        return res
-          .status(404)
-          .json({ message: "Post not found", error: "Post not found" });
+        return res.status(404).json({ message: "Post not found" });
       }
 
       const io = req.app.get("io");
@@ -74,11 +131,10 @@ const postController = {
           status,
           acceptedBy: status === "accepted" ? userId : post.acceptedBy,
         },
-        { new: true },
+        { new: true }
       );
 
       const notifyUser = status === "accepted" ? postedBy._id : post.acceptedBy;
-
       io.to(notifyUser.toString()).emit("notify-post-status-update", {
         updatedPost,
       });

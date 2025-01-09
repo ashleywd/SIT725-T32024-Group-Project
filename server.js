@@ -7,7 +7,7 @@ const { handleError, handle404 } = require("./controllers/appController");
 const {
   appRoutes,
   authRoutes,
-  postRoutes,
+  postRoutes, // Only declare postRoutes once here
   accountRoutes,
 } = require("./routes/");
 const { connectDB } = require("./config/db");
@@ -35,9 +35,10 @@ app.set("view engine", "ejs");
 
 // Set routes
 app.use("/", appRoutes);
-app.use("/api/posts", postRoutes);
+app.use("/api/posts", postRoutes); // Use postRoutes here
 app.use("/api/auth", authRoutes);
 app.use("/api/account", accountRoutes);
+// Remove this duplicate line: app.use('/api', postRoutes);
 
 // Error handlers
 app.use(handleError);
