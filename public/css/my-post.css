@@ -1,8 +1,51 @@
-#postsContent {
-    display: flex;
-    flex-wrap: wrap;
+/* Layout */
+#post,
+.post {
+  margin: 0;
 }
 
-#post {
-    margin: 0;
+#postsContent {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* Card styles */
+.card-title {
+  margin-bottom: 1rem;
+}
+
+.card-content .section {
+  margin-top: 1rem;
+}
+
+.divider {
+  margin: 1rem 0;
+}
+
+/* Action areas */
+.card-action .row {
+  margin-bottom: 0;
+}
+
+.modal-footer {
+  padding: 4px 24px;
+}
+
+/* Card actions */
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.action-button {
+  flex: 1;
+  margin: 0 5px;
+}
+
+.action-button:first-child {
+  margin-left: 0;
+}
+
+.action-button:last-child {
+  margin-right: 0;
 }

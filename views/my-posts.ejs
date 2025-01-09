@@ -49,6 +49,7 @@
             type="datetime-local"
             id="editDateTime"
             name="dateTime"
+            class="validate"
             required
           />
           <label for="editDateTime" class="active">Date and Time</label>
@@ -70,7 +71,15 @@
     </form>
   </div>
   <div class="modal-footer">
-    <button class="waves-effect waves-light btn-flat" id="saveEditButton">Save</button>
+    <button class="waves-effect waves-light btn-flat" id="saveEditButton">
+      Save
+    </button>
     <button class="modal-close waves-effect waves-red btn-flat">Cancel</button>
+  </div>
+</div>
+
+<div class="card-action">
+  <div class="row">
+    ${completedButton({ postId: id, postedBy })} ${cancelButton}
   </div>
 </div>
