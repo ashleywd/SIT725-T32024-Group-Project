@@ -1,4 +1,7 @@
-async function getMyPosts() {
+verifyUserAuthentication();
+activateWebSocket();
+
+const getMyPosts = async () => {
   try {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -25,7 +28,7 @@ async function getMyPosts() {
     console.error("Failed to fetch posts:", error);
     M.toast({ html: "Failed to load posts", classes: "red" });
   }
-}
+};
 
 const completedButton = ({ postId, postedBy }) => `
   <div class="col s6">
@@ -313,6 +316,4 @@ M.Modal.init(document.querySelectorAll(".modal"));
 M.FormSelect.init(document.querySelectorAll("select"));
 
 // Start the application
-verifyUserAuthentication();
-activateWebSocket();
 getMyPosts();
