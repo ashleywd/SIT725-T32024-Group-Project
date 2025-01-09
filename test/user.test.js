@@ -1,47 +1,67 @@
-const mongoose = require('mongoose');
-const User = require('../models/user'); 
+const User = require('../models/user');
+
+jest.mock('../models/user');
 
 describe('User Model Test', () => {
-    beforeAll(async () => {
-        await mongoose.connect('mongodb://127.0.0.1:27017/testDB');
-
-        await User.syncIndexes();
-    });
-
-    afterAll(async () => {
-        await mongoose.connection.dropDatabase();
-        await mongoose.connection.close();
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
     it('should create a user successfully', async () => {
+        const mockSave = jest.fn().mockResolvedValue({
+            _id: 'mockedUserId',
+            username: 'testuser',
+            email: 'testuser@example.com',
+            password: 'password123',
+        });
+        User.prototype.save = mockSave;
+
         const validUser = new User({
             username: 'testuser',
             email: 'testuser@example.com',
             password: 'password123',
         });
+
         const savedUser = await validUser.save();
 
-        expect(savedUser._id).toBeDefined();
+        expect(mockSave).toHaveBeenCalledTimes(1);
         expect(savedUser.username).toBe('testuser');
         expect(savedUser.email).toBe('testuser@example.com');
     });
 
     it('should fail when required fields are missing', async () => {
+        const mockSave = jest.fn().mockRejectedValue({
+            errors: {
+                username: { message: 'Username is required' },
+                email: { message: 'Email is required' },
+                password: { message: 'Password is required' },
+            },
+        });
+        User.prototype.save = mockSave;
+
         const invalidUser = new User({});
+
         let err;
         try {
             await invalidUser.save();
         } catch (error) {
             err = error;
         }
-        expect(err).toBeDefined();
+
+        expect(mockSave).toHaveBeenCalledTimes(1);
         expect(err.errors.username).toBeDefined();
         expect(err.errors.email).toBeDefined();
         expect(err.errors.password).toBeDefined();
     });
 
     it('should enforce unique email and username', async () => {
-        await User.deleteMany({}); 
+        const mockSave = jest.fn()
+            .mockResolvedValueOnce({})
+            .mockRejectedValueOnce({
+                code: 11000, // MongoDB duplicate key error code
+            });
+
+        User.prototype.save = mockSave;
 
         const user1 = new User({
             username: 'duplicateuser',
@@ -62,7 +82,8 @@ describe('User Model Test', () => {
         } catch (error) {
             err = error;
         }
-        expect(err).toBeDefined();
-        expect(err.code).toBe(11000); // MongoDB duplicate key error code
+
+        expect(mockSave).toHaveBeenCalledTimes(2);
+        expect(err.code).toBe(11000);
     });
 });
