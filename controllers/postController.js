@@ -4,6 +4,7 @@ const postController = {
   createPost: async (req, res) => {
     try {
       const { type, hoursNeeded, description, dateTime } = req.body;
+      // Use userId from auth middleware
       const userId = req.userId;
 
       const newPost = new Post({
@@ -27,7 +28,7 @@ const postController = {
   getAllPosts: async (req, res) => {
     try {
       const posts = await Post.find({
-        postedBy: { $ne: req.userId },
+        postedBy: { $ne: req.userId }, // Exclude current user's posts
       }).populate({ path: "postedBy", select: "username" });
       res.status(200).json(posts);
     } catch (error) {
