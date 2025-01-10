@@ -109,16 +109,6 @@ const POST_LABEL = {
   completed: "Completed",
 };
 
-const getStatusColor = (status) => {
-  const colors = {
-    open: "blue",
-    accepted: "orange",
-    completed: "green",
-    cancelled: "red",
-  };
-  return colors[status] || "grey";
-};
-
 const acceptButtonComponent = ({ status, postId, postedBy }) => {
   if (status !== "open") return "";
 
