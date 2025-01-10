@@ -29,3 +29,13 @@ const clearTokenAndRedirectToLogin = () => {
   localStorage.removeItem("token");
   window.location.href = "/login";
 };
+
+const getStatusColor = (status) => {
+  const colors = {
+    open: "blue",
+    accepted: "orange",
+    completed: "green",
+    cancelled: "red",
+  };
+  return colors[status] || "grey";
+};

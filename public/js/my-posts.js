@@ -81,16 +81,6 @@ const createMyPost = ({
   </div>
  `;
 
-const getStatusColor = (status) => {
-  const colors = {
-    open: "blue",
-    accepted: "orange",
-    completed: "green",
-    cancelled: "red",
-  };
-  return colors[status] || "grey";
-};
-
 const getCardActions = (id, status, dateTime, postedBy) => {
   if (status === "completed" || status === "cancelled") return "";
 

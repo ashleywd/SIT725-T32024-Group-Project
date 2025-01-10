@@ -7,6 +7,13 @@ const postController = {
       // Use userId from auth middleware
       const userId = req.userId;
 
+      const selectedDate = new Date(dateTime);
+      if (selectedDate < new Date()) {
+        return res.status(400).json({
+          message: "Cannot set date/time in the past",
+        });
+      }
+
       const newPost = new Post({
         postedBy: userId,
         type,
