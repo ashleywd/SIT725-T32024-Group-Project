@@ -22,9 +22,9 @@ const postController = {
         description,
         dateTime,
       });
-
       const savedPost = await newPost.save();
-      io.emit("post-created");
+
+      io.emit("posts-updated");
       res.status(201).json(savedPost);
     } catch (error) {
       console.error("Error creating post:", error);
@@ -87,7 +87,7 @@ const postController = {
         { type, hoursNeeded, description, dateTime },
         { new: true }
       ).populate({ path: "postedBy", select: "username" });
-      io.emit("post-edited");
+      io.emit("posts-updated");
       res.status(200).json(updatedPost);
     } catch (error) {
       console.error("Error editing post:", error);
@@ -110,7 +110,7 @@ const postController = {
         { status: "cancelled" },
         { new: true }
       );
-      io.emit("post-deleted");
+      io.emit("posts-updated");
       res.status(200).json({
         message: "Post cancelled successfully",
         post,
@@ -151,10 +151,8 @@ const postController = {
         updatedPost,
       });
       if(status == "completed"){
-      io.emit("post-completed", {
-        updatedPost,
-      });
-    }
+        io.emit("posts-updated");
+      }
       res.status(201).json({ updatedPost });
     } catch (error) {
       console.error("Error updating post status:", error);
