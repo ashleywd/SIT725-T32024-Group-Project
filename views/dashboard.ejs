@@ -14,23 +14,34 @@
 
   <!-- Filter Row -->
   <div class="row">
-    <div class="input-field col s12 m6">
-      <select id="typeFilter">
-        <option value="all">All Types</option>
-        <option value="offer">Offers Only</option>
-        <option value="request">Requests Only</option>
-      </select>
-      <label>Filter by Type</label>
-    </div>
-    <div class="input-field col s12 m6">
-      <select id="statusFilter">
-        <option value="all">All Statuses</option>
-        <option value="open">Open</option>
-        <option value="accepted">Accepted</option>
-        <option value="completed">Completed</option>
-        <option value="cancelled">Cancelled</option>
-      </select>
-      <label>Filter by Status</label>
+    <div class="col s12">
+      <div class="card filter-card">
+        <div class="card-content">
+          <span class="card-title filter-title">Filter Posts</span>
+          <div class="row filter-row">
+            <div class="input-field col s12 m6">
+              <i class="material-icons prefix">filter_list</i>
+              <select id="typeFilter">
+                <option value="all">All Types</option>
+                <option value="offer">Offers Only</option>
+                <option value="request">Requests Only</option>
+              </select>
+              <label>Filter by Type</label>
+            </div>
+            <div class="input-field col s12 m6">
+              <i class="material-icons prefix">fiber_manual_record</i>
+              <select id="statusFilter">
+                <option value="all">All Statuses</option>
+                <option value="open">Open</option>
+                <option value="accepted">Accepted</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <label>Filter by Status</label>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -105,7 +116,7 @@
           </div>
         </div>
 
-        <div class="row">
+        <div class="row form-actions">
           <div class="col s12 center-align">
             <button class="btn waves-effect waves-light" type="submit">
               Submit

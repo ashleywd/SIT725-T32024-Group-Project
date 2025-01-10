@@ -105,25 +105,27 @@ const DISABLE_STATES = ["accepted", "completed"];
 
 const POST_LABEL = {
   open: "Accept",
-  accepted: "Pending completition",
+  accepted: "Pending Completion",
   completed: "Completed",
 };
 
-const acceptButtonComponent = ({ status, postId, postedBy }) => `
-  <div class="center-align">
-    <button
-      id="accept-post-button"
-      class="btn waves-effect waves-light ${
-        DISABLE_STATES.includes(status) && "disabled"
-      }"
-      data-post-info="${encodeURIComponent(
-        JSON.stringify({ postId, postedBy })
-      )}"
+const acceptButtonComponent = ({ status, postId, postedBy }) => {
+  if (status !== "open") return "";
+
+  return `
+    <div class="center-align">
+      <button
+        id="accept-post-button"
+        class="waves-effect waves-light btn blue"
+        data-post-info="${encodeURIComponent(
+          JSON.stringify({ postId, postedBy })
+        )}"
       >
-        ${POST_LABEL[status]}
-    </button>
-  </div>
-`;
+        <i class="material-icons left">handshake</i>Accept
+      </button>
+    </div>
+  `;
+};
 
 const createPost = ({
   postId,
@@ -135,25 +137,43 @@ const createPost = ({
   status,
 }) => `
   <div class="col s12 m6">
-      <div class="card">
-          <div class="card-content">
-              <span class="card-title">${
-                type === "offer" ? "Babysitting Offer" : "Babysitter Request"
-              }</span>
-              <p><strong>Posted by:</strong> ${postedBy?.username}</p>
-              <p><strong>Hours:</strong> ${hoursNeeded}</p>
-              <p><strong>Date:</strong> ${new Date(
-                dateTime
-              ).toLocaleString()}</p>
-              <p>${description}</p>
-              <strong>Status:</strong> ${String(status).toUpperCase()}
-              ${
-                status === "open"
-                  ? acceptButtonComponent({ status, postId, postedBy })
-                  : ""
-              }
-          </div>
+    <div class="card hoverable post-card">
+      <div class="card-content">
+        <span class="card-title grey-text text-darken-4">
+          <i class="material-icons left">
+            ${type === "offer" ? "person_outline" : "child_care"}
+          </i>
+          ${type === "offer" ? "Babysitting Offer" : "Babysitter Request"}
+          <span class="right">
+            <span class="new badge ${getStatusColor(
+              status
+            )}" data-badge-caption="">${String(status).toUpperCase()}</span>
+          </span>
+        </span>
+        <div class="divider"></div>
+        <div class="section">
+          <p><i class="material-icons tiny">person</i> <strong>Posted by:</strong> ${
+            postedBy?.username
+          }</p>
+          <p><i class="material-icons tiny">schedule</i> <strong>Hours:</strong> ${hoursNeeded}</p>
+          <p><i class="material-icons tiny">event</i> <strong>Date:</strong> ${new Date(
+            dateTime
+          ).toLocaleString()}</p>
+          <p><i class="material-icons tiny">description</i> ${description}</p>
+        </div>
       </div>
+      ${
+        status === "open"
+          ? `
+        <div class="card-action">
+          <div class="row">
+            ${acceptButtonComponent({ status, postId, postedBy })}
+          </div>
+        </div>
+      `
+          : ""
+      }
+    </div>
   </div>
 `;
 
@@ -163,7 +183,7 @@ const handleAcceptPost = async (postInfo) => {
     const decodedData = decodeURIComponent(postInfo);
     const { postId, postedBy } = JSON.parse(decodedData);
 
-    const response = await fetch("/api/posts", {
+    const response = await fetch(`/api/posts/status/${postId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -171,14 +191,18 @@ const handleAcceptPost = async (postInfo) => {
       },
       body: JSON.stringify({ postId, postedBy, status: "accepted" }),
     });
-    const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(`Server error: ${result.error || "Unknown error"}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to accept post");
     }
+
+    const result = await response.json();
+    M.toast({ html: "Post accepted successfully", classes: "green" });
     getPosts();
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    console.error("Error accepting post:", error);
+    M.toast({ html: error.message || "Failed to accept post", classes: "red" });
   }
 };
 

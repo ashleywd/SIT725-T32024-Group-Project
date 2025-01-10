@@ -7,6 +7,13 @@ const postController = {
       // Use userId from auth middleware
       const userId = req.userId;
 
+      const selectedDate = new Date(dateTime);
+      if (selectedDate < new Date()) {
+        return res.status(400).json({
+          message: "Cannot set date/time in the past",
+        });
+      }
+
       const newPost = new Post({
         postedBy: userId,
         type,
@@ -24,12 +31,12 @@ const postController = {
         .json({ message: "Error creating post", error: error.message });
     }
   },
+
   getAllPosts: async (req, res) => {
     try {
       const posts = await Post.find({
         postedBy: { $ne: req.userId }, // Exclude current user's posts
       }).populate({ path: "postedBy", select: "username" });
-
       res.status(200).json(posts);
     } catch (error) {
       res
@@ -37,6 +44,7 @@ const postController = {
         .json({ message: "Error fetching posts", error: error.message });
     }
   },
+
   getUserPosts: async (req, res) => {
     try {
       const posts = await Post.find({
@@ -55,6 +63,62 @@ const postController = {
         .json({ message: "Error fetching user posts", error: error.message });
     }
   },
+
+  editPost: async (req, res) => {
+    try {
+      const { postId } = req.params;
+      const { type, hoursNeeded, description, dateTime } = req.body;
+      const userId = req.userId;
+
+      const post = await Post.findById(postId);
+
+      const selectedDate = new Date(dateTime);
+      if (selectedDate < new Date()) {
+        return res.status(400).json({
+          message: "Cannot set date/time in the past",
+        });
+      }
+
+      const updatedPost = await Post.findByIdAndUpdate(
+        postId,
+        { type, hoursNeeded, description, dateTime },
+        { new: true }
+      ).populate({ path: "postedBy", select: "username" });
+
+      res.status(200).json(updatedPost);
+    } catch (error) {
+      console.error("Error editing post:", error);
+      res
+        .status(500)
+        .json({ message: "Error editing post", error: error.message });
+    }
+  },
+
+  cancelPost: async (req, res) => {
+    try {
+      const { postId } = req.params;
+      const post = await Post.findOneAndUpdate(
+        {
+          _id: postId,
+          postedBy: req.userId,
+          status: { $nin: ["cancelled", "completed"] },
+        },
+        { status: "cancelled" },
+        { new: true }
+      );
+
+      res.status(200).json({
+        message: "Post cancelled successfully",
+        post,
+      });
+    } catch (error) {
+      console.error("Error cancelling post:", error);
+      res
+        .status(500)
+        .json({ message: "Error cancelling post", error: error.message });
+    }
+  },
+
   updatePostStatus: async (req, res) => {
     try {
       const { postId, postedBy, status } = req.body;
@@ -74,7 +138,7 @@ const postController = {
           status,
           acceptedBy: status === "accepted" ? userId : post.acceptedBy,
         },
-        { new: true },
+        { new: true }
       );
 
       const notifyUser = status === "accepted" ? postedBy._id : post.acceptedBy;
