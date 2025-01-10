@@ -3,6 +3,7 @@ const Post = require("../models/post");
 const postController = {
   createPost: async (req, res) => {
     try {
+      const io = req.app.get("io");
       const { type, hoursNeeded, description, dateTime } = req.body;
       // Use userId from auth middleware
       const userId = req.userId;
@@ -23,6 +24,7 @@ const postController = {
       });
 
       const savedPost = await newPost.save();
+      io.emit("post-created");
       res.status(201).json(savedPost);
     } catch (error) {
       console.error("Error creating post:", error);
@@ -66,6 +68,7 @@ const postController = {
 
   editPost: async (req, res) => {
     try {
+      const io = req.app.get("io");
       const { postId } = req.params;
       const { type, hoursNeeded, description, dateTime } = req.body;
       const userId = req.userId;
@@ -84,7 +87,7 @@ const postController = {
         { type, hoursNeeded, description, dateTime },
         { new: true }
       ).populate({ path: "postedBy", select: "username" });
-
+      io.emit("post-edited");
       res.status(200).json(updatedPost);
     } catch (error) {
       console.error("Error editing post:", error);
@@ -96,6 +99,7 @@ const postController = {
 
   cancelPost: async (req, res) => {
     try {
+      const io = req.app.get("io");
       const { postId } = req.params;
       const post = await Post.findOneAndUpdate(
         {
@@ -106,7 +110,7 @@ const postController = {
         { status: "cancelled" },
         { new: true }
       );
-
+      io.emit("post-deleted");
       res.status(200).json({
         message: "Post cancelled successfully",
         post,
@@ -146,7 +150,11 @@ const postController = {
       io.to(notifyUser.toString()).emit("notify-post-status-update", {
         updatedPost,
       });
-
+      if(status == "completed"){
+      io.emit("post-completed", {
+        updatedPost,
+      });
+    }
       res.status(201).json({ updatedPost });
     } catch (error) {
       console.error("Error updating post status:", error);
