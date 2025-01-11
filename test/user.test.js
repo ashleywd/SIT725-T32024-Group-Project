@@ -5,9 +5,10 @@ jest.mock('../models/user');
 describe('User Model Test', () => {
     afterEach(() => {
         jest.clearAllMocks();
+        jest.restoreAllMocks(); 
     });
 
-    it('should create a user successfully', async () => {
+    it('should successfully create a user with valid data', async () => {
         const mockSave = jest.fn().mockResolvedValue({
             _id: 'mockedUserId',
             username: 'testuser',
@@ -29,7 +30,7 @@ describe('User Model Test', () => {
         expect(savedUser.email).toBe('testuser@example.com');
     });
 
-    it('should fail when required fields are missing', async () => {
+    it('should return errors when required fields are missing', async () => {
         const mockSave = jest.fn().mockRejectedValue({
             errors: {
                 username: { message: 'Username is required' },
@@ -49,12 +50,12 @@ describe('User Model Test', () => {
         }
 
         expect(mockSave).toHaveBeenCalledTimes(1);
-        expect(err.errors.username).toBeDefined();
-        expect(err.errors.email).toBeDefined();
-        expect(err.errors.password).toBeDefined();
+        expect(err.errors.username.message).toBe('Username is required');
+        expect(err.errors.email.message).toBe('Email is required');
+        expect(err.errors.password.message).toBe('Password is required');
     });
 
-    it('should enforce unique email and username', async () => {
+    it('should throw an error when email or username is already taken', async () => {
         const mockSave = jest.fn()
             .mockResolvedValueOnce({})
             .mockRejectedValueOnce({
@@ -86,4 +87,29 @@ describe('User Model Test', () => {
         expect(mockSave).toHaveBeenCalledTimes(2);
         expect(err.code).toBe(11000);
     });
+
+    it('should throw an error when email format is invalid', async () => {
+        const mockSave = jest.fn().mockRejectedValue({
+            errors: {
+                email: { message: 'Invalid email format' },
+            },
+        });
+        User.prototype.save = mockSave;
+
+        const invalidUser = new User({
+            username: 'testuser',
+            email: 'invalid-email', // Invalid email format
+            password: 'password123',
+        });
+
+        let err;
+        try {
+            await invalidUser.save();
+        } catch (error) {
+            err = error;
+        }
+
+        expect(mockSave).toHaveBeenCalledTimes(1);
+        expect(err.errors.email.message).toBe('Invalid email format');
+    });    
 });
