@@ -150,9 +150,8 @@ const postController = {
       io.to(notifyUser.toString()).emit("notify-post-status-update", {
         updatedPost,
       });
-      if(status == "completed"){
-        io.emit("posts-updated");
-      }
+      io.emit("posts-updated");
+
       res.status(201).json({ updatedPost });
     } catch (error) {
       console.error("Error updating post status:", error);
