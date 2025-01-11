@@ -25,7 +25,7 @@ const handleSubmitForm = async function (e) {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(`Server error: ${result.error || "Unknown error"}`);
+      throw new Error(result.message || "Unknown error");
     }
 
     const modal = M.Modal.getInstance(document.getElementById("modalForm"));
