@@ -24,7 +24,14 @@ const handleNotifyAcceptPost = (data) => {
   }
 };
 
+const handlePostsUpdated = () => {
+  if (window.location.href.includes("dashboard")) {
+    getPosts?.();
+  }
+};
+
 const activateWebSocket = () => {
   const socket = initializeWebSocket();
   socket.on("notify-post-status-update", handleNotifyAcceptPost);
+  socket.on("posts-updated", handlePostsUpdated);
 };

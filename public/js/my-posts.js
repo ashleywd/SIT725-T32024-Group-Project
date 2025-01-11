@@ -2,6 +2,9 @@ verifyUserAuthentication();
 activateWebSocket();
 
 const getMyPosts = async () => {
+  // Store current scroll position
+  const scrollPosition = window.scrollY;
+
   try {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -24,6 +27,9 @@ const getMyPosts = async () => {
     const posts = await response.json();
     renderPosts(posts);
     initializeButtons();
+
+    // Restore scroll position
+    window.scrollTo(0, scrollPosition);
   } catch (error) {
     console.error("Failed to fetch posts:", error);
     M.toast({ html: "Failed to load posts", classes: "red" });
@@ -158,7 +164,7 @@ const handleEditPost = async (postId) => {
     const requestBody = {
       type: document.getElementById("editType").value,
       hoursNeeded: parseInt(document.getElementById("editHoursNeeded").value),
-      dateTime: selectedDate.toISOString(), // This will convert to UTC
+      dateTime: selectedDate.toISOString(),
       description: document.getElementById("editDescription").value,
     };
 
@@ -171,10 +177,13 @@ const handleEditPost = async (postId) => {
       body: JSON.stringify(requestBody),
     });
 
+    const result = await response.json();
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to update post");
+      throw new Error(result.message || "Failed to update post");
     }
+
+    const modal = M.Modal.getInstance(document.getElementById("editPostModal"));
+    modal.close();
 
     M.toast({ html: "Post updated successfully", classes: "green" });
     getMyPosts();
@@ -252,7 +261,11 @@ const initializeButtons = () => {
 
         const originalDateTime = target.dataset.datetime;
         const date = new Date(originalDateTime);
-        const dateTime = date.toISOString().slice(0, 16);
+        const localDateTime = new Date(
+          date.getTime() - date.getTimezoneOffset() * 60000
+        )
+          .toISOString()
+          .slice(0, 16);
 
         const description = postElement
           .querySelector(".section p:nth-child(3)")
@@ -262,13 +275,8 @@ const initializeButtons = () => {
         // Set values in modal
         document.getElementById("editType").value = type;
         document.getElementById("editHoursNeeded").value = hoursNeeded;
-        document.getElementById("editDateTime").value = dateTime;
+        document.getElementById("editDateTime").value = localDateTime;
         document.getElementById("editDescription").value = description;
-
-        // Force the label to stay active
-        document
-          .getElementById("editDateTime")
-          .dispatchEvent(new Event("change"));
 
         // Initialize and open modal
         const modal = M.Modal.init(document.getElementById("editPostModal"));
@@ -277,7 +285,6 @@ const initializeButtons = () => {
         // Set up save button
         document.getElementById("saveEditButton").onclick = () => {
           handleEditPost(postId);
-          modal.close();
         };
 
         // Reinitialize Materialize select
