@@ -45,6 +45,9 @@ postForm.addEventListener("submit", handleSubmitForm);
 let allPosts = []; // Store all posts for filtering
 
 const getPosts = async () => {
+  // Store current scroll position
+  const scrollPosition = window.scrollY;
+
   const postsContent = document.getElementById("postsContent");
 
   try {
@@ -71,6 +74,9 @@ const getPosts = async () => {
     const posts = await response.json();
     allPosts = posts; // Store all posts
     filterAndRenderPosts();
+
+    // Restore scroll position
+    window.scrollTo(0, scrollPosition);
   } catch (error) {
     console.error("Failed to fetch posts:", error);
     M.toast({ html: "Failed to load posts", classes: "red" });

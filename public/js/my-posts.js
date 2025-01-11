@@ -2,6 +2,9 @@ verifyUserAuthentication();
 activateWebSocket();
 
 const getMyPosts = async () => {
+  // Store current scroll position
+  const scrollPosition = window.scrollY;
+
   try {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -24,6 +27,9 @@ const getMyPosts = async () => {
     const posts = await response.json();
     renderPosts(posts);
     initializeButtons();
+
+    // Restore scroll position
+    window.scrollTo(0, scrollPosition);
   } catch (error) {
     console.error("Failed to fetch posts:", error);
     M.toast({ html: "Failed to load posts", classes: "red" });
