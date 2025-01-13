@@ -26,7 +26,9 @@ const handleNotifyAcceptPost = (data) => {
 
 const handlePostsUpdated = () => {
   if (window.location.href.includes("dashboard")) {
-    getPosts?.();
+    // Let's not refresh the page every time a post is updated because it will affect the user experience.
+    // Maybe we can refresh the notification badge instead.
+    // getPosts?.();
   }
 };
 

@@ -42,12 +42,7 @@ const handleSubmitForm = async function (e) {
 
 postForm.addEventListener("submit", handleSubmitForm);
 
-let allPosts = []; // Store all posts for filtering
-
 const getPosts = async () => {
-  // Store current scroll position
-  const scrollPosition = window.scrollY;
-
   const postsContent = document.getElementById("postsContent");
 
   try {
@@ -72,19 +67,15 @@ const getPosts = async () => {
     }
 
     const posts = await response.json();
-    allPosts = posts; // Store all posts
-    filterAndRenderPosts();
-
-    // Restore scroll position
-    window.scrollTo(0, scrollPosition);
+    filterAndRenderPosts(posts);
   } catch (error) {
     console.error("Failed to fetch posts:", error);
     M.toast({ html: "Failed to load posts", classes: "red" });
   }
 };
 
-const filterPosts = (typeFilter, statusFilter) => {
-  return allPosts.filter((post) => {
+const filterPosts = (posts, typeFilter, statusFilter) => {
+  return posts.filter((post) => {
     const matchesType = typeFilter === "all" || post.type === typeFilter;
     const matchesStatus =
       statusFilter === "all" || post.status === statusFilter;
@@ -92,10 +83,10 @@ const filterPosts = (typeFilter, statusFilter) => {
   });
 };
 
-const filterAndRenderPosts = () => {
+const filterAndRenderPosts = (posts) => {
   const typeFilter = document.getElementById("typeFilter").value;
   const statusFilter = document.getElementById("statusFilter").value;
-  const filteredPosts = filterPosts(typeFilter, statusFilter);
+  const filteredPosts = filterPosts(posts, typeFilter, statusFilter);
   renderPosts(filteredPosts);
   initializeButtons();
 };
