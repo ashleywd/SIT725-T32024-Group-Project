@@ -22,23 +22,6 @@ const logout = (e) => {
 
 logoutMenu.forEach((menu) => menu.addEventListener("click", logout));
 
-const getNotifications = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    const response = await fetch("/api/notifications", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
-    });
-    const data = await response.json();
-    return data;
-  } catch (err) {
-    console.error("Error fetching notifications:", err.message);
-  }
-};
-
 export {
   toggleUnnecessaryMenu,
 };

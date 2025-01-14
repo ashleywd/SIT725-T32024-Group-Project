@@ -185,20 +185,10 @@ const postController = {
         updatedPost,
       });
 
-      const notificationMessage = `Post status ${status}: ${post.description}`;
-      const notificationsToSave = [
-        { userId: postedBy._id, message: notificationMessage, isGlobal: false },
-        { userId: post.acceptedBy, message: notificationMessage, isGlobal: false },
-      ];
-
-      // Loop through notifications and save each one
-      for (const notificationData of notificationsToSave) {
-        const newNotification = new Notification(notificationData);
-        await newNotification.save();
-      }
-
-      // I am not sure this is correct as this will notify all users
-      io.emit("posts-updated");
+      const newNotification = new Notification({ userId: post.acceptedBy, message: `Post status ${status}: ${post.description}`, isGlobal: false });
+      const savedNotification = await newNotification.save();
+      // Notify user who accepted the post
+      io.emit("posts-updated", savedNotification);
 
       res.status(201).json({ updatedPost });
     } catch (error) {
