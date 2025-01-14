@@ -39,39 +39,6 @@ const getNotifications = async () => {
   }
 };
 
-const initializeNotificationsMenu = async () => {
-  try {
-    const notificationElements = document.querySelectorAll('.dropdown-trigger');
-    const notificationIcon = document.querySelector('.notifications-icon');
-    const notificationContainer = document.querySelector('#notifications-container');
-
-    const notifications = await getNotifications();
-    if (notifications?.length > 0) {
-      notificationIcon.textContent = "notifications_active";
-      notifications.forEach((notification) => {
-        /*
-        <li><a href="#!">
-        */
-        const notificationElement = document.createElement('li');
-        const notificationLink = document.createElement('a');
-        notificationLink.href = "#!";
-        notificationLink.textContent = notification.description;
-        notificationElement.appendChild(notificationLink);
-        notificationContainer.appendChild(notificationElement);
-      });
-    }
-
-    M.Dropdown.init(notificationElements, {
-      constrainWidth: false,
-      coverTrigger: false,
-    });
-  } catch (err) {
-    console.error("Error initializing notifications menu:", err.message);
-  }
-};
-
-initializeNotificationsMenu();
-
 export {
   toggleUnnecessaryMenu,
 };

@@ -39,9 +39,15 @@ const getStatusColor = (status) => {
   return colors[status] || "grey";
 };
 
+const resetScreenPosition = () => {
+  const scrollPosition = window.scrollY;
+  window.scrollTo(0, scrollPosition);
+};
+
 export {
   initializeMaterializeComponent,
   verifyUserAuthentication,
   clearTokenAndRedirectToLogin,
   getStatusColor,
+  resetScreenPosition,
 };

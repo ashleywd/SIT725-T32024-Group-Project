@@ -27,8 +27,8 @@ const postController = {
 
       // Create notification for new post
       const newNotification = new Notification({
-        userId,
-        description: `New post created: ${savedPost.description}`,
+        message: `New post created: ${savedPost.description}`,
+        isGlobal: true,
       });
       const savedNotification = await newNotification.save();
       io.emit("posts-updated", savedNotification);
@@ -109,8 +109,8 @@ const postController = {
 
       // Create notification for post update
       const newNotification = new Notification({
-        userId,
-        description: `Post edited: ${updatedPost.description}`,
+        message: `Post edited: ${updatedPost.description}`,
+        isGlobal: true,
       });
       const savedNotification = await newNotification.save();
       io.emit("posts-updated", savedNotification);
@@ -139,8 +139,8 @@ const postController = {
       );
 
       const newNotification = new Notification({
-        userId,
-        description: `Post edited: ${post.description}`,
+        message: `Post cancelled: ${post.description}`,
+        isGlobal: true,
       });
       const savedNotification = await newNotification.save();
       io.emit("posts-updated", savedNotification);
@@ -185,14 +185,20 @@ const postController = {
         updatedPost,
       });
 
-      // Create notification for post status update
-      const newNotification = new Notification({
-        userId,
-        description: `Post edited: ${post.description}`,
-      });
-      const savedNotification = await newNotification.save();
+      const notificationMessage = `Post status ${status}: ${post.description}`;
+      const notificationsToSave = [
+        { userId: postedBy._id, message: notificationMessage, isGlobal: false },
+        { userId: post.acceptedBy, message: notificationMessage, isGlobal: false },
+      ];
+
+      // Loop through notifications and save each one
+      for (const notificationData of notificationsToSave) {
+        const newNotification = new Notification(notificationData);
+        await newNotification.save();
+      }
+
       // I am not sure this is correct as this will notify all users
-      io.emit("posts-updated", savedNotification);
+      io.emit("posts-updated");
 
       res.status(201).json({ updatedPost });
     } catch (error) {

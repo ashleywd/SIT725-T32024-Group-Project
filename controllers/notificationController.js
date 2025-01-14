@@ -3,11 +3,10 @@ const Notification = require("../models/notification");
 const notificationController = {
   createNotification: async (req, res) => {
     try {
-      const { userId, description, dateTime } = req.body;
+      const { userId, message } = req.body;
       const newNotification = new Notification({
         userId,
-        description,
-        dateTime,
+        message,
       });
       const savedNotification = await newNotification.save();
       res.status(201).json(savedNotification);
@@ -22,7 +21,8 @@ const notificationController = {
   getNotifications: async (req, res) => {
     try {
       const userId = req.userId;
-      const notifications = await Notification.find({ userId });
+      const notifications = await Notification.find({ $or: [{ userId }, { isGlobal: true }] });
+
       res.status(200).json(notifications);
     } catch (error) {
       console.error("Error fetching notifications:", error);

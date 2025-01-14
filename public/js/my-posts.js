@@ -5,6 +5,7 @@ import {
   initializeMaterializeComponent,
 } from "./global.js";
 import { activateWebSocket } from "./socket-client.js";
+import { displayNotifications } from "./notifications.js";
 
 verifyUserAuthentication();
 
@@ -333,8 +334,13 @@ const handleNotifyAcceptPost = (data) => {
   displayMyPosts();
 };
 
+const handlePostsUpdated = () => {
+  displayNotifications();
+};
+
 initializeMaterializeComponent();
 displayMyPosts();
-activateWebSocket({ handleNotifyAcceptPost });
+displayNotifications();
+activateWebSocket({ handleNotifyAcceptPost, handlePostsUpdated });
 
 export { displayMyPosts };
