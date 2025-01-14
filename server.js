@@ -38,6 +38,7 @@ app.use("/", appRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/account", accountRoutes);
+app.use("/api/notification", notificationRoutes);
 
 // Error handlers
 app.use(handleError);
