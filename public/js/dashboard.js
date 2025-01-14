@@ -252,7 +252,23 @@ const displayPosts = async () => {
   initializeButtons();
 };
 
+const handleNotifyAcceptPost = (data) => {
+  const operation = data.updatedPost.status;
+  M.toast({
+    html: `Post ${data.updatedPost.description} ${operation}.`,
+    classes: "green",
+  });
+  displayPosts();
+};
+
+
+const handlePostsUpdated = () => {
+  filterAndRenderPosts();
+};
+
 verifyUserAuthentication();
 initializeMaterializeComponent();
-activateWebSocket();
 displayPosts();
+activateWebSocket({ handleNotifyAcceptPost, handlePostsUpdated });
+
+export { displayPosts };
