@@ -29,7 +29,6 @@ const postController = {
       const newNotification = new Notification({
         userId,
         description: `New post created: ${savedPost.description}`,
-        dateTime: new Date(),
       });
       const savedNotification = await newNotification.save();
       io.emit("posts-updated", savedNotification);
@@ -112,7 +111,6 @@ const postController = {
       const newNotification = new Notification({
         userId,
         description: `Post edited: ${updatedPost.description}`,
-        dateTime: new Date(),
       });
       const savedNotification = await newNotification.save();
       io.emit("posts-updated", savedNotification);
@@ -143,7 +141,6 @@ const postController = {
       const newNotification = new Notification({
         userId,
         description: `Post edited: ${post.description}`,
-        dateTime: new Date(),
       });
       const savedNotification = await newNotification.save();
       io.emit("posts-updated", savedNotification);
@@ -192,7 +189,6 @@ const postController = {
       const newNotification = new Notification({
         userId,
         description: `Post edited: ${post.description}`,
-        dateTime: new Date(),
       });
       const savedNotification = await newNotification.save();
       // I am not sure this is correct as this will notify all users

@@ -22,32 +22,56 @@ const logout = (e) => {
 
 logoutMenu.forEach((menu) => menu.addEventListener("click", logout));
 
-const fetchUserPoints = async () => {
+const getNotifications = async () => {
   try {
     const token = localStorage.getItem("token");
-    const response = await fetch("/api/account/points", {
+    const response = await fetch("/api/notifications", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
         Authorization: token,
       },
     });
-
-    if (!response.ok && response.status === 401) {
-      clearTokenAndRedirectToLogin();
-      throw new Error("Failed to fetch user points");
-    }
-
     const data = await response.json();
-    const pointsBadge = document.getElementById("pointsBadge");
-    const points = data.points;
-    pointsBadge.innerText = `${points}`;
+    return data;
   } catch (err) {
-    console.error("Error fetching user points:", err.message);
+    console.error("Error fetching notifications:", err.message);
   }
 };
 
+const initializeNotificationsMenu = async () => {
+  try {
+    const notificationElements = document.querySelectorAll('.dropdown-trigger');
+    const notificationIcon = document.querySelector('.notifications-icon');
+    const notificationContainer = document.querySelector('#notifications-container');
+
+    const notifications = await getNotifications();
+    if (notifications?.length > 0) {
+      notificationIcon.textContent = "notifications_active";
+      notifications.forEach((notification) => {
+        /*
+        <li><a href="#!">
+        */
+        const notificationElement = document.createElement('li');
+        const notificationLink = document.createElement('a');
+        notificationLink.href = "#!";
+        notificationLink.textContent = notification.description;
+        notificationElement.appendChild(notificationLink);
+        notificationContainer.appendChild(notificationElement);
+      });
+    }
+
+    M.Dropdown.init(notificationElements, {
+      constrainWidth: false,
+      coverTrigger: false,
+    });
+  } catch (err) {
+    console.error("Error initializing notifications menu:", err.message);
+  }
+};
+
+initializeNotificationsMenu();
+
 export {
   toggleUnnecessaryMenu,
-  fetchUserPoints
 };

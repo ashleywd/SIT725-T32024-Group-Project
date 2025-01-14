@@ -9,15 +9,11 @@ const notificationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["seen", "unseen"],
-      default: "open",
+      enum: ["new", "seen"],
+      default: "new",
     },
     description: {
       type: String,
-      required: true,
-    },
-    dateTime: {
-      type: Date,
       required: true,
     },
   },

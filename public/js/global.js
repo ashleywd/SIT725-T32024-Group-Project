@@ -1,4 +1,4 @@
-import { toggleUnnecessaryMenu, fetchUserPoints } from "./navbar.js";
+import { toggleUnnecessaryMenu } from "./navbar.js";
 
 const initializeMaterializeComponent = () => {
   // Initialize Materialize components
@@ -22,7 +22,6 @@ const verifyUserAuthentication = () => {
 
   // Actions for when users are authenticated
   toggleUnnecessaryMenu();
-  fetchUserPoints();
 };
 
 const clearTokenAndRedirectToLogin = () => {

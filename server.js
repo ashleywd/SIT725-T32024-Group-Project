@@ -39,7 +39,7 @@ app.use("/", appRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/account", accountRoutes);
-app.use("/api/notification", notificationRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Error handlers
 app.use(handleError);
