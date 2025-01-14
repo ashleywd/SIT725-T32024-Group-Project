@@ -9,6 +9,7 @@ const {
   authRoutes,
   postRoutes,
   accountRoutes,
+  notificationRoutes,
 } = require("./routes/");
 const { connectDB } = require("./config/db");
 const { Server } = require("socket.io");

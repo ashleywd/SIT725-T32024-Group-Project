@@ -41,7 +41,7 @@ const fetchUserPoints = async () => {
     const data = await response.json();
     const pointsBadge = document.getElementById("pointsBadge");
     const points = data.points;
-    pointsBadge.innerText = `${points} pts`;
+    pointsBadge.innerText = `${points}`;
   } catch (err) {
     console.error("Error fetching user points:", err.message);
   }
