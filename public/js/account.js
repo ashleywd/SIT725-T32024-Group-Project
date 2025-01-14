@@ -83,8 +83,8 @@ accountDetails.addEventListener("submit", async (e) => {
     if (!response.ok) throw new Error(result.error || "Update failed");
 
     M.toast({ html: "Account updated successfully!" });
-    fetchAccountDetails();
     toggleAccountDetails();
+    displayAccountDetails();
   } catch (error) {
     console.error("Update error:", error);
     M.toast({ html: error.message, classes: "red" });
