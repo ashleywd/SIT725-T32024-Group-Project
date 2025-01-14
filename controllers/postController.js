@@ -1,4 +1,5 @@
 const Post = require("../models/post");
+const Notification = require("../models/notification");
 
 const postController = {
   createPost: async (req, res) => {
@@ -24,7 +25,15 @@ const postController = {
       });
       const savedPost = await newPost.save();
 
-      io.emit("posts-updated");
+      // Create notification for new post
+      const newNotification = new Notification({
+        userId,
+        description: `New post created: ${savedPost.description}`,
+        dateTime: new Date(),
+      });
+      const savedNotification = await newNotification.save();
+      io.emit("posts-updated", savedNotification);
+
       res.status(201).json(savedPost);
     } catch (error) {
       console.error("Error creating post:", error);
@@ -86,8 +95,6 @@ const postController = {
       const { type, hoursNeeded, description, dateTime } = req.body;
       const userId = req.userId;
 
-      const post = await Post.findById(postId);
-
       const selectedDate = new Date(dateTime);
       if (selectedDate < new Date()) {
         return res.status(400).json({
@@ -100,7 +107,16 @@ const postController = {
         { type, hoursNeeded, description, dateTime },
         { new: true }
       ).populate({ path: "postedBy", select: "username" });
-      io.emit("posts-updated");
+
+      // Create notification for post update
+      const newNotification = new Notification({
+        userId,
+        description: `Post edited: ${updatedPost.description}`,
+        dateTime: new Date(),
+      });
+      const savedNotification = await newNotification.save();
+      io.emit("posts-updated", savedNotification);
+
       res.status(200).json(updatedPost);
     } catch (error) {
       console.error("Error editing post:", error);
@@ -123,7 +139,15 @@ const postController = {
         { status: "cancelled" },
         { new: true }
       );
-      io.emit("posts-updated");
+
+      const newNotification = new Notification({
+        userId,
+        description: `Post edited: ${post.description}`,
+        dateTime: new Date(),
+      });
+      const savedNotification = await newNotification.save();
+      io.emit("posts-updated", savedNotification);
+
       res.status(200).json({
         message: "Post cancelled successfully",
         post,
@@ -163,7 +187,16 @@ const postController = {
       io.to(notifyUser.toString()).emit("notify-post-status-update", {
         updatedPost,
       });
-      io.emit("posts-updated");
+
+      // Create notification for post status update
+      const newNotification = new Notification({
+        userId,
+        description: `Post edited: ${post.description}`,
+        dateTime: new Date(),
+      });
+      const savedNotification = await newNotification.save();
+      // I am not sure this is correct as this will notify all users
+      io.emit("posts-updated", savedNotification);
 
       res.status(201).json({ updatedPost });
     } catch (error) {
