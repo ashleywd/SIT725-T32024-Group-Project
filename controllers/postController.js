@@ -47,6 +47,19 @@ const postController = {
     }
   },
 
+  getPostById: async (req, res) => {
+    try {
+      const { postId } = req.params;
+      const post = await Post.findById(postId);
+      res.status(200).json(post);
+    } catch (error) {
+      console.error("Error fetching post by id:", error);
+      res
+        .status(500)
+        .json({ message: "Error fetching post by id", error: error.message });
+    }
+  },
+
   getUserPosts: async (req, res) => {
     try {
       const posts = await Post.find({

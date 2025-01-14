@@ -1,4 +1,10 @@
+import {
+  verifyUserAuthentication,
+  initializeMaterializeComponent,
+} from "./global.js";
+
 verifyUserAuthentication();
+initializeMaterializeComponent();
 
 const populateData = (data) => {
   document.getElementById("accountName").value = data.name;
@@ -6,7 +12,7 @@ const populateData = (data) => {
   document.getElementById("accountPoints").innerText = data.points;
 };
 
-const fetchAccountDetails = async () => {
+const getAccountDetails = async () => {
   try {
     const token = localStorage.getItem("token");
     const response = await fetch("/api/account", {
@@ -22,7 +28,7 @@ const fetchAccountDetails = async () => {
     }
 
     const data = await response.json();
-    populateData(data);
+    return data;
   } catch (err) {
     console.error("Error fetching account details:", err.message);
     const instance = M.Modal.getInstance(document.getElementById("errorModal"));
@@ -86,10 +92,9 @@ accountDetails.addEventListener("submit", async (e) => {
 });
 
 const cancelBtn = document.getElementById("cancelBtn");
-
 cancelBtn.addEventListener("click", () => {
   toggleAccountDetails();
-  fetchAccountDetails();
+  displayAccountDetails();
 });
 
 const deleteAccountBtn = document.getElementById("deleteAccountBtn");
@@ -114,4 +119,9 @@ deleteAccountBtn.addEventListener("click", async () => {
 });
 
 // Fetch account details on page load
-fetchAccountDetails();
+const displayAccountDetails = async () => {
+  const data = await getAccountDetails();
+  populateData(data);
+};
+
+displayAccountDetails();

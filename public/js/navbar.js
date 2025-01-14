@@ -46,3 +46,8 @@ const fetchUserPoints = async () => {
     console.error("Error fetching user points:", err.message);
   }
 };
+
+export {
+  toggleUnnecessaryMenu,
+  fetchUserPoints
+};

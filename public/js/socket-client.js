@@ -37,3 +37,5 @@ const activateWebSocket = () => {
   socket.on("notify-post-status-update", handleNotifyAcceptPost);
   socket.on("posts-updated", handlePostsUpdated);
 };
+
+export { activateWebSocket };
