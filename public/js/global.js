@@ -1,4 +1,4 @@
-import { toggleUnnecessaryMenu, fetchUserPoints } from "./navbar.js";
+import { toggleUnnecessaryMenu } from "./navbar.js";
 
 const initializeMaterializeComponent = () => {
   // Initialize Materialize components
@@ -22,7 +22,6 @@ const verifyUserAuthentication = () => {
 
   // Actions for when users are authenticated
   toggleUnnecessaryMenu();
-  fetchUserPoints();
 };
 
 const clearTokenAndRedirectToLogin = () => {
@@ -40,9 +39,15 @@ const getStatusColor = (status) => {
   return colors[status] || "grey";
 };
 
+const resetScreenPosition = () => {
+  const scrollPosition = window.scrollY;
+  window.scrollTo(0, scrollPosition);
+};
+
 export {
   initializeMaterializeComponent,
   verifyUserAuthentication,
   clearTokenAndRedirectToLogin,
   getStatusColor,
+  resetScreenPosition,
 };

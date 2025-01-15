@@ -1,4 +1,5 @@
 const Post = require("../models/post");
+const Notification = require("../models/notification");
 
 const postController = {
   createPost: async (req, res) => {
@@ -23,8 +24,8 @@ const postController = {
         dateTime,
       });
       const savedPost = await newPost.save();
-
       io.emit("posts-updated");
+
       res.status(201).json(savedPost);
     } catch (error) {
       console.error("Error creating post:", error);
@@ -86,8 +87,6 @@ const postController = {
       const { type, hoursNeeded, description, dateTime } = req.body;
       const userId = req.userId;
 
-      const post = await Post.findById(postId);
-
       const selectedDate = new Date(dateTime);
       if (selectedDate < new Date()) {
         return res.status(400).json({
@@ -98,9 +97,11 @@ const postController = {
       const updatedPost = await Post.findByIdAndUpdate(
         postId,
         { type, hoursNeeded, description, dateTime },
-        { new: true }
+        { new: true },
       ).populate({ path: "postedBy", select: "username" });
-      io.emit("posts-updated");
+
+      io.emit("posts-updated",);
+
       res.status(200).json(updatedPost);
     } catch (error) {
       console.error("Error editing post:", error);
@@ -121,9 +122,11 @@ const postController = {
           status: { $nin: ["cancelled", "completed"] },
         },
         { status: "cancelled" },
-        { new: true }
+        { new: true },
       );
+
       io.emit("posts-updated");
+
       res.status(200).json({
         message: "Post cancelled successfully",
         post,
@@ -155,10 +158,17 @@ const postController = {
           status,
           acceptedBy: status === "accepted" ? userId : post.acceptedBy,
         },
-        { new: true }
+        { new: true },
       );
 
       const notifyUser = status === "accepted" ? postedBy._id : post.acceptedBy;
+
+      const newNotification = new Notification({
+        userId: notifyUser,
+        message: `Post status ${status}: ${post.description}`,
+        isGlobal: false,
+      });
+      await newNotification.save();
 
       io.to(notifyUser.toString()).emit("notify-post-status-update", {
         updatedPost,

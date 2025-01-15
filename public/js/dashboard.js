@@ -3,8 +3,10 @@ import {
   clearTokenAndRedirectToLogin,
   getStatusColor,
   initializeMaterializeComponent,
+  resetScreenPosition,
 } from "./global.js";
 import { activateWebSocket } from "./socket-client.js";
+import { displayNotifications } from "./notifications.js";
 
 const postForm = document.getElementById("postForm");
 
@@ -259,16 +261,20 @@ const handleNotifyAcceptPost = (data) => {
     classes: "green",
   });
   displayPosts();
+  resetScreenPosition();
+  displayNotifications();
 };
 
-
 const handlePostsUpdated = () => {
+  resetScreenPosition();
   filterAndRenderPosts();
+  displayNotifications();
 };
 
 verifyUserAuthentication();
 initializeMaterializeComponent();
 displayPosts();
+displayNotifications();
 activateWebSocket({ handleNotifyAcceptPost, handlePostsUpdated });
 
 export { displayPosts };

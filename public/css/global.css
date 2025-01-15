@@ -1,20 +1,45 @@
 #logout-menu {
-  display: none;
+    display: none;
 }
 
 #dashboard-menu {
-  display: none;
+    display: none;
 }
 
 #account-menu {
-  display: none;
+    display: none;
 }
 
 #my-posts-menu {
-  display: none;
+    display: none;
 }
 
 #pointsBadge:hover {
-  cursor: auto;
-  background: none;
+    cursor: auto;
+    background: none;
+}
+
+#notifications-menu {
+    display: none;
+}
+
+.notification-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.notification-text {
+    padding-inline-start: 10px;
+    width: 100%;
+}
+
+.delete-notification {
+    height: auto;
+    width: 56px;
+}
+
+.grow {
+    transition: all 0.1s ease;
+    transform: scale(1.3);
 }
