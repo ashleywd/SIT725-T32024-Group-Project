@@ -1,5 +1,10 @@
-verifyUserAuthentication();
-activateWebSocket();
+import {
+  verifyUserAuthentication,
+  clearTokenAndRedirectToLogin,
+  getStatusColor,
+  initializeMaterializeComponent,
+} from "./global.js";
+import { activateWebSocket } from "./socket-client.js";
 
 const postForm = document.getElementById("postForm");
 
@@ -32,8 +37,7 @@ const handleSubmitForm = async function (e) {
     modal.close();
     M.toast({ html: "Post created successfully!" });
     postForm.reset();
-    M.FormSelect.init(document.querySelectorAll("select"));
-    getPosts(); // Refresh posts after creating new one
+    displayPosts();
   } catch (error) {
     console.error("Error creating post:", error);
     M.toast({ html: error.message, classes: "red" });
@@ -42,12 +46,7 @@ const handleSubmitForm = async function (e) {
 
 postForm.addEventListener("submit", handleSubmitForm);
 
-let allPosts = []; // Store all posts for filtering
-
 const getPosts = async () => {
-  // Store current scroll position
-  const scrollPosition = window.scrollY;
-
   const postsContent = document.getElementById("postsContent");
 
   try {
@@ -72,19 +71,16 @@ const getPosts = async () => {
     }
 
     const posts = await response.json();
-    allPosts = posts; // Store all posts
-    filterAndRenderPosts();
 
-    // Restore scroll position
-    window.scrollTo(0, scrollPosition);
+    return posts;
   } catch (error) {
     console.error("Failed to fetch posts:", error);
     M.toast({ html: "Failed to load posts", classes: "red" });
   }
 };
 
-const filterPosts = (typeFilter, statusFilter) => {
-  return allPosts.filter((post) => {
+const filterPosts = (posts, typeFilter, statusFilter) => {
+  return posts.filter((post) => {
     const matchesType = typeFilter === "all" || post.type === typeFilter;
     const matchesStatus =
       statusFilter === "all" || post.status === statusFilter;
@@ -92,28 +88,29 @@ const filterPosts = (typeFilter, statusFilter) => {
   });
 };
 
-const filterAndRenderPosts = () => {
-  const typeFilter = document.getElementById("typeFilter").value;
-  const statusFilter = document.getElementById("statusFilter").value;
-  const filteredPosts = filterPosts(typeFilter, statusFilter);
-  renderPosts(filteredPosts);
-  initializeButtons();
+const filterAndRenderPosts = async () => {
+  try {
+    const posts = await getPosts();
+    const typeFilter = document.getElementById("typeFilter").value;
+    const statusFilter = document.getElementById("statusFilter").value;
+    const filteredPosts = filterPosts(posts, typeFilter, statusFilter);
+    renderPosts(filteredPosts);
+    initializeButtons();
+  } catch (error) {
+    console.error("Error filtering posts:", error);
+    M.toast({ html: "Failed to filter posts", classes: "red" });
+  }
 };
 
 // Initialize both filter selects
-const filterSelects = document.querySelectorAll("select");
-M.FormSelect.init(filterSelects);
-filterSelects.forEach((select) => {
-  select.addEventListener("change", filterAndRenderPosts);
-});
-
-const DISABLE_STATES = ["accepted", "completed"];
-
-const POST_LABEL = {
-  open: "Accept",
-  accepted: "Pending Completion",
-  completed: "Completed",
+const initializeFilterSelects = () => {
+  const filterSelects = document.querySelectorAll("#typeFilter, #statusFilter");
+  filterSelects.forEach((select) => {
+    select.addEventListener("change", filterAndRenderPosts);
+  });
 };
+
+initializeFilterSelects();
 
 const acceptButtonComponent = ({ status, postId, postedBy }) => {
   if (status !== "open") return "";
@@ -124,7 +121,7 @@ const acceptButtonComponent = ({ status, postId, postedBy }) => {
         id="accept-post-button"
         class="waves-effect waves-light btn blue"
         data-post-info="${encodeURIComponent(
-          JSON.stringify({ postId, postedBy })
+          JSON.stringify({ postId, postedBy }),
         )}"
       >
         <i class="material-icons left">handshake</i>Accept
@@ -152,7 +149,7 @@ const createPost = ({
           ${type === "offer" ? "Babysitting Offer" : "Babysitter Request"}
           <span class="right">
             <span class="new badge ${getStatusColor(
-              status
+              status,
             )}" data-badge-caption="">${String(status).toUpperCase()}</span>
           </span>
         </span>
@@ -163,7 +160,7 @@ const createPost = ({
           }</p>
           <p><i class="material-icons tiny">schedule</i> <strong>Hours:</strong> ${hoursNeeded}</p>
           <p><i class="material-icons tiny">event</i> <strong>Date:</strong> ${new Date(
-            dateTime
+            dateTime,
           ).toLocaleString()}</p>
           <p><i class="material-icons tiny">description</i> ${description}</p>
         </div>
@@ -203,9 +200,9 @@ const handleAcceptPost = async (postInfo) => {
       throw new Error(errorData.message || "Failed to accept post");
     }
 
-    const result = await response.json();
+    await response.json();
     M.toast({ html: "Post accepted successfully", classes: "green" });
-    getPosts();
+    displayPosts();
   } catch (error) {
     console.error("Error accepting post:", error);
     M.toast({ html: error.message || "Failed to accept post", classes: "red" });
@@ -240,7 +237,7 @@ const renderPosts = (posts) => {
               description: post.description,
               hoursNeeded: post.hoursNeeded,
               status: post.status,
-            })
+            }),
           )
           .join("")
       : "<p>No posts available.</p>";
@@ -249,4 +246,29 @@ const renderPosts = (posts) => {
   postContentContainer.innerHTML = postsHtml;
 };
 
-getPosts();
+const displayPosts = async () => {
+  const posts = await getPosts();
+  renderPosts(posts);
+  initializeButtons();
+};
+
+const handleNotifyAcceptPost = (data) => {
+  const operation = data.updatedPost.status;
+  M.toast({
+    html: `Post ${data.updatedPost.description} ${operation}.`,
+    classes: "green",
+  });
+  displayPosts();
+};
+
+
+const handlePostsUpdated = () => {
+  filterAndRenderPosts();
+};
+
+verifyUserAuthentication();
+initializeMaterializeComponent();
+displayPosts();
+activateWebSocket({ handleNotifyAcceptPost, handlePostsUpdated });
+
+export { displayPosts };

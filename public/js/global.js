@@ -1,3 +1,5 @@
+import { toggleUnnecessaryMenu, fetchUserPoints } from "./navbar.js";
+
 const initializeMaterializeComponent = () => {
   // Initialize Materialize components
   const selects = document.querySelectorAll("select");
@@ -6,11 +8,9 @@ const initializeMaterializeComponent = () => {
   const modals = document.querySelectorAll(".modal");
   M.Modal.init(modals);
 
-  const sidenav = document.querySelectorAll('.sidenav');
+  const sidenav = document.querySelectorAll(".sidenav");
   M.Sidenav.init(sidenav);
 };
-
-initializeMaterializeComponent();
 
 const verifyUserAuthentication = () => {
   const token = localStorage.getItem("token");
@@ -38,4 +38,11 @@ const getStatusColor = (status) => {
     cancelled: "red",
   };
   return colors[status] || "grey";
+};
+
+export {
+  initializeMaterializeComponent,
+  verifyUserAuthentication,
+  clearTokenAndRedirectToLogin,
+  getStatusColor,
 };

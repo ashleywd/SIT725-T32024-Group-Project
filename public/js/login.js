@@ -1,3 +1,5 @@
+import { initializeMaterializeComponent } from "./global.js";
+
 const loginButton = document.querySelector("#login-button");
 const loginForm = document.querySelector(".login-form");
 
@@ -36,3 +38,4 @@ const handleSubmit = (e) => {
 
 loginButton.addEventListener("click", handleSubmit);
 loginForm.addEventListener("submit", handleSubmit);
+initializeMaterializeComponent();

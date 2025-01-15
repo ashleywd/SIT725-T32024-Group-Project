@@ -1,10 +1,14 @@
+import {
+  verifyUserAuthentication,
+  clearTokenAndRedirectToLogin,
+  getStatusColor,
+  initializeMaterializeComponent,
+} from "./global.js";
+import { activateWebSocket } from "./socket-client.js";
+
 verifyUserAuthentication();
-activateWebSocket();
 
 const getMyPosts = async () => {
-  // Store current scroll position
-  const scrollPosition = window.scrollY;
-
   try {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -25,29 +29,38 @@ const getMyPosts = async () => {
     }
 
     const posts = await response.json();
-    renderPosts(posts);
-    initializeButtons();
-
-    // Restore scroll position
-    window.scrollTo(0, scrollPosition);
+    return posts;
   } catch (error) {
     console.error("Failed to fetch posts:", error);
     M.toast({ html: "Failed to load posts", classes: "red" });
   }
 };
 
+const renderPosts = (posts) => {
+  const postsHtml =
+    Array.isArray(posts) && posts.length > 0
+      ? posts.map((post) => createMyPost(post)).join("")
+      : "<p>You have no posts yet.</p>";
+
+  const postsContainer = document.getElementById("postsContent");
+  postsContainer.innerHTML = postsHtml;
+};
+
+const displayMyPosts = async () => {
+  const posts = await getMyPosts();
+  renderPosts(posts);
+  initializeButtons();
+};
+
 const completedButton = ({ postId, postedBy }) => `
-  <div class="col s6">
-    <a href="#" 
-      id="completed-button"
-      class="waves-effect waves-light btn green"
-      data-post-info="${encodeURIComponent(
-        JSON.stringify({ postId, postedBy })
-      )}"
-    >
-      <i class="material-icons left">check</i>Complete
-    </a>
-  </div>
+  <a href="#"
+    id="completed-button"
+    class="waves-effect waves-light btn green"
+    data-post-id="${postId}"
+    data-post-posted-by="${postedBy._id}"
+  >
+    <i class="material-icons left">check</i>Complete
+  </a>
 `;
 
 const createMyPost = ({
@@ -69,7 +82,7 @@ const createMyPost = ({
           ${type === "offer" ? "Babysitting Offer" : "Babysitter Request"}
           <span class="right">
             <span class="new badge ${getStatusColor(
-              status
+              status,
             )}" data-badge-caption="">${String(status).toUpperCase()}</span>
           </span>
         </span>
@@ -77,58 +90,44 @@ const createMyPost = ({
         <div class="section">
           <p><i class="material-icons tiny">schedule</i> <strong>Hours:</strong> ${hoursNeeded}</p>
           <p><i class="material-icons tiny">event</i> <strong>Date:</strong> ${new Date(
-            dateTime
+            dateTime,
           ).toLocaleString()}</p>
           <p><i class="material-icons tiny">description</i> ${description}</p>
         </div>
       </div>
-      ${getCardActions(_id, status, dateTime, postedBy)}
+      ${getCardActions(_id, status, postedBy)}
     </div>
   </div>
  `;
 
-const getCardActions = (id, status, dateTime, postedBy) => {
+const cancelButton = (id) => `
+  <a href="#" class="cancel-post waves-effect waves-light btn red" data-post-id="${id}">
+    <i class="material-icons left">cancel</i>Cancel
+  </a>
+`;
+
+const editButton = (id) => `
+  <a href="#" class="edit-post waves-effect waves-light btn blue" data-post-id="${id}"">
+    <i class="material-icons left">edit</i>Edit
+  </a>
+`;
+
+const getCardActions = (id, status, postedBy) => {
   if (status === "completed" || status === "cancelled") return "";
-
-  const cancelButton = `
-    <div class="col s6">
-      <a href="#" class="cancel-post waves-effect waves-light btn red" data-post-id="${id}">
-        <i class="material-icons left">cancel</i>Cancel
-      </a>
-    </div>
-  `;
-
-  if (status === "accepted") {
-    return `
-      <div class="card-action">
-        <div class="row">
-          ${completedButton({ postId: id, postedBy })}
-          ${cancelButton}
-        </div>
-      </div>
-    `;
-  }
 
   return `
     <div class="card-action">
       <div class="row">
-        <div class="col s6">
-          <a href="#" class="edit-post waves-effect waves-light btn blue" data-post-id="${id}" data-datetime="${dateTime}">
-            <i class="material-icons left">edit</i>Edit
-          </a>
-        </div>
-        ${cancelButton}
+          ${status === "accepted" ? completedButton({ postId: id, postedBy }) : editButton(id)}
+          ${cancelButton(id)}
       </div>
     </div>
   `;
 };
 
-const handleMarkCompleted = async (postInfo) => {
+const handleMarkCompleted = async (postId, postedBy) => {
   const userToken = localStorage.getItem("token");
   try {
-    const decodedData = decodeURIComponent(postInfo);
-    const { postId, postedBy } = JSON.parse(decodedData);
-
     const response = await fetch("/api/posts/status/" + postId, {
       method: "PUT",
       headers: {
@@ -144,7 +143,7 @@ const handleMarkCompleted = async (postInfo) => {
     }
 
     M.toast({ html: "Post marked as completed", classes: "green" });
-    getMyPosts();
+    displayMyPosts();
   } catch (error) {
     console.error("Error marking post as completed:", error);
     M.toast({ html: "Failed to mark post as completed", classes: "red" });
@@ -186,7 +185,7 @@ const handleEditPost = async (postId) => {
     modal.close();
 
     M.toast({ html: "Post updated successfully", classes: "green" });
-    getMyPosts();
+    displayMyPosts();
   } catch (error) {
     console.error("Error updating post:", error);
     M.toast({ html: error.message || "Failed to update post", classes: "red" });
@@ -213,104 +212,129 @@ const handleCancelPost = async (postId) => {
     }
 
     M.toast({ html: "Post cancelled successfully", classes: "green" });
-    getMyPosts();
+    displayMyPosts();
   } catch (error) {
     console.error("Error cancelling post:", error);
     M.toast({ html: error.message || "Failed to cancel post", classes: "red" });
   }
 };
 
-const renderPosts = (posts) => {
-  const postsHtml =
-    Array.isArray(posts) && posts.length > 0
-      ? posts.map((post) => createMyPost(post)).join("")
-      : "<p>You have no posts yet.</p>";
-  document.getElementById("postsContent").innerHTML = postsHtml;
+const handleClickCompletePost = (e) => {
+  e.preventDefault();
+  const postId = e.currentTarget.dataset.postId;
+  const postedBy = e.currentTarget.dataset.postPostedBy;
+  handleMarkCompleted(postId, postedBy);
+};
+
+const getPostById = async (postId) => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`/api/posts/${postId}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+        method: "GET",
+      },
+    });
+    const post = await response.json();
+    return post;
+  } catch (error) {
+    console.error("Error fetching post:", error);
+    M.toast({ html: "Failed to fetch post", classes: "red" });
+  }
+};
+
+const handleSaveEdits = (e) => {
+  e.preventDefault();
+  const postId = e.target.dataset.postId;
+  handleEditPost(postId);
+};
+
+const getLocalDate = (date) => {
+  const localDate = new Date(date)
+    .toLocaleString("sv", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
+    .replace(" ", "T");
+
+  return localDate;
+};
+
+const handleClickEditPost = async (e) => {
+  e.preventDefault();
+  const target = e.target.closest(".edit-post");
+  if (!target) return;
+
+  try {
+    const postId = target.dataset.postId;
+    const postData = await getPostById(postId);
+    const selectedDate = getLocalDate(postData.dateTime);
+
+    document.getElementById("editType").value = postData.type;
+    document.getElementById("editHoursNeeded").value = postData.hoursNeeded;
+    document.getElementById("editDateTime").value = selectedDate;
+    document.getElementById("editDescription").value = postData.description;
+
+    // Initialize and open modal
+    const modelElement = document.getElementById("editPostModal");
+    const modalInstance = M.Modal.init(modelElement);
+    modalInstance.open();
+
+    // Set up save button
+    const saveButton = document.getElementById("saveEditButton");
+    saveButton.dataset.postId = postId;
+    saveButton.addEventListener("click", handleSaveEdits);
+
+    // Reinitialize Materialize components
+    M.updateTextFields();
+  } catch (error) {
+    console.error("Error parsing date:", error);
+    M.toast({ html: "Error opening edit form", classes: "red" });
+  }
+};
+
+const handleClickCancelPost = (e) => {
+  e.preventDefault();
+  const target = e.target.closest(".cancel-post");
+  if (!target) return;
+  const postId = target.dataset.postId;
+  handleCancelPost(postId);
 };
 
 const initializeButtons = () => {
   const completedButtons = document.querySelectorAll("#completed-button");
-  if (completedButtons.length > 0) {
-    completedButtons.forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        const postInfo = e.currentTarget.dataset.postInfo;
-        handleMarkCompleted(postInfo);
-      });
-    });
-  }
-
-  document.querySelectorAll(".edit-post").forEach((button) => {
-    button.addEventListener("click", (e) => {
-      e.preventDefault();
-      const target = e.target.closest(".edit-post");
-      if (!target) return;
-      const postId = target.dataset.postId;
-      const postElement = document.getElementById(`post-${postId}`);
-
-      try {
-        const type = postElement
-          .querySelector(".card-title")
-          .textContent.includes("Offer")
-          ? "offer"
-          : "request";
-
-        const hoursNeeded = postElement
-          .querySelector(".section p:nth-child(1)")
-          .textContent.replace(/[^0-9.]/g, "");
-
-        const originalDateTime = target.dataset.datetime;
-        const date = new Date(originalDateTime);
-        const localDateTime = new Date(
-          date.getTime() - date.getTimezoneOffset() * 60000
-        )
-          .toISOString()
-          .slice(0, 16);
-
-        const description = postElement
-          .querySelector(".section p:nth-child(3)")
-          .textContent.replace(/^.*?description.*?/, "")
-          .trim();
-
-        // Set values in modal
-        document.getElementById("editType").value = type;
-        document.getElementById("editHoursNeeded").value = hoursNeeded;
-        document.getElementById("editDateTime").value = localDateTime;
-        document.getElementById("editDescription").value = description;
-
-        // Initialize and open modal
-        const modal = M.Modal.init(document.getElementById("editPostModal"));
-        modal.open();
-
-        // Set up save button
-        document.getElementById("saveEditButton").onclick = () => {
-          handleEditPost(postId);
-        };
-
-        // Reinitialize Materialize select
-        M.FormSelect.init(document.getElementById("editType"));
-        M.updateTextFields();
-      } catch (error) {
-        console.error("Error parsing date:", error);
-        M.toast({ html: "Error opening edit form", classes: "red" });
-      }
-    });
+  completedButtons.forEach((btn) => {
+    btn.addEventListener("click", handleClickCompletePost);
   });
 
-  document.querySelectorAll(".cancel-post").forEach((button) => {
-    button.addEventListener("click", (e) => {
-      e.preventDefault();
-      const target = e.target.closest(".cancel-post");
-      if (!target) return;
-      const postId = target.dataset.postId;
-      handleCancelPost(postId);
-    });
+  const editButtons = document.querySelectorAll(".edit-post");
+  editButtons.forEach((button) => {
+    button.addEventListener("click", handleClickEditPost);
+  });
+
+  const cancelButtons = document.querySelectorAll(".cancel-post");
+  cancelButtons.forEach((button) => {
+    button.addEventListener("click", handleClickCancelPost);
   });
 };
 
-// Initialize Materialize components
-M.Modal.init(document.querySelectorAll(".modal"));
-M.FormSelect.init(document.querySelectorAll("select"));
+const handleNotifyAcceptPost = (data) => {
+  const operation = data.updatedPost.status;
+  M.toast({
+    html: `Post ${data.updatedPost.description} ${operation}.`,
+    classes: "green",
+  });
 
-// Start the application
-getMyPosts();
+  displayMyPosts();
+};
+
+initializeMaterializeComponent();
+displayMyPosts();
+activateWebSocket({ handleNotifyAcceptPost });
+
+export { displayMyPosts };
