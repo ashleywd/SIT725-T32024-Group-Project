@@ -261,6 +261,8 @@ const handleNotifyAcceptPost = (data) => {
     classes: "green",
   });
   displayPosts();
+  resetScreenPosition();
+  displayNotifications();
 };
 
 const handlePostsUpdated = () => {

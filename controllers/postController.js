@@ -104,7 +104,7 @@ const postController = {
       const updatedPost = await Post.findByIdAndUpdate(
         postId,
         { type, hoursNeeded, description, dateTime },
-        { new: true }
+        { new: true },
       ).populate({ path: "postedBy", select: "username" });
 
       // Create notification for post update
@@ -135,7 +135,7 @@ const postController = {
           status: { $nin: ["cancelled", "completed"] },
         },
         { status: "cancelled" },
-        { new: true }
+        { new: true },
       );
 
       const newNotification = new Notification({
@@ -176,19 +176,20 @@ const postController = {
           status,
           acceptedBy: status === "accepted" ? userId : post.acceptedBy,
         },
-        { new: true }
+        { new: true },
       );
 
       const notifyUser = status === "accepted" ? postedBy._id : post.acceptedBy;
+      const newNotification = new Notification({
+        userId: notifyUser,
+        message: `Post status ${status}: ${post.description}`,
+        isGlobal: false,
+      });
+      await newNotification.save();
 
       io.to(notifyUser.toString()).emit("notify-post-status-update", {
         updatedPost,
       });
-
-      const newNotification = new Notification({ userId: post.acceptedBy, message: `Post status ${status}: ${post.description}`, isGlobal: false });
-      const savedNotification = await newNotification.save();
-      // Notify user who accepted the post
-      io.emit("posts-updated", savedNotification);
 
       res.status(201).json({ updatedPost });
     } catch (error) {

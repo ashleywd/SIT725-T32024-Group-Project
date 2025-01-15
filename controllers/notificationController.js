@@ -53,7 +53,7 @@ const notificationController = {
 
   deleteNotification: async (req, res) => {
     try {
-      const { notificationId } = req.body;
+      const { notificationId } = req.params;
       await Notification.findByIdAndDelete(notificationId);
       res.status(204).end();
     } catch (error) {

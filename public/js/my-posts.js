@@ -332,6 +332,7 @@ const handleNotifyAcceptPost = (data) => {
   });
 
   displayMyPosts();
+  displayNotifications();
 };
 
 const handlePostsUpdated = () => {
