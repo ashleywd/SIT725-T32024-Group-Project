@@ -33,6 +33,24 @@ const deleteNotification = async (notificationId) => {
   }
 };
 
+const updateStatusToSeen = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`/api/notifications/`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+    });
+    if (!response.ok) {
+      throw new Error("Failed to delete notification");
+    }
+  } catch (err) {
+    console.error("Error deleting notification:", err.message);
+  }
+}
+
 const handleDeleteNotification = async (e) => {
   try {
     e.preventDefault();
@@ -81,12 +99,22 @@ const growingEffect = (element) => {
 };
 
 const triggerNewNotificationEffect = (notifications) => {
+  const notificationIcon = document.querySelector(".notifications-icon");
   const unseenNotification = notifications.find((notification) => notification.status === "new");
   if (!unseenNotification) return;
 
-  const notificationIcon = document.querySelector(".notifications-icon");
   notificationIcon.textContent = "notifications_active";
   growingEffect(notificationIcon)
+};
+
+const handleOnOpenStart = async () => {
+  try {
+    await updateStatusToSeen();
+    const notificationIcon = document.querySelector(".notifications-icon");
+    notificationIcon.textContent = "notifications_none";
+  } catch (e) {
+    console.error("Error handleOnOpenStart:", err.message);
+  }
 };
 
 const displayNotifications = async () => {
@@ -100,6 +128,7 @@ const displayNotifications = async () => {
     M.Dropdown.init(notificationElements, {
       constrainWidth: false,
       coverTrigger: false,
+      onOpenStart: handleOnOpenStart,
     });
   } catch (err) {
     console.error("Error initializing notifications menu:", err.message);

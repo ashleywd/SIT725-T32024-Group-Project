@@ -35,13 +35,14 @@ const notificationController = {
 
   updateNotificationStatus: async (req, res) => {
     try {
-      const { notificationId, status } = req.body;
-      const updatedNotification = await Notification.findByIdAndUpdate(
-        notificationId,
-        { status },
-        { new: true },
+      const userId = req.userId;
+      await Notification.updateMany(
+            { userId },
+            { status: "seen" },
+            {new: true}
       );
-      res.status(200).json(updatedNotification);
+
+      res.status(200).json({ message: "Notifications marked as seen" });
     } catch (error) {
       console.error("Error updating notification status:", error);
       res.status(500).json({
