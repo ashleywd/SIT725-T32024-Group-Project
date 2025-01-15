@@ -24,14 +24,7 @@ const postController = {
         dateTime,
       });
       const savedPost = await newPost.save();
-
-      // Create notification for new post
-      const newNotification = new Notification({
-        message: `New post created: ${savedPost.description}`,
-        isGlobal: true,
-      });
-      const savedNotification = await newNotification.save();
-      io.emit("posts-updated", savedNotification);
+      io.emit("posts-updated");
 
       res.status(201).json(savedPost);
     } catch (error) {
@@ -107,13 +100,7 @@ const postController = {
         { new: true },
       ).populate({ path: "postedBy", select: "username" });
 
-      // Create notification for post update
-      const newNotification = new Notification({
-        message: `Post edited: ${updatedPost.description}`,
-        isGlobal: true,
-      });
-      const savedNotification = await newNotification.save();
-      io.emit("posts-updated", savedNotification);
+      io.emit("posts-updated",);
 
       res.status(200).json(updatedPost);
     } catch (error) {
@@ -138,12 +125,7 @@ const postController = {
         { new: true },
       );
 
-      const newNotification = new Notification({
-        message: `Post cancelled: ${post.description}`,
-        isGlobal: true,
-      });
-      const savedNotification = await newNotification.save();
-      io.emit("posts-updated", savedNotification);
+      io.emit("posts-updated");
 
       res.status(200).json({
         message: "Post cancelled successfully",
@@ -180,6 +162,7 @@ const postController = {
       );
 
       const notifyUser = status === "accepted" ? postedBy._id : post.acceptedBy;
+
       const newNotification = new Notification({
         userId: notifyUser,
         message: `Post status ${status}: ${post.description}`,
@@ -190,6 +173,7 @@ const postController = {
       io.to(notifyUser.toString()).emit("notify-post-status-update", {
         updatedPost,
       });
+      io.emit("posts-updated");
 
       res.status(201).json({ updatedPost });
     } catch (error) {

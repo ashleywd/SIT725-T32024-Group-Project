@@ -80,16 +80,22 @@ const growingEffect = (element) => {
   }, 1000);
 };
 
+const triggerNewNotificationEffect = (notifications) => {
+  const unseenNotification = notifications.find((notification) => notification.status === "new");
+  if (!unseenNotification) return;
+
+  const notificationIcon = document.querySelector(".notifications-icon");
+  notificationIcon.textContent = "notifications_active";
+  growingEffect(notificationIcon)
+};
+
 const displayNotifications = async () => {
   try {
     const notificationElements = document.querySelectorAll(".dropdown-trigger");
-    const notificationIcon = document.querySelector(".notifications-icon");
     const notifications = await getNotifications();
-    if (notifications?.length > 0) {
-      growingEffect(notificationIcon);
-      notificationIcon.textContent = "notifications_active";
-      addNotificationToMenu(notifications);
-    }
+
+    triggerNewNotificationEffect(notifications);
+    addNotificationToMenu(notifications);
 
     M.Dropdown.init(notificationElements, {
       constrainWidth: false,
