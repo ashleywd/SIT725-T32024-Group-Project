@@ -18,6 +18,10 @@ const postController = {
         }
         // Deduct points at post creation
         await pointsController.updatePoints(userId, -hoursNeeded);
+        // Send toast notification
+        io.to(userId.toString()).emit("toast-notification", {
+          message: `Post is created and you have been deducted ${hoursNeeded} points.`,
+        });
       }
 
       const selectedDate = new Date(dateTime);
@@ -191,21 +195,6 @@ const postController = {
         },
         { new: true },
       );
-      
-      // Handle points transfer on completion
-      if (status === "completed") {
-        if (post.type === "request") {
-          // Deduct points from requester
-          await pointsController.updatePoints(post.postedBy, -post.hoursNeeded);
-          // Add points to sitter
-          await pointsController.updatePoints(post.acceptedBy, post.hoursNeeded);
-        } else if (post.type === "offer") {
-          // Add points to sitter
-          await pointsController.updatePoints(post.postedBy, post.hoursNeeded);
-          // Deduct points from requester
-          await pointsController.updatePoints(post.acceptedBy, -post.hoursNeeded);
-        }
-      }
 
       const notifyUser = status === "accepted" ? postedBy._id : post.acceptedBy;
 
