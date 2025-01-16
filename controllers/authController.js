@@ -39,7 +39,7 @@ const authController = {
         username,
         password: hashedPassword,
         email,
-        points: 0,
+        points: 10,
         createdAt: new Date(),
       });
 
