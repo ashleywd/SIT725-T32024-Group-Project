@@ -1,13 +1,24 @@
 const Post = require("../models/post");
 const Notification = require("../models/notification");
+const pointsController = require("./pointsController");
 
 const postController = {
   createPost: async (req, res) => {
     try {
       const io = req.app.get("io");
       const { type, hoursNeeded, description, dateTime } = req.body;
-      // Use userId from auth middleware
       const userId = req.userId;
+
+      if (type === "request") {
+        const hasEnoughPoints = await pointsController.checkPoints(userId, hoursNeeded);
+        if (!hasEnoughPoints) {
+          return res.status(400).json({ 
+            message: "You do not have enough points to create this request." 
+          });
+        }
+        // Deduct points at post creation
+        await pointsController.updatePoints(userId, -hoursNeeded);
+      }
 
       const selectedDate = new Date(dateTime);
       if (selectedDate < new Date()) {
@@ -87,6 +98,26 @@ const postController = {
       const { type, hoursNeeded, description, dateTime } = req.body;
       const userId = req.userId;
 
+      // Get original post
+      const originalPost = await Post.findById(postId);
+      
+      if (type === "request") {
+        const pointDifference = hoursNeeded - originalPost.hoursNeeded;
+        if (pointDifference > 0) {
+          const hasEnoughPoints = await pointsController.checkPoints(userId, pointDifference);
+          if (!hasEnoughPoints) {
+            return res.status(400).json({ 
+              message: "You do not have enough points to update this request." 
+            });
+          }
+          // Deduct additional points
+          await pointsController.updatePoints(userId, -pointDifference);
+        } else if (pointDifference < 0) {
+          // Refund points if hoursNeeded is reduced
+          await pointsController.updatePoints(userId, -pointDifference);
+        }
+      }
+
       const selectedDate = new Date(dateTime);
       if (selectedDate < new Date()) {
         return res.status(400).json({
@@ -160,6 +191,21 @@ const postController = {
         },
         { new: true },
       );
+      
+      // Handle points transfer on completion
+      if (status === "completed") {
+        if (post.type === "request") {
+          // Deduct points from requester
+          await pointsController.updatePoints(post.postedBy, -post.hoursNeeded);
+          // Add points to sitter
+          await pointsController.updatePoints(post.acceptedBy, post.hoursNeeded);
+        } else if (post.type === "offer") {
+          // Add points to sitter
+          await pointsController.updatePoints(post.postedBy, post.hoursNeeded);
+          // Deduct points from requester
+          await pointsController.updatePoints(post.acceptedBy, -post.hoursNeeded);
+        }
+      }
 
       const notifyUser = status === "accepted" ? postedBy._id : post.acceptedBy;
 
