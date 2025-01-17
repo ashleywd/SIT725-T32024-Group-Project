@@ -3,6 +3,7 @@ import {
   clearTokenAndRedirectToLogin,
   getStatusColor,
   initializeMaterializeComponent,
+  updatePointsDisplay,
 } from "./global.js";
 import { activateWebSocket } from "./socket-client.js";
 import { displayNotifications } from "./notifications.js";
@@ -83,7 +84,7 @@ const createMyPost = ({
           ${type === "offer" ? "Babysitting Offer" : "Babysitter Request"}
           <span class="right">
             <span class="new badge ${getStatusColor(
-              status,
+              status
             )}" data-badge-caption="">${String(status).toUpperCase()}</span>
           </span>
         </span>
@@ -91,7 +92,7 @@ const createMyPost = ({
         <div class="section">
           <p><i class="material-icons tiny">schedule</i> <strong>Hours:</strong> ${hoursNeeded}</p>
           <p><i class="material-icons tiny">event</i> <strong>Date:</strong> ${new Date(
-            dateTime,
+            dateTime
           ).toLocaleString()}</p>
           <p><i class="material-icons tiny">description</i> ${description}</p>
         </div>
@@ -119,7 +120,11 @@ const getCardActions = (id, status, postedBy) => {
   return `
     <div class="card-action">
       <div class="row">
-          ${status === "accepted" ? completedButton({ postId: id, postedBy }) : editButton(id)}
+          ${
+            status === "accepted"
+              ? completedButton({ postId: id, postedBy })
+              : editButton(id)
+          }
           ${cancelButton(id)}
       </div>
     </div>
@@ -156,6 +161,9 @@ const handleEditPost = async (postId) => {
     const token = localStorage.getItem("token");
     const dateTimeInput = document.getElementById("editDateTime").value;
     const selectedDate = new Date(dateTimeInput);
+    const originalPost = await getPostById(postId);
+    const newHours = parseInt(document.getElementById("editHoursNeeded").value);
+    const pointDifference = newHours - originalPost.hoursNeeded;
 
     if (selectedDate < new Date()) {
       throw new Error("Cannot set date/time in the past");
@@ -185,8 +193,30 @@ const handleEditPost = async (postId) => {
     const modal = M.Modal.getInstance(document.getElementById("editPostModal"));
     modal.close();
 
-    M.toast({ html: "Post updated successfully", classes: "green" });
+    if (requestBody.type === "request") {
+      if (pointDifference > 0) {
+        M.toast({
+          html: `Request post updated successfully and you have been deducted ${pointDifference} additional points`,
+          classes: "green",
+        });
+      } else if (pointDifference < 0) {
+        M.toast({
+          html: `Request post updated successfully and you have been refunded ${Math.abs(
+            pointDifference
+          )} points`,
+          classes: "green",
+        });
+      } else {
+        M.toast({
+          html: "Request post updated successfully",
+          classes: "green",
+        });
+      }
+    } else {
+      M.toast({ html: "Offer post updated successfully", classes: "green" });
+    }
     displayMyPosts();
+    updatePointsDisplay();
   } catch (error) {
     console.error("Error updating post:", error);
     M.toast({ html: error.message || "Failed to update post", classes: "red" });
@@ -199,6 +229,7 @@ const handleCancelPost = async (postId) => {
       return;
     }
 
+    const originalPost = await getPostById(postId);
     const token = localStorage.getItem("token");
     const response = await fetch(`/api/posts/cancel/${postId}`, {
       method: "PUT",
@@ -212,8 +243,19 @@ const handleCancelPost = async (postId) => {
       throw new Error(errorData.message || "Failed to cancel post");
     }
 
-    M.toast({ html: "Post cancelled successfully", classes: "green" });
+    if (originalPost.type === "request") {
+      M.toast({
+        html: `Post cancelled successfully and you have been refunded ${originalPost.hoursNeeded} points`,
+        classes: "green",
+      });
+    } else {
+      M.toast({
+        html: "Post cancelled successfully",
+        classes: "green",
+      });
+    }
     displayMyPosts();
+    updatePointsDisplay();
   } catch (error) {
     console.error("Error cancelling post:", error);
     M.toast({ html: error.message || "Failed to cancel post", classes: "red" });
@@ -342,6 +384,7 @@ const handlePostsUpdated = () => {
 initializeMaterializeComponent();
 displayMyPosts();
 displayNotifications();
+updatePointsDisplay();
 activateWebSocket({ handleNotifyAcceptPost, handlePostsUpdated });
 
 export { displayMyPosts };

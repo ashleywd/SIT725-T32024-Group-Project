@@ -1,6 +1,7 @@
 import {
   verifyUserAuthentication,
   initializeMaterializeComponent,
+  updatePointsDisplay,
 } from "./global.js";
 
 verifyUserAuthentication();
@@ -122,6 +123,7 @@ deleteAccountBtn.addEventListener("click", async () => {
 const displayAccountDetails = async () => {
   const data = await getAccountDetails();
   populateData(data);
+  updatePointsDisplay();
 };
 
 displayAccountDetails();

@@ -44,10 +44,30 @@ const resetScreenPosition = () => {
   window.scrollTo(0, scrollPosition);
 };
 
+const updatePointsDisplay = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch("/api/account/points", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+    });
+    const data = await response.json();
+    const pointsElement = document.getElementById("userPoints");
+    if (pointsElement) {
+      pointsElement.textContent = data.points;
+    }
+  } catch (error) {
+    console.error("Error fetching points:", error);
+  }
+};
+
 export {
   initializeMaterializeComponent,
   verifyUserAuthentication,
   clearTokenAndRedirectToLogin,
   getStatusColor,
   resetScreenPosition,
+  updatePointsDisplay,
 };
