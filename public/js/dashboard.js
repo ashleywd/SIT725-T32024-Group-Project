@@ -7,7 +7,10 @@ import {
   updatePointsDisplay,
 } from "./global.js";
 import { activateWebSocket } from "./socket-client.js";
-import { displayNotifications } from "./notifications.js";
+import {
+  displayNotifications,
+  handleStatusNotification,
+} from "./notifications.js";
 
 const postForm = document.getElementById("postForm");
 
@@ -263,21 +266,18 @@ const displayPosts = async () => {
 };
 
 const handleNotifyAcceptPost = (data) => {
-  const operation = data.updatedPost.status;
-  M.toast({
-    html: `Post ${data.updatedPost.description} ${operation}.`,
-    classes: "green",
-  });
+  handleStatusNotification(data.updatedPost); // Just handle the toast
   displayPosts();
   resetScreenPosition();
-  displayNotifications();
+  displayNotifications(); // This updates notifications
+  updatePointsDisplay(); // This updates points
 };
 
 const handlePostsUpdated = () => {
   resetScreenPosition();
-  filterAndRenderPosts();
-  displayNotifications();
-  updatePointsDisplay();
+  filterAndRenderPosts(); // This handles post display
+  displayNotifications(); // This updates notifications
+  updatePointsDisplay(); // This updates points
 };
 
 verifyUserAuthentication();

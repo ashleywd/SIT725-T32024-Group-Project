@@ -49,16 +49,23 @@ const updateStatusToSeen = async () => {
   } catch (err) {
     console.error("Error deleting notification:", err.message);
   }
-}
+};
 
 const handleDeleteNotification = async (e) => {
   try {
     e.preventDefault();
-    const notificationId = e.target.parentElement.dataset.notificationId;
+    // Get the parent li element that contains the notification
+    const notificationItem = e.target.closest(".notification-item");
+
+    // Get the delete button which should have the data attribute
+    const deleteButton = notificationItem.querySelector(".delete-notification");
+
+    const notificationId = deleteButton.dataset.notificationId;
+
     await deleteNotification(notificationId);
     displayNotifications();
   } catch (err) {
-    console.error("Error deleting notification:", err.message);
+    console.error("Error deleting notification:", err);
     M.toast({ html: "Failed to delete notification", classes: "red" });
   }
 };
@@ -75,7 +82,7 @@ const deleteButtonIcon = (notificationId) => {
 
 const addNotificationToMenu = (notifications) => {
   const notificationsContainer = document.querySelector(
-    "#notifications-container",
+    "#notifications-container"
   );
   notificationsContainer.innerHTML = "";
 
@@ -100,11 +107,13 @@ const growingEffect = (element) => {
 
 const triggerNewNotificationEffect = (notifications) => {
   const notificationIcon = document.querySelector(".notifications-icon");
-  const unseenNotification = notifications.find((notification) => notification.status === "new");
+  const unseenNotification = notifications.find(
+    (notification) => notification.status === "new"
+  );
   if (!unseenNotification) return;
 
   notificationIcon.textContent = "notifications_active";
-  growingEffect(notificationIcon)
+  growingEffect(notificationIcon);
 };
 
 const handleOnOpenStart = async () => {
@@ -135,4 +144,28 @@ const displayNotifications = async () => {
   }
 };
 
-export { displayNotifications };
+const handleStatusNotification = (updatedPost, type) => {
+  let toastMessage;
+  const dateTime = new Date(updatedPost.dateTime).toLocaleString();
+
+  if (updatedPost.status === "accepted") {
+    if (updatedPost.type === "offer") {
+      toastMessage = `Your babysitting offer for ${dateTime} has been accepted`;
+    } else {
+      toastMessage = `Your request for a babysitter on ${dateTime} has been accepted`;
+    }
+  } else if (updatedPost.status === "completed") {
+    if (updatedPost.type === "offer") {
+      toastMessage = `Your babysitting offer for ${dateTime} has been marked as completed. ${updatedPost.hoursNeeded} points credited.`;
+    } else {
+      toastMessage = `The babysitting session you provided on ${dateTime} has been marked as completed. ${updatedPost.hoursNeeded} points credited.`;
+    }
+  }
+
+  M.toast({
+    html: toastMessage,
+    classes: "green",
+  });
+};
+
+export { displayNotifications, handleStatusNotification };

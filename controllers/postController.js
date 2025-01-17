@@ -10,16 +10,14 @@ const postController = {
       const { type, hoursNeeded, description, dateTime } = req.body;
       const userId = req.userId;
 
-      // console.log("=== Create Post Debug ===");
-      // console.log("User ID:", userId);
-      // console.log("Post Type:", type);
-      // console.log("Hours Needed:", hoursNeeded);
+      const selectedDate = new Date(dateTime);
+      if (selectedDate < new Date()) {
+        return res.status(400).json({
+          message: "Cannot set date/time in the past",
+        });
+      }
 
       if (type === "request") {
-        // Check current points
-        const user = await User.findById(userId);
-        // console.log("Current User Points:", user.points);
-
         const hasEnoughPoints = await pointsController.checkPoints(
           userId,
           hoursNeeded
@@ -29,30 +27,11 @@ const postController = {
             message: "You do not have enough points to create this request.",
           });
         }
-
-        // Log before points deduction
-        // console.log("Points to deduct:", hoursNeeded);
-
-        // Deduct points at post creation
+        // Single point deduction
         await pointsController.updatePoints(userId, -hoursNeeded);
-
-        // Check points after deduction
-        const updatedUser = await User.findById(userId);
-        // console.log("Points after deduction:", updatedUser.points);
-
-        // Send toast notification
-        io.to(userId.toString()).emit("toast-notification", {
-          message: `Post is created and you have been deducted ${hoursNeeded} points.`,
-        });
       }
 
-      const selectedDate = new Date(dateTime);
-      if (selectedDate < new Date()) {
-        return res.status(400).json({
-          message: "Cannot set date/time in the past",
-        });
-      }
-
+      // Create and save the post
       const newPost = new Post({
         postedBy: userId,
         type,
@@ -61,14 +40,17 @@ const postController = {
         dateTime,
       });
       const savedPost = await newPost.save();
+
+      // Notify other users
       io.emit("posts-updated");
 
       res.status(201).json(savedPost);
     } catch (error) {
       console.error("Error creating post:", error);
-      res
-        .status(500)
-        .json({ message: "Error creating post", error: error.message });
+      res.status(500).json({
+        message: "Error creating post",
+        error: error.message,
+      });
     }
   },
 
@@ -243,9 +225,36 @@ const postController = {
 
       const notifyUser = status === "accepted" ? postedBy._id : post.acceptedBy;
 
+      let notificationMessage;
+      if (status === "accepted") {
+        if (post.type === "offer") {
+          notificationMessage = `Your babysitting offer for ${new Date(
+            post.dateTime
+          ).toLocaleString()} has been accepted.`;
+        } else {
+          notificationMessage = `Your request for a babysitter on ${new Date(
+            post.dateTime
+          ).toLocaleString()} has been accepted.`;
+        }
+      } else if (status === "completed") {
+        if (post.type === "offer") {
+          notificationMessage = `Your babysitting offer for ${new Date(
+            post.dateTime
+          ).toLocaleString()} has been marked as completed. ${
+            post.hoursNeeded
+          } points have been credited to your account.`;
+        } else {
+          notificationMessage = `The babysitting session you provided on ${new Date(
+            post.dateTime
+          ).toLocaleString()} has been marked as completed. ${
+            post.hoursNeeded
+          } points have been credited to your account.`;
+        }
+      }
+
       const newNotification = new Notification({
         userId: notifyUser,
-        message: `Post status ${status}: ${post.description}`,
+        message: notificationMessage,
         isGlobal: false,
       });
       await newNotification.save();

@@ -6,7 +6,10 @@ import {
   updatePointsDisplay,
 } from "./global.js";
 import { activateWebSocket } from "./socket-client.js";
-import { displayNotifications } from "./notifications.js";
+import {
+  displayNotifications,
+  handleStatusNotification,
+} from "./notifications.js";
 
 verifyUserAuthentication();
 
@@ -367,12 +370,7 @@ const initializeButtons = () => {
 };
 
 const handleNotifyAcceptPost = (data) => {
-  const operation = data.updatedPost.status;
-  M.toast({
-    html: `Post ${data.updatedPost.description} ${operation}.`,
-    classes: "green",
-  });
-
+  handleStatusNotification(data.updatedPost);
   displayMyPosts();
   displayNotifications();
 };
