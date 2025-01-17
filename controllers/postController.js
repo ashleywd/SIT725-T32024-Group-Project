@@ -1,3 +1,4 @@
+const User = require("../models/user");
 const Post = require("../models/post");
 const Notification = require("../models/notification");
 const pointsController = require("./pointsController");
@@ -9,15 +10,36 @@ const postController = {
       const { type, hoursNeeded, description, dateTime } = req.body;
       const userId = req.userId;
 
+      // console.log("=== Create Post Debug ===");
+      // console.log("User ID:", userId);
+      // console.log("Post Type:", type);
+      // console.log("Hours Needed:", hoursNeeded);
+
       if (type === "request") {
-        const hasEnoughPoints = await pointsController.checkPoints(userId, hoursNeeded);
+        // Check current points
+        const user = await User.findById(userId);
+        // console.log("Current User Points:", user.points);
+
+        const hasEnoughPoints = await pointsController.checkPoints(
+          userId,
+          hoursNeeded
+        );
         if (!hasEnoughPoints) {
-          return res.status(400).json({ 
-            message: "You do not have enough points to create this request." 
+          return res.status(400).json({
+            message: "You do not have enough points to create this request.",
           });
         }
+
+        // Log before points deduction
+        // console.log("Points to deduct:", hoursNeeded);
+
         // Deduct points at post creation
         await pointsController.updatePoints(userId, -hoursNeeded);
+
+        // Check points after deduction
+        const updatedUser = await User.findById(userId);
+        // console.log("Points after deduction:", updatedUser.points);
+
         // Send toast notification
         io.to(userId.toString()).emit("toast-notification", {
           message: `Post is created and you have been deducted ${hoursNeeded} points.`,
@@ -104,14 +126,17 @@ const postController = {
 
       // Get original post
       const originalPost = await Post.findById(postId);
-      
+
       if (type === "request") {
         const pointDifference = hoursNeeded - originalPost.hoursNeeded;
         if (pointDifference > 0) {
-          const hasEnoughPoints = await pointsController.checkPoints(userId, pointDifference);
+          const hasEnoughPoints = await pointsController.checkPoints(
+            userId,
+            pointDifference
+          );
           if (!hasEnoughPoints) {
-            return res.status(400).json({ 
-              message: "You do not have enough points to update this request." 
+            return res.status(400).json({
+              message: "You do not have enough points to update this request.",
             });
           }
           // Deduct additional points
@@ -132,10 +157,10 @@ const postController = {
       const updatedPost = await Post.findByIdAndUpdate(
         postId,
         { type, hoursNeeded, description, dateTime },
-        { new: true },
+        { new: true }
       ).populate({ path: "postedBy", select: "username" });
 
-      io.emit("posts-updated",);
+      io.emit("posts-updated");
 
       res.status(200).json(updatedPost);
     } catch (error) {
@@ -150,6 +175,7 @@ const postController = {
     try {
       const io = req.app.get("io");
       const { postId } = req.params;
+
       const post = await Post.findOneAndUpdate(
         {
           _id: postId,
@@ -157,8 +183,13 @@ const postController = {
           status: { $nin: ["cancelled", "completed"] },
         },
         { status: "cancelled" },
-        { new: true },
+        { new: true }
       );
+
+      // Refund points if it's a request post
+      if (post.type === "request") {
+        await pointsController.updatePoints(req.userId, post.hoursNeeded);
+      }
 
       io.emit("posts-updated");
 
@@ -186,6 +217,20 @@ const postController = {
           .json({ message: "Post not found", error: "Post not found" });
       }
 
+      // Award points when post is completed
+      if (status === "completed") {
+        if (post.type === "offer") {
+          // For offer posts: award points to the post owner (who did the babysitting)
+          await pointsController.updatePoints(post.postedBy, post.hoursNeeded);
+        } else if (post.type === "request") {
+          // For request posts: award points to the acceptedBy user (who did the babysitting)
+          await pointsController.updatePoints(
+            post.acceptedBy,
+            post.hoursNeeded
+          );
+        }
+      }
+
       const io = req.app.get("io");
       const updatedPost = await Post.findByIdAndUpdate(
         postId,
@@ -193,7 +238,7 @@ const postController = {
           status,
           acceptedBy: status === "accepted" ? userId : post.acceptedBy,
         },
-        { new: true },
+        { new: true }
       );
 
       const notifyUser = status === "accepted" ? postedBy._id : post.acceptedBy;

@@ -4,6 +4,7 @@ import {
   getStatusColor,
   initializeMaterializeComponent,
   resetScreenPosition,
+  updatePointsDisplay,
 } from "./global.js";
 import { activateWebSocket } from "./socket-client.js";
 import { displayNotifications } from "./notifications.js";
@@ -37,8 +38,15 @@ const handleSubmitForm = async function (e) {
 
     const modal = M.Modal.getInstance(document.getElementById("modalForm"));
     modal.close();
-    M.toast({ html: "Post created successfully!" });
+    if (formData.type === "request") {
+      M.toast({
+        html: `Request post is created successfully and you have been deducted ${formData.hoursNeeded} points`,
+      });
+    } else {
+      M.toast({ html: "Offer post created successfully!" });
+    }
     postForm.reset();
+    updatePointsDisplay();
     displayPosts();
   } catch (error) {
     console.error("Error creating post:", error);
@@ -123,7 +131,7 @@ const acceptButtonComponent = ({ status, postId, postedBy }) => {
         id="accept-post-button"
         class="waves-effect waves-light btn blue"
         data-post-info="${encodeURIComponent(
-          JSON.stringify({ postId, postedBy }),
+          JSON.stringify({ postId, postedBy })
         )}"
       >
         <i class="material-icons left">handshake</i>Accept
@@ -151,7 +159,7 @@ const createPost = ({
           ${type === "offer" ? "Babysitting Offer" : "Babysitter Request"}
           <span class="right">
             <span class="new badge ${getStatusColor(
-              status,
+              status
             )}" data-badge-caption="">${String(status).toUpperCase()}</span>
           </span>
         </span>
@@ -162,7 +170,7 @@ const createPost = ({
           }</p>
           <p><i class="material-icons tiny">schedule</i> <strong>Hours:</strong> ${hoursNeeded}</p>
           <p><i class="material-icons tiny">event</i> <strong>Date:</strong> ${new Date(
-            dateTime,
+            dateTime
           ).toLocaleString()}</p>
           <p><i class="material-icons tiny">description</i> ${description}</p>
         </div>
@@ -239,7 +247,7 @@ const renderPosts = (posts) => {
               description: post.description,
               hoursNeeded: post.hoursNeeded,
               status: post.status,
-            }),
+            })
           )
           .join("")
       : "<p>No posts available.</p>";
@@ -269,12 +277,14 @@ const handlePostsUpdated = () => {
   resetScreenPosition();
   filterAndRenderPosts();
   displayNotifications();
+  updatePointsDisplay();
 };
 
 verifyUserAuthentication();
 initializeMaterializeComponent();
 displayPosts();
 displayNotifications();
+updatePointsDisplay();
 activateWebSocket({ handleNotifyAcceptPost, handlePostsUpdated });
 
 export { displayPosts };
