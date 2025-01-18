@@ -1,4 +1,3 @@
-const User = require("../models/user");
 const Post = require("../models/post");
 const Notification = require("../models/notification");
 const pointsController = require("./pointsController");
