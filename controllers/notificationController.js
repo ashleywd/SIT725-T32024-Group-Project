@@ -21,7 +21,9 @@ const notificationController = {
   getNotifications: async (req, res) => {
     try {
       const userId = req.userId;
-      const notifications = await Notification.find({ $or: [{ userId }, { isGlobal: true }] });
+      const notifications = await Notification.find({
+        $or: [{ userId }, { isGlobal: true }],
+      });
 
       res.status(200).json(notifications);
     } catch (error) {
@@ -37,9 +39,9 @@ const notificationController = {
     try {
       const userId = req.userId;
       await Notification.updateMany(
-            { userId },
-            { status: "seen" },
-            {new: true}
+        { userId },
+        { status: "seen" },
+        { new: true }
       );
 
       res.status(200).json({ message: "Notifications marked as seen" });
