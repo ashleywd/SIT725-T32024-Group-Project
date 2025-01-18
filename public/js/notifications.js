@@ -155,25 +155,55 @@ const displayNotifications = async () => {
 const handleStatusNotification = (updatedPost, type) => {
   let toastMessage;
   const dateTime = new Date(updatedPost.dateTime).toLocaleString();
+  const currentUserId = JSON.parse(
+    atob(localStorage.getItem("token").split(".")[1])
+  ).userId;
+
+  // Only show notification if user is involved with the post
+  const isPostCreator = updatedPost.postedBy === currentUserId;
+  const isPostAcceptor = updatedPost.acceptedBy === currentUserId;
+
+  if (!isPostCreator && !isPostAcceptor) {
+    return; // Exit if user hasn't interacted with this post
+  }
 
   if (updatedPost.status === "accepted") {
     if (updatedPost.type === "offer") {
-      toastMessage = `Your babysitting offer for ${dateTime} has been accepted`;
+      if (isPostCreator) {
+        toastMessage = `Your babysitting offer for ${dateTime} has been accepted`;
+      }
+      if (isPostAcceptor) {
+        toastMessage = `You have accepted a babysitting offer for ${dateTime}. ${updatedPost.hoursNeeded} points have been deducted from your account.`;
+      }
     } else {
-      toastMessage = `Your request for a babysitter on ${dateTime} has been accepted`;
+      if (isPostCreator) {
+        toastMessage = `Your request for a babysitter on ${dateTime} has been accepted`;
+      }
     }
   } else if (updatedPost.status === "completed") {
+    if (updatedPost.type === "offer" && isPostCreator) {
+      toastMessage = `Your babysitting offer for ${dateTime} has been completed and ${updatedPost.hoursNeeded} points have been credited to your account.`;
+    } else if (updatedPost.type === "request" && isPostAcceptor) {
+      toastMessage = `The babysitting session you provided on ${dateTime} has been completed and ${updatedPost.hoursNeeded} points have been credited to your account.`;
+    }
+  } else if (updatedPost.status === "cancelled") {
     if (updatedPost.type === "offer") {
-      toastMessage = `Your babysitting offer for ${dateTime} has been marked as completed. ${updatedPost.hoursNeeded} points credited.`;
+      if (isPostAcceptor) {
+        toastMessage = `The babysitting offer you accepted for ${dateTime} has been cancelled. ${updatedPost.hoursNeeded} points have been refunded.`;
+      }
     } else {
-      toastMessage = `The babysitting session you provided on ${dateTime} has been marked as completed. ${updatedPost.hoursNeeded} points credited.`;
+      if (isPostAcceptor) {
+        toastMessage = `The babysitting request you accepted for ${dateTime} has been cancelled.`;
+      }
     }
   }
 
-  M.toast({
-    html: toastMessage,
-    classes: "green",
-  });
+  if (toastMessage) {
+    M.toast({
+      html: toastMessage,
+      classes: "green",
+    });
+  }
 };
 
 export { displayNotifications, handleStatusNotification };

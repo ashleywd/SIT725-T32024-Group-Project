@@ -153,6 +153,7 @@ const handleMarkCompleted = async (postId, postedBy) => {
 
     M.toast({ html: "Post marked as completed", classes: "green" });
     displayMyPosts();
+    updatePointsDisplay();
   } catch (error) {
     console.error("Error marking post as completed:", error);
     M.toast({ html: "Failed to mark post as completed", classes: "red" });
