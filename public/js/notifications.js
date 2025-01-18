@@ -86,6 +86,14 @@ const addNotificationToMenu = (notifications) => {
   );
   notificationsContainer.innerHTML = "";
 
+  if (!notifications.length) {
+    const emptyMessage = document.createElement("li");
+    emptyMessage.classList.add("no-notifications");
+    emptyMessage.textContent = "No notifications to display";
+    notificationsContainer.appendChild(emptyMessage);
+    return;
+  }
+
   notifications.forEach((notification) => {
     const notificationElement = document.createElement("li");
     const notificationMessage = document.createElement("p");
