@@ -17,27 +17,30 @@ const postController = {
         });
       }
 
-      if (type === "request") {
-        const hasEnoughPoints = await pointsController.checkPoints(
-          userId,
-          hoursNeeded
-        );
-        if (!hasEnoughPoints) {
-          return res.status(400).json({
-            message: "You do not have enough points to create this request.",
-          });
-        }
-        // Single point deduction
-        await pointsController.updatePoints(userId, -hoursNeeded);
-        await notificationController.createNotification(
-          {
-            body: {
-              userId: userId,
-              message: `${hoursNeeded} points have been deducted for your babysitting request.`,
-            },
+      // Create notification for post owner (for both types)
+      await notificationController.createNotification(
+        {
+          body: {
+            userId: req.userId,
+            message: `You have created a new ${type} post for ${new Date(
+              dateTime
+            ).toLocaleString()}.`,
           },
-          { status: () => ({ json: () => {} }) }
-        );
+        },
+        { status: () => ({ json: () => {} }) }
+      );
+
+      if (type === "request") {
+        try {
+          await pointsController.handleRequestPoints(userId, hoursNeeded);
+          await notificationController.notifyPointsChange(
+            userId,
+            -hoursNeeded,
+            "your babysitting request"
+          );
+        } catch (error) {
+          return res.status(400).json({ message: error.message });
+        }
       }
 
       // Create and save the post
@@ -118,49 +121,34 @@ const postController = {
       // Get original post
       const originalPost = await Post.findById(postId);
 
+      // Handle points for request posts
       if (type === "request") {
         const pointDifference = hoursNeeded - originalPost.hoursNeeded;
+
         if (pointDifference > 0) {
-          const hasEnoughPoints = await pointsController.checkPoints(
-            userId,
-            pointDifference
-          );
-          if (!hasEnoughPoints) {
-            return res.status(400).json({
-              message: "You do not have enough points to update this request.",
-            });
-          }
-          // Deduct additional points
-          await pointsController.updatePoints(userId, -pointDifference);
+          // Check and deduct additional points
+          await pointsController.handleRequestPoints(userId, pointDifference);
 
           // Notify about point deduction
-          await notificationController.createNotification(
-            {
-              body: {
-                userId: userId,
-                message: `${pointDifference} additional points have been deducted for your updated babysitting request.`,
-              },
-            },
-            { status: () => ({ json: () => {} }) }
+          await notificationController.notifyPointsChange(
+            userId,
+            -pointDifference,
+            "updating your babysitting request"
           );
         } else if (pointDifference < 0) {
-          // Refund points if hoursNeeded is reduced
+          // Credit points back
           await pointsController.updatePoints(userId, -pointDifference);
 
-          // Notify about point refund
-          await notificationController.createNotification(
-            {
-              body: {
-                userId: userId,
-                message: `${Math.abs(
-                  pointDifference
-                )} points have been refunded due to reducing hours in your babysitting request.`,
-              },
-            },
-            { status: () => ({ json: () => {} }) }
+          // Create refund notification
+          await notificationController.notifyPointsChange(
+            userId,
+            Math.abs(pointDifference),
+            "reducing hours in your babysitting request"
           );
         }
       }
+
+      // Validate date
 
       const selectedDate = new Date(dateTime);
       if (selectedDate < new Date()) {
@@ -201,55 +189,83 @@ const postController = {
         { new: true }
       );
 
-      // Refund points if it's a request post
+      // Handle request cancellations
       if (post.type === "request") {
         await pointsController.updatePoints(req.userId, post.hoursNeeded);
-      } else if (post.type === "offer" && post.acceptedBy) {
-        // Refund points to the user who accepted the offer
-        await pointsController.updatePoints(post.acceptedBy, post.hoursNeeded);
+
+        // Create notification for post owner about cancellation
+        await notificationController.createNotification(
+          {
+            body: {
+              userId: req.userId,
+              message: `You have cancelled your ${
+                post.type
+              } post for ${new Date(post.dateTime).toLocaleString()}.`,
+            },
+          },
+          { status: () => ({ json: () => {} }) }
+        );
+
+        // Notify creator about refund
+        await notificationController.notifyPointsChange(
+          req.userId,
+          post.hoursNeeded,
+          "cancelling your babysitting request"
+        );
+
+        // Notify acceptor about cancellation
+        if (post.acceptedBy) {
+          await notificationController.notifyStatusChange(
+            post.acceptedBy,
+            post,
+            "cancelled"
+          );
+
+          io.to(post.acceptedBy.toString()).emit("notify-post-status-update", {
+            updatedPost: post,
+            type: "cancel",
+          });
+        }
+      } else if (post.type === "offer") {
+        // Create notification for post owner about cancellation
+        await notificationController.createNotification(
+          {
+            body: {
+              userId: req.userId,
+              message: `You have cancelled your ${
+                post.type
+              } post for ${new Date(post.dateTime).toLocaleString()}.`,
+            },
+          },
+          { status: () => ({ json: () => {} }) }
+        );
+
+        if (post.acceptedBy) {
+          await pointsController.updatePoints(
+            post.acceptedBy,
+            post.hoursNeeded
+          );
+
+          // Notify acceptor about cancellation status
+          await notificationController.notifyStatusChange(
+            post.acceptedBy,
+            post,
+            "cancelled"
+          );
+
+          // Notify acceptor about refund
+          await notificationController.notifyPointsChange(
+            post.acceptedBy,
+            post.hoursNeeded,
+            "the cancelled babysitting offer"
+          );
+
+          io.to(post.acceptedBy.toString()).emit("notify-post-status-update", {
+            updatedPost: post,
+            type: "cancel",
+          });
+        }
       }
-
-      // Create notification for the other party if post was accepted
-      if (post.acceptedBy) {
-        const notificationMessage = `The ${
-          post.type
-        } post that you accepted for ${new Date(
-          post.dateTime
-        ).toLocaleString()} has been cancelled.${
-          post.type === "offer"
-            ? ` ${post.hoursNeeded} points have been refunded to your account.`
-            : ""
-        }`;
-
-        const newNotification = new Notification({
-          userId: post.acceptedBy,
-          message: notificationMessage,
-          isGlobal: false,
-        });
-        await newNotification.save();
-
-        // Emit socket events for notification and toast
-        io.to(post.acceptedBy.toString()).emit("notify-post-status-update", {
-          updatedPost: post,
-          type: "cancel",
-        });
-      }
-
-      // Create notification for post owner as well
-      const ownerNotificationMessage = `You have cancelled your ${
-        post.type
-      } post for ${new Date(post.dateTime).toLocaleString()}.${
-        post.type === "request"
-          ? ` ${post.hoursNeeded} points have been refunded to your account.`
-          : ""
-      }`;
-
-      const ownerNotification = new Notification({
-        userId: req.userId,
-        message: ownerNotificationMessage,
-        isGlobal: false,
-      });
-      await ownerNotification.save();
 
       // Emit socket events for post owner
       io.to(req.userId.toString()).emit("notify-post-status-update", {
@@ -276,32 +292,95 @@ const postController = {
       const userId = req.userId;
       const post = await Post.findById(postId);
 
-      // Handle points for accepting
+      // Handle acceptances
       if (status === "accepted") {
-        if (post.type === "offer") {
-          const hasEnoughPoints = await pointsController.checkPoints(
-            userId,
-            post.hoursNeeded
+        // Create status notifications
+        await notificationController.notifyStatusChange(
+          post.postedBy,
+          post,
+          status
+        );
+        if (post.acceptedBy) {
+          await notificationController.notifyStatusChange(
+            post.acceptedBy,
+            post,
+            status
           );
-          if (!hasEnoughPoints) {
-            return res
-              .status(400)
-              .json({ message: "Not enough points to accept offer" });
+        }
+        // Handle points for accepting
+        if (post.type === "offer") {
+          try {
+            // Notification for accepting an offer
+            await notificationController.createNotification(
+              {
+                body: {
+                  userId: userId,
+                  message: `You have accepted a babysitting offer for ${new Date(
+                    post.dateTime
+                  ).toLocaleString()}.`,
+                },
+              },
+              { status: () => ({ json: () => {} }) }
+            );
+
+            await pointsController.handleOfferPoints(userId, post.hoursNeeded);
+            await notificationController.notifyPointsChange(
+              userId,
+              -post.hoursNeeded,
+              "accepting a babysitting offer"
+            );
+          } catch (error) {
+            return res.status(400).json({ message: error.message });
           }
-          await pointsController.updatePoints(userId, -post.hoursNeeded);
+        } else {
+          // Notification for accepting a request
+          await notificationController.createNotification(
+            {
+              body: {
+                userId: userId,
+                message: `You have accepted to provide babysitting on ${new Date(
+                  post.dateTime
+                ).toLocaleString()}.`,
+              },
+            },
+            { status: () => ({ json: () => {} }) }
+          );
         }
       }
 
-      // Handle points for completion
+      // Handle completions
       if (status === "completed") {
+        // Create status notifications
+        await notificationController.notifyStatusChange(
+          post.postedBy,
+          post,
+          status
+        );
+        if (post.acceptedBy) {
+          await notificationController.notifyStatusChange(
+            post.acceptedBy,
+            post,
+            status
+          );
+        }
+
+        // Handle points for completion
         if (post.type === "offer") {
-          // For offer posts: award points to the post owner (who did the babysitting)
           await pointsController.updatePoints(post.postedBy, post.hoursNeeded);
+          await notificationController.notifyPointsChange(
+            post.postedBy,
+            post.hoursNeeded,
+            "completing your babysitting offer"
+          );
         } else if (post.type === "request") {
-          // For request posts: award points to the acceptedBy user (who did the babysitting)
           await pointsController.updatePoints(
             post.acceptedBy,
             post.hoursNeeded
+          );
+          await notificationController.notifyPointsChange(
+            post.acceptedBy,
+            post.hoursNeeded,
+            "completing the babysitting session"
           );
         }
       }
@@ -316,123 +395,6 @@ const postController = {
         },
         { new: true }
       );
-
-      // Create notifications based on status
-      if (status === "accepted") {
-        if (post.type === "offer") {
-          // Notify creator
-          await notificationController.createNotification(
-            {
-              body: {
-                userId: post.postedBy,
-                message: `Your babysitting offer for ${new Date(
-                  post.dateTime
-                ).toLocaleString()} has been accepted.`,
-              },
-            },
-            { status: () => ({ json: () => {} }) }
-          );
-
-          // Notify acceptor
-          await notificationController.createNotification(
-            {
-              body: {
-                userId: userId,
-                message: `You have accepted a babysitting offer for ${new Date(
-                  post.dateTime
-                ).toLocaleString()}. ${
-                  post.hoursNeeded
-                } points have been deducted from your account.`,
-              },
-            },
-            { status: () => ({ json: () => {} }) }
-          );
-        } else {
-          // Notify request creator
-          await notificationController.createNotification(
-            {
-              body: {
-                userId: post.postedBy,
-                message: `Your request for a babysitter on ${new Date(
-                  post.dateTime
-                ).toLocaleString()} has been accepted.`,
-              },
-            },
-            { status: () => ({ json: () => {} }) }
-          );
-
-          // Notify acceptor
-          await notificationController.createNotification(
-            {
-              body: {
-                userId: userId,
-                message: `You have accepted to provide babysitting on ${new Date(
-                  post.dateTime
-                ).toLocaleString()}.`,
-              },
-            },
-            { status: () => ({ json: () => {} }) }
-          );
-        }
-      } else if (status === "completed") {
-        if (post.type === "offer") {
-          // Notify creator
-          await notificationController.createNotification(
-            {
-              body: {
-                userId: post.postedBy,
-                message: `Your babysitting offer for ${new Date(
-                  post.dateTime
-                ).toLocaleString()} has been marked as completed. ${
-                  post.hoursNeeded
-                } points have been credited to your account.`,
-              },
-            },
-            { status: () => ({ json: () => {} }) }
-          );
-
-          // Notify acceptor
-          await notificationController.createNotification(
-            {
-              body: {
-                userId: post.acceptedBy,
-                message: `The babysitting offer you accepted for ${new Date(
-                  post.dateTime
-                ).toLocaleString()} has been completed.`,
-              },
-            },
-            { status: () => ({ json: () => {} }) }
-          );
-        } else {
-          // Notify request creator
-          await notificationController.createNotification(
-            {
-              body: {
-                userId: post.postedBy,
-                message: `Your babysitting request for ${new Date(
-                  post.dateTime
-                ).toLocaleString()} has been completed.`,
-              },
-            },
-            { status: () => ({ json: () => {} }) }
-          );
-
-          // Notify acceptor
-          await notificationController.createNotification(
-            {
-              body: {
-                userId: post.acceptedBy,
-                message: `The babysitting session you provided on ${new Date(
-                  post.dateTime
-                ).toLocaleString()} has been marked as completed. ${
-                  post.hoursNeeded
-                } points have been credited to your account.`,
-              },
-            },
-            { status: () => ({ json: () => {} }) }
-          );
-        }
-      }
 
       // Emit socket events
       io.to(post.postedBy.toString()).emit("notify-post-status-update", {
