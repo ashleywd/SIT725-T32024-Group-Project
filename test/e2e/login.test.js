@@ -4,6 +4,8 @@ const { test, expect } = require('@playwright/test');
 test.describe('Login Functionality', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the login page before each test
+    const { user, generatedToken } = await insertTestUser("testUser", "password123");
+    token = generatedToken;
     await page.goto('/login'); 
   });
 
@@ -19,9 +21,8 @@ test.describe('Login Functionality', () => {
 
   // Test login with valid credentials
   test('should log in successfully with valid credentials', async ({ page }) => {
-    // Fill in valid username and password
-    await page.fill('input[name="username"]', 'validUsername');
-    await page.fill('input[name="password"]', 'validPassword');
+        await page.fill('#username', 'validUsername');
+    await page.fill('#password', 'validPassword');
     
     await page.click('button[type="submit"]');
 
