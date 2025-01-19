@@ -1,10 +1,13 @@
 const { test, expect } = require('@playwright/test');
+const { insertTestUser } = require('../../testUtils'); // Adjust the path if necessary
 
 // Define the test block
 test.describe('Login Functionality', () => {
+  let token;
+
   test.beforeEach(async ({ page }) => {
-    // Navigate to the login page before each test
-    const { user, generatedToken } = await insertTestUser("testUser", "password123");
+    // Insert a test user and navigate to the login page before each test
+    const { user, token: generatedToken } = await insertTestUser("testUser", "password123");
     token = generatedToken;
     await page.goto('/login'); 
   });
@@ -21,11 +24,10 @@ test.describe('Login Functionality', () => {
 
   // Test login with valid credentials
   test('should log in successfully with valid credentials', async ({ page }) => {
-        await page.fill('#username', 'validUsername');
-    await page.fill('#password', 'validPassword');
+    await page.fill('#username', 'testUser');
+    await page.fill('#password', 'password123');
     
     await page.click('button[type="submit"]');
-
     
     await page.waitForURL('/dashboard'); 
     const url = page.url();
@@ -34,15 +36,33 @@ test.describe('Login Functionality', () => {
 
   // Test login with invalid credentials
   test('should show error message for invalid credentials', async ({ page }) => {
-    
-    await page.fill('input[name="username"]', 'invalidUsername');
-    await page.fill('input[name="password"]', 'invalidPassword');
+    await page.fill('#username', 'invalidUsername');
+    await page.fill('#password', 'invalidPassword');
 
     await page.click('button[type="submit"]');
 
-    
     await expect(page.locator('.error-message')).toBeVisible();
     const errorText = await page.textContent('.error-message');
     expect(errorText).toBe('Invalid username or password.'); 
+  });
+
+  // Test login with missing username
+  test('should show error message for missing username', async ({ page }) => {
+    await page.fill('#password', 'password123');
+    await page.click('button[type="submit"]');
+
+    await expect(page.locator('.error-message')).toBeVisible();
+    const errorText = await page.textContent('.error-message');
+    expect(errorText).toBe('Username and password are required.');
+  });
+
+  // Test login with missing password
+  test('should show error message for missing password', async ({ page }) => {
+    await page.fill('#username', 'testUser');
+    await page.click('button[type="submit"]');
+
+    await expect(page.locator('.error-message')).toBeVisible();
+    const errorText = await page.textContent('.error-message');
+    expect(errorText).toBe('Username and password are required.');
   });
 });
