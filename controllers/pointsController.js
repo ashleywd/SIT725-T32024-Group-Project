@@ -35,6 +35,30 @@ const pointsController = {
       throw error;
     }
   },
+  handleRequestPoints: async (userId, pointsNeeded) => {
+    const hasEnoughPoints = await pointsController.checkPoints(
+      userId,
+      pointsNeeded
+    );
+    if (!hasEnoughPoints) {
+      throw new Error("You do not have enough points to create this request.");
+    }
+    // Single point deduction
+    await pointsController.updatePoints(userId, -pointsNeeded);
+    return true;
+  },
+
+  handleOfferPoints: async (userId, pointsNeeded) => {
+    const hasEnoughPoints = await pointsController.checkPoints(
+      userId,
+      pointsNeeded
+    );
+    if (!hasEnoughPoints) {
+      throw new Error("Not enough points to accept offer");
+    }
+    await pointsController.updatePoints(userId, -pointsNeeded);
+    return true;
+  },
 };
 
 module.exports = pointsController;

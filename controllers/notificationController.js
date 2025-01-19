@@ -66,6 +66,75 @@ const notificationController = {
         .json({ message: "Error deleting notification", error: error.message });
     }
   },
+  notifyPointsChange: async (userId, points, reason) => {
+    const isDeduction = points < 0;
+    const message = isDeduction
+      ? `${Math.abs(points)} points have been deducted for ${reason}.`
+      : `${points} points have been credited for ${reason}.`;
+
+    await notificationController.createNotification(
+      {
+        body: {
+          userId,
+          message,
+        },
+      },
+      { status: () => ({ json: () => {} }) }
+    );
+  },
+
+  notifyStatusChange: async (userId, post, status) => {
+    let message;
+    const dateString = new Date(post.dateTime).toLocaleString();
+
+    if (status === "accepted") {
+      if (post.type === "offer") {
+        message =
+          userId === post.postedBy
+            ? `Your babysitting offer for ${dateString} has been accepted.`
+            : `You have accepted a babysitting offer for ${dateString}.`;
+      } else {
+        message =
+          userId === post.postedBy
+            ? `Your request for a babysitter on ${dateString} has been accepted.`
+            : `You have accepted to provide babysitting on ${dateString}.`;
+      }
+    } else if (status === "completed") {
+      if (post.type === "offer") {
+        message =
+          userId === post.postedBy
+            ? `Your babysitting offer for ${dateString} has been marked as completed.`
+            : `The babysitting offer you accepted for ${dateString} has been completed.`;
+      } else {
+        message =
+          userId === post.postedBy
+            ? `Your babysitting request for ${dateString} has been completed.`
+            : `The babysitting session you provided on ${dateString} has been marked as completed.`;
+      }
+    } else if (status === "cancelled") {
+      if (post.type === "offer") {
+        message =
+          userId === post.postedBy
+            ? `Your babysitting offer for ${dateString} has been cancelled.`
+            : `The babysitting offer you accepted for ${dateString} has been cancelled.`;
+      } else {
+        message =
+          userId === post.postedBy
+            ? `Your babysitting request for ${dateString} has been cancelled.`
+            : `The babysitting request you accepted for ${dateString} has been cancelled.`; // Missing this message
+      }
+    }
+
+    await notificationController.createNotification(
+      {
+        body: {
+          userId,
+          message,
+        },
+      },
+      { status: () => ({ json: () => {} }) }
+    );
+  },
 };
 
 module.exports = notificationController;
