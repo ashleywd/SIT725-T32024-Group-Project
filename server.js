@@ -1,4 +1,4 @@
-require("dotenv").config();
+const dotenv = require("dotenv")
 const express = require("express");
 const path = require("node:path");
 const app = express();
@@ -15,6 +15,12 @@ const { Server } = require("socket.io");
 const { createServer } = require("node:http");
 const verifyToken = require("./middleware/socketMiddleware");
 const socketController = require("./controllers/socketController");
+
+if (process.env.NODE_ENV === 'test') {
+  dotenv.config({ path: './.env.test' });
+} else {
+  dotenv.config(); // Default to .env
+}
 
 connectDB();
 
