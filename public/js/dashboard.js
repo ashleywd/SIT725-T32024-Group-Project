@@ -266,18 +266,18 @@ const displayPosts = async () => {
 };
 
 const handleNotifyAcceptPost = (data) => {
-  handleStatusNotification(data.updatedPost); // Just handle the toast
+  handleStatusNotification(data.updatedPost);
   displayPosts();
   resetScreenPosition();
-  displayNotifications(); // This updates notifications
-  updatePointsDisplay(); // This updates points
+  displayNotifications();
+  updatePointsDisplay();
 };
 
 const handlePostsUpdated = () => {
   resetScreenPosition();
-  filterAndRenderPosts(); // This handles post display
-  displayNotifications(); // This updates notifications
-  updatePointsDisplay(); // This updates points
+  filterAndRenderPosts();
+  displayNotifications();
+  updatePointsDisplay();
 };
 
 verifyUserAuthentication();
