@@ -33,21 +33,15 @@ const handleSubmitForm = async function (e) {
       },
       body: JSON.stringify(formData),
     });
-    const result = await response.json();
 
+    const result = await response.json();
     if (!response.ok) {
       throw new Error(result.message || "Unknown error");
     }
 
     const modal = M.Modal.getInstance(document.getElementById("modalForm"));
     modal.close();
-    if (formData.type === "request") {
-      M.toast({
-        html: `Request post is created successfully and you have been deducted ${formData.hoursNeeded} points`,
-      });
-    } else {
-      M.toast({ html: "Offer post created successfully!" });
-    }
+    M.toast({ html: result.message || "Post created successfully!" });
     postForm.reset();
     updatePointsDisplay();
     displayPosts();
