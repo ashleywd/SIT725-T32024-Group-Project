@@ -121,25 +121,23 @@ const postController = {
       // Get original post
       const originalPost = await Post.findById(postId);
 
-      // Handle points for request posts
-      if (type === "request") {
+      // Validate hours change
+      if (type === "request" && hoursNeeded !== originalPost.hoursNeeded) {
         const pointDifference = hoursNeeded - originalPost.hoursNeeded;
 
         if (pointDifference > 0) {
-          // Check and deduct additional points
-          await pointsController.handleRequestPoints(userId, pointDifference);
-
-          // Notify about point deduction
-          await notificationController.notifyPointsChange(
-            userId,
-            -pointDifference,
-            "updating your babysitting request"
-          );
+          try {
+            await pointsController.handleRequestPoints(userId, pointDifference);
+            await notificationController.notifyPointsChange(
+              userId,
+              -pointDifference,
+              "updating your babysitting request"
+            );
+          } catch (error) {
+            return res.status(400).json({ message: error.message });
+          }
         } else if (pointDifference < 0) {
-          // Credit points back
           await pointsController.updatePoints(userId, -pointDifference);
-
-          // Create refund notification
           await notificationController.notifyPointsChange(
             userId,
             Math.abs(pointDifference),
