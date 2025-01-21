@@ -5,6 +5,7 @@ import {
   initializeMaterializeComponent,
   resetScreenPosition,
   updatePointsDisplay,
+  getPostById,
 } from "./global.js";
 
 import { activateWebSocket } from "./socket-client.js";
@@ -30,6 +31,7 @@ const handleSubmitForm = async function (e) {
 
   try {
     const userToken = localStorage.getItem("token");
+    const currentUserId = JSON.parse(atob(userToken.split(".")[1])).userId;
 
     // Points validation first
     if (formData.type === "request") {
@@ -63,9 +65,9 @@ const handleSubmitForm = async function (e) {
       );
     }
 
-    // Create single consolidated notification
+    // Create notification only for post creator
     await createNotification(
-      null,
+      currentUserId, // Use existing user's ID instead of null
       `You have created a new ${formData.type} post for ${new Date(
         formData.dateTime
       ).toLocaleString()}.${
@@ -86,7 +88,6 @@ const handleSubmitForm = async function (e) {
     postForm.reset();
     updatePointsDisplay();
     displayPosts();
-    displayNotifications();
   } catch (error) {
     console.error("Error creating post:", error);
     M.toast({ html: error.message, classes: "red" });
@@ -234,6 +235,7 @@ const handleAcceptPost = async (postInfo) => {
   try {
     const decodedData = decodeURIComponent(postInfo);
     const { postId, postedBy } = JSON.parse(decodedData);
+    const currentUserId = JSON.parse(atob(userToken.split(".")[1])).userId;
 
     // Get post and validate points first
     const post = await getPostById(postId);
@@ -259,12 +261,26 @@ const handleAcceptPost = async (postInfo) => {
       throw new Error(errorData.message || "Failed to accept post");
     }
 
-    // Create acceptance notification
+    const result = await response.json();
+
+    // Create notification for post creator
     await createNotification(
-      null,
-      `You have accepted ${post.type === "offer" ? "a" : "to provide"} 
-      babysitting ${post.type === "offer" ? "offer" : ""} 
-      for ${new Date(post.dateTime).toLocaleString()}.${
+      post.postedBy,
+      `Your ${post.type} for ${new Date(
+        post.dateTime
+      ).toLocaleString()} has been accepted.`,
+      userToken,
+      window.location.origin
+    );
+
+    // Create notification for acceptor (current user)
+    await createNotification(
+      currentUserId,
+      `You have accepted ${
+        post.type === "offer" ? "a" : "to provide"
+      } babysitting ${post.type === "offer" ? "offer" : ""} for ${new Date(
+        post.dateTime
+      ).toLocaleString()}.${
         post.type === "offer"
           ? ` ${post.hoursNeeded} points will be deducted from your account.`
           : ""
@@ -273,17 +289,20 @@ const handleAcceptPost = async (postInfo) => {
       window.location.origin
     );
 
-    // Update points if offer (only after successful post update)
+    // Update points if offer
     if (post.type === "offer") {
       await pointsService.updatePoints(
         -post.hoursNeeded,
         "accepting a babysitting offer",
-        false // Suppress points notification
+        false // Suppress separate points notification
       );
     }
 
-    // Show success message
+    // Update UI
     M.toast({ html: "Post accepted successfully", classes: "green" });
+    displayPosts();
+    displayNotifications();
+    updatePointsDisplay();
   } catch (error) {
     console.error("Error accepting post:", error);
     M.toast({ html: error.message || "Failed to accept post", classes: "red" });

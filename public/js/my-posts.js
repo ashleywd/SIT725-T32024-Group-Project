@@ -4,6 +4,7 @@ import {
   getStatusColor,
   initializeMaterializeComponent,
   updatePointsDisplay,
+  getPostById,
 } from "./global.js";
 
 import { activateWebSocket } from "./socket-client.js";
@@ -20,8 +21,8 @@ verifyUserAuthentication();
 
 const getMyPosts = async () => {
   try {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    const userToken = localStorage.getItem("token");
+    if (!userToken) {
       window.location.href = "/login";
       return;
     }
@@ -29,7 +30,7 @@ const getMyPosts = async () => {
     const response = await fetch("/api/posts/my-posts", {
       headers: {
         "Content-Type": "application/json",
-        Authorization: token,
+        Authorization: userToken,
       },
     });
 
@@ -167,9 +168,9 @@ const getStatusActions = (post, dateTime) => {
 
     case "cancelled_offer":
       return {
-        creatorMessage: `You have cancelled your offer post for ${dateTime}.`,
+        creatorMessage: `You have cancelled your babysitting offer for ${dateTime}.`,
         acceptorMessage: post.acceptedBy
-          ? `The babysitting offer you accepted for ${dateTime} has been cancelled. ${post.hoursNeeded} points have been refunded.`
+          ? `The babysitting offer you accepted for ${dateTime} has been cancelled. ${post.hoursNeeded} points have been refunded to your account.`
           : null,
         pointsUpdate: post.acceptedBy
           ? {
@@ -182,14 +183,14 @@ const getStatusActions = (post, dateTime) => {
 
     case "cancelled_request":
       return {
-        creatorMessage: `You have cancelled your request post for ${dateTime}. ${post.hoursNeeded} points have been refunded.`,
+        creatorMessage: `Your babysitting request for ${dateTime} has been cancelled. ${post.hoursNeeded} points have been refunded to your account.`,
         acceptorMessage: post.acceptedBy
           ? `The babysitting request you accepted for ${dateTime} has been cancelled.`
           : null,
         pointsUpdate: {
           amount: post.hoursNeeded,
           recipient: post.postedBy,
-          reason: "cancelling your babysitting request",
+          reason: "cancelled babysitting request refund",
         },
       };
 
@@ -260,20 +261,25 @@ const handleMarkCompleted = async (postId, postedBy) => {
 
 const handleEditPost = async (postId) => {
   try {
-    const token = localStorage.getItem("token");
+    const userToken = localStorage.getItem("token");
+    const currentUserId = JSON.parse(atob(userToken.split(".")[1])).userId;
     const dateTimeInput = document.getElementById("editDateTime").value;
     const selectedDate = new Date(dateTimeInput);
     const originalPost = await getPostById(postId);
     const newHours = parseInt(document.getElementById("editHoursNeeded").value);
-    const pointDifference = newHours - originalPost.hoursNeeded;
+    const isRequestPost =
+      document.getElementById("editType").value === "request";
+    const wasRequestPost = originalPost.type === "request";
 
-    // Points validation for requests first
-    if (document.getElementById("editType").value === "request") {
-      if (pointDifference > 0) {
-        const currentPoints = await pointsService.getPoints();
-        if (currentPoints < pointDifference) {
-          throw new Error("Insufficient points for increasing hours");
-        }
+    /// Only calculate point difference if both old and new posts are requests
+    const pointDifference =
+      isRequestPost && wasRequestPost ? newHours - originalPost.hoursNeeded : 0;
+
+    // Points validation for requests only
+    if (isRequestPost && wasRequestPost && pointDifference > 0) {
+      const currentPoints = await pointsService.getPoints();
+      if (currentPoints < pointDifference) {
+        throw new Error("Insufficient points for increasing hours");
       }
     }
 
@@ -287,7 +293,7 @@ const handleEditPost = async (postId) => {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: token,
+        Authorization: userToken,
       },
       body: JSON.stringify({
         type: document.getElementById("editType").value,
@@ -302,9 +308,9 @@ const handleEditPost = async (postId) => {
       throw new Error(result.message || "Failed to update post");
     }
 
-    // Create notification about post update
+    // Create notification about post update with specific userId
     await createNotification(
-      null,
+      currentUserId, // Use currentUserId instead of null
       `You have updated your ${result.type} post for ${new Date(
         result.dateTime
       ).toLocaleString()}.${
@@ -314,21 +320,19 @@ const handleEditPost = async (postId) => {
             }.`
           : ""
       }`,
-      token,
+      userToken,
       window.location.origin
     );
 
-    // Handle points updates after post update succeeds
-    if (document.getElementById("editType").value === "request") {
+    // Handle points updates only if both old and new posts are requests
+    if (isRequestPost && wasRequestPost) {
       if (pointDifference > 0) {
-        // Deduct points for increased hours
         await pointsService.updatePoints(
           -pointDifference,
           "updating your babysitting request",
           false
         );
       } else if (pointDifference < 0) {
-        // Refund points for reduced hours
         await pointsService.updatePoints(
           Math.abs(pointDifference),
           "reducing hours in your babysitting request",
@@ -361,20 +365,20 @@ const handleEditPost = async (postId) => {
 
 const handleCancelPost = async (postId) => {
   try {
-    // 1. Confirmation validation
     if (!confirm("Are you sure you want to cancel this post?")) {
       return;
     }
 
     const originalPost = await getPostById(postId);
     const dateTime = new Date(originalPost.dateTime).toLocaleString();
-    const token = localStorage.getItem("token");
+    const userToken = localStorage.getItem("token");
+    const currentUserId = JSON.parse(atob(userToken.split(".")[1])).userId;
 
-    // 2. Update post status first
+    // Update post status
     const response = await fetch(`/api/posts/cancel/${postId}`, {
       method: "PUT",
       headers: {
-        Authorization: token,
+        Authorization: userToken,
       },
     });
 
@@ -382,7 +386,7 @@ const handleCancelPost = async (postId) => {
       throw new Error("Failed to cancel post");
     }
 
-    // 3. Get status actions
+    // Get status actions for notifications and points
     const actions = getStatusActions(
       {
         ...originalPost,
@@ -391,38 +395,34 @@ const handleCancelPost = async (postId) => {
       dateTime
     );
 
-    // 4. Create notifications
+    // Create notification for post creator
     await createNotification(
-      null,
+      currentUserId,
       actions.creatorMessage,
-      token,
+      userToken,
       window.location.origin
     );
 
+    // Create notification for acceptor if post was accepted
     if (originalPost.acceptedBy && actions.acceptorMessage) {
       await createNotification(
         originalPost.acceptedBy,
         actions.acceptorMessage,
-        token,
+        userToken,
         window.location.origin
       );
     }
 
-    // 5. Update points if needed
+    // Update points based on post type
     if (actions.pointsUpdate) {
       await pointsService.updatePoints(
         actions.pointsUpdate.amount,
         actions.pointsUpdate.reason,
-        false
+        false // Suppress separate points notification
       );
     }
 
-    // 6. Update UI
-    M.toast({
-      html: "Post cancelled successfully",
-      classes: "green",
-    });
-
+    // Update UI
     displayMyPosts();
     updatePointsDisplay();
     displayNotifications();
@@ -437,24 +437,6 @@ const handleClickCompletePost = (e) => {
   const postId = e.currentTarget.dataset.postId;
   const postedBy = e.currentTarget.dataset.postPostedBy;
   handleMarkCompleted(postId, postedBy);
-};
-
-const getPostById = async (postId) => {
-  try {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`/api/posts/${postId}`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-        method: "GET",
-      },
-    });
-    const post = await response.json();
-    return post;
-  } catch (error) {
-    console.error("Error fetching post:", error);
-    M.toast({ html: "Failed to fetch post", classes: "red" });
-  }
 };
 
 const handleSaveEdits = (e) => {

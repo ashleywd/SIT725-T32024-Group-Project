@@ -63,6 +63,29 @@ const updatePointsDisplay = async () => {
   }
 };
 
+const getPostById = async (postId) => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`/api/posts/${postId}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch post");
+    }
+
+    const post = await response.json();
+    return post;
+  } catch (error) {
+    console.error("Error fetching post:", error);
+    M.toast({ html: "Failed to fetch post", classes: "red" });
+    throw error;
+  }
+};
+
 export {
   initializeMaterializeComponent,
   verifyUserAuthentication,
@@ -70,4 +93,5 @@ export {
   getStatusColor,
   resetScreenPosition,
   updatePointsDisplay,
+  getPostById,
 };
