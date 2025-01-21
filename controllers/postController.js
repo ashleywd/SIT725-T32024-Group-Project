@@ -18,30 +18,30 @@ const postController = {
       }
 
       // Create notification for post owner (for both types)
-      await notificationController.createNotification(
-        {
-          body: {
-            userId: req.userId,
-            message: `You have created a new ${type} post for ${new Date(
-              dateTime
-            ).toLocaleString()}.`,
-          },
-        },
-        { status: () => ({ json: () => {} }) }
-      );
+      // await notificationController.createNotification(
+      //   {
+      //     body: {
+      //       userId: req.userId,
+      //       message: `You have created a new ${type} post for ${new Date(
+      //         dateTime
+      //       ).toLocaleString()}.`,
+      //     },
+      //   },
+      //   { status: () => ({ json: () => {} }) }
+      // );
 
-      if (type === "request") {
-        try {
-          await pointsController.handleRequestPoints(userId, hoursNeeded);
-          await notificationController.notifyPointsChange(
-            userId,
-            -hoursNeeded,
-            "your babysitting request"
-          );
-        } catch (error) {
-          return res.status(400).json({ message: error.message });
-        }
-      }
+      // if (type === "request") {
+      //   try {
+      //     await pointsController.handleRequestPoints(userId, hoursNeeded);
+      //     await notificationController.notifyPointsChange(
+      //       userId,
+      //       -hoursNeeded,
+      //       "your babysitting request"
+      //     );
+      //   } catch (error) {
+      //     return res.status(400).json({ message: error.message });
+      //   }
+      // }
 
       // Create and save the post
       const newPost = new Post({
@@ -122,32 +122,31 @@ const postController = {
       const originalPost = await Post.findById(postId);
 
       // Validate hours change
-      if (type === "request" && hoursNeeded !== originalPost.hoursNeeded) {
-        const pointDifference = hoursNeeded - originalPost.hoursNeeded;
+      // if (type === "request" && hoursNeeded !== originalPost.hoursNeeded) {
+      //   const pointDifference = hoursNeeded - originalPost.hoursNeeded;
 
-        if (pointDifference > 0) {
-          try {
-            await pointsController.handleRequestPoints(userId, pointDifference);
-            await notificationController.notifyPointsChange(
-              userId,
-              -pointDifference,
-              "updating your babysitting request"
-            );
-          } catch (error) {
-            return res.status(400).json({ message: error.message });
-          }
-        } else if (pointDifference < 0) {
-          await pointsController.updatePoints(userId, -pointDifference);
-          await notificationController.notifyPointsChange(
-            userId,
-            Math.abs(pointDifference),
-            "reducing hours in your babysitting request"
-          );
-        }
-      }
+      //   if (pointDifference > 0) {
+      //     try {
+      //       await pointsController.handleRequestPoints(userId, pointDifference);
+      //       await notificationController.notifyPointsChange(
+      //         userId,
+      //         -pointDifference,
+      //         "updating your babysitting request"
+      //       );
+      //     } catch (error) {
+      //       return res.status(400).json({ message: error.message });
+      //     }
+      //   } else if (pointDifference < 0) {
+      //     await pointsController.updatePoints(userId, -pointDifference);
+      //     await notificationController.notifyPointsChange(
+      //       userId,
+      //       Math.abs(pointDifference),
+      //       "reducing hours in your babysitting request"
+      //     );
+      //   }
+      // }
 
       // Validate date
-
       const selectedDate = new Date(dateTime);
       if (selectedDate < new Date()) {
         return res.status(400).json({
@@ -187,83 +186,83 @@ const postController = {
         { new: true }
       );
 
-      // Handle request cancellations
-      if (post.type === "request") {
-        await pointsController.updatePoints(req.userId, post.hoursNeeded);
+      // // Handle request cancellations
+      // if (post.type === "request") {
+      //   await pointsController.updatePoints(req.userId, post.hoursNeeded);
 
-        // Create notification for post owner about cancellation
-        await notificationController.createNotification(
-          {
-            body: {
-              userId: req.userId,
-              message: `You have cancelled your ${
-                post.type
-              } post for ${new Date(post.dateTime).toLocaleString()}.`,
-            },
-          },
-          { status: () => ({ json: () => {} }) }
-        );
+      //   // Create notification for post owner about cancellation
+      //   await notificationController.createNotification(
+      //     {
+      //       body: {
+      //         userId: req.userId,
+      //         message: `You have cancelled your ${
+      //           post.type
+      //         } post for ${new Date(post.dateTime).toLocaleString()}.`,
+      //       },
+      //     },
+      //     { status: () => ({ json: () => {} }) }
+      //   );
 
-        // Notify creator about refund
-        await notificationController.notifyPointsChange(
-          req.userId,
-          post.hoursNeeded,
-          "cancelling your babysitting request"
-        );
+      //   // Notify creator about refund
+      //   await notificationController.notifyPointsChange(
+      //     req.userId,
+      //     post.hoursNeeded,
+      //     "cancelling your babysitting request"
+      //   );
 
-        // Notify acceptor about cancellation
-        if (post.acceptedBy) {
-          await notificationController.notifyStatusChange(
-            post.acceptedBy,
-            post,
-            "cancelled"
-          );
+      //   // Notify acceptor about cancellation
+      //   if (post.acceptedBy) {
+      //     await notificationController.notifyStatusChange(
+      //       post.acceptedBy,
+      //       post,
+      //       "cancelled"
+      //     );
 
-          io.to(post.acceptedBy.toString()).emit("notify-post-status-update", {
-            updatedPost: post,
-            type: "cancel",
-          });
-        }
-      } else if (post.type === "offer") {
-        // Create notification for post owner about cancellation
-        await notificationController.createNotification(
-          {
-            body: {
-              userId: req.userId,
-              message: `You have cancelled your ${
-                post.type
-              } post for ${new Date(post.dateTime).toLocaleString()}.`,
-            },
-          },
-          { status: () => ({ json: () => {} }) }
-        );
+      //     io.to(post.acceptedBy.toString()).emit("notify-post-status-update", {
+      //       updatedPost: post,
+      //       type: "cancel",
+      //     });
+      //   }
+      // } else if (post.type === "offer") {
+      //   // Create notification for post owner about cancellation
+      //   await notificationController.createNotification(
+      //     {
+      //       body: {
+      //         userId: req.userId,
+      //         message: `You have cancelled your ${
+      //           post.type
+      //         } post for ${new Date(post.dateTime).toLocaleString()}.`,
+      //       },
+      //     },
+      //     { status: () => ({ json: () => {} }) }
+      //   );
 
-        if (post.acceptedBy) {
-          await pointsController.updatePoints(
-            post.acceptedBy,
-            post.hoursNeeded
-          );
+      //   if (post.acceptedBy) {
+      //     await pointsController.updatePoints(
+      //       post.acceptedBy,
+      //       post.hoursNeeded
+      //     );
 
-          // Notify acceptor about cancellation status
-          await notificationController.notifyStatusChange(
-            post.acceptedBy,
-            post,
-            "cancelled"
-          );
+      //     // Notify acceptor about cancellation status
+      //     await notificationController.notifyStatusChange(
+      //       post.acceptedBy,
+      //       post,
+      //       "cancelled"
+      //     );
 
-          // Notify acceptor about refund
-          await notificationController.notifyPointsChange(
-            post.acceptedBy,
-            post.hoursNeeded,
-            "the cancelled babysitting offer"
-          );
+      //     // Notify acceptor about refund
+      //     await notificationController.notifyPointsChange(
+      //       post.acceptedBy,
+      //       post.hoursNeeded,
+      //       "the cancelled babysitting offer"
+      //     );
 
-          io.to(post.acceptedBy.toString()).emit("notify-post-status-update", {
-            updatedPost: post,
-            type: "cancel",
-          });
-        }
-      }
+      //     io.to(post.acceptedBy.toString()).emit("notify-post-status-update", {
+      //       updatedPost: post,
+      //       type: "cancel",
+      //     });
+      //   }
+      // }
 
       // Emit socket events for post owner
       io.to(req.userId.toString()).emit("notify-post-status-update", {
@@ -290,98 +289,98 @@ const postController = {
       const userId = req.userId;
       const post = await Post.findById(postId);
 
-      // Handle acceptances
-      if (status === "accepted") {
-        // Create status notifications
-        await notificationController.notifyStatusChange(
-          post.postedBy,
-          post,
-          status
-        );
-        if (post.acceptedBy) {
-          await notificationController.notifyStatusChange(
-            post.acceptedBy,
-            post,
-            status
-          );
-        }
-        // Handle points for accepting
-        if (post.type === "offer") {
-          try {
-            // Notification for accepting an offer
-            await notificationController.createNotification(
-              {
-                body: {
-                  userId: userId,
-                  message: `You have accepted a babysitting offer for ${new Date(
-                    post.dateTime
-                  ).toLocaleString()}.`,
-                },
-              },
-              { status: () => ({ json: () => {} }) }
-            );
+      // // Handle acceptances
+      // if (status === "accepted") {
+      //   // Create status notifications
+      //   await notificationController.notifyStatusChange(
+      //     post.postedBy,
+      //     post,
+      //     status
+      //   );
+      //   if (post.acceptedBy) {
+      //     await notificationController.notifyStatusChange(
+      //       post.acceptedBy,
+      //       post,
+      //       status
+      //     );
+      //   }
+      //   // Handle points for accepting
+      //   if (post.type === "offer") {
+      //     try {
+      //       // Notification for accepting an offer
+      //       await notificationController.createNotification(
+      //         {
+      //           body: {
+      //             userId: userId,
+      //             message: `You have accepted a babysitting offer for ${new Date(
+      //               post.dateTime
+      //             ).toLocaleString()}.`,
+      //           },
+      //         },
+      //         { status: () => ({ json: () => {} }) }
+      //       );
 
-            await pointsController.handleOfferPoints(userId, post.hoursNeeded);
-            await notificationController.notifyPointsChange(
-              userId,
-              -post.hoursNeeded,
-              "accepting a babysitting offer"
-            );
-          } catch (error) {
-            return res.status(400).json({ message: error.message });
-          }
-        } else {
-          // Notification for accepting a request
-          await notificationController.createNotification(
-            {
-              body: {
-                userId: userId,
-                message: `You have accepted to provide babysitting on ${new Date(
-                  post.dateTime
-                ).toLocaleString()}.`,
-              },
-            },
-            { status: () => ({ json: () => {} }) }
-          );
-        }
-      }
+      //       await pointsController.handleOfferPoints(userId, post.hoursNeeded);
+      //       await notificationController.notifyPointsChange(
+      //         userId,
+      //         -post.hoursNeeded,
+      //         "accepting a babysitting offer"
+      //       );
+      //     } catch (error) {
+      //       return res.status(400).json({ message: error.message });
+      //     }
+      //   } else {
+      //     // Notification for accepting a request
+      //     await notificationController.createNotification(
+      //       {
+      //         body: {
+      //           userId: userId,
+      //           message: `You have accepted to provide babysitting on ${new Date(
+      //             post.dateTime
+      //           ).toLocaleString()}.`,
+      //         },
+      //       },
+      //       { status: () => ({ json: () => {} }) }
+      //     );
+      //   }
+      // }
 
-      // Handle completions
-      if (status === "completed") {
-        // Create status notifications
-        await notificationController.notifyStatusChange(
-          post.postedBy,
-          post,
-          status
-        );
-        if (post.acceptedBy) {
-          await notificationController.notifyStatusChange(
-            post.acceptedBy,
-            post,
-            status
-          );
-        }
+      // // Handle completions
+      // if (status === "completed") {
+      //   // Create status notifications
+      //   await notificationController.notifyStatusChange(
+      //     post.postedBy,
+      //     post,
+      //     status
+      //   );
+      //   if (post.acceptedBy) {
+      //     await notificationController.notifyStatusChange(
+      //       post.acceptedBy,
+      //       post,
+      //       status
+      //     );
+      //   }
 
-        // Handle points for completion
-        if (post.type === "offer") {
-          await pointsController.updatePoints(post.postedBy, post.hoursNeeded);
-          await notificationController.notifyPointsChange(
-            post.postedBy,
-            post.hoursNeeded,
-            "completing your babysitting offer"
-          );
-        } else if (post.type === "request") {
-          await pointsController.updatePoints(
-            post.acceptedBy,
-            post.hoursNeeded
-          );
-          await notificationController.notifyPointsChange(
-            post.acceptedBy,
-            post.hoursNeeded,
-            "completing the babysitting session"
-          );
-        }
-      }
+      //   // Handle points for completion
+      //   if (post.type === "offer") {
+      //     await pointsController.updatePoints(post.postedBy, post.hoursNeeded);
+      //     await notificationController.notifyPointsChange(
+      //       post.postedBy,
+      //       post.hoursNeeded,
+      //       "completing your babysitting offer"
+      //     );
+      //   } else if (post.type === "request") {
+      //     await pointsController.updatePoints(
+      //       post.acceptedBy,
+      //       post.hoursNeeded
+      //     );
+      //     await notificationController.notifyPointsChange(
+      //       post.acceptedBy,
+      //       post.hoursNeeded,
+      //       "completing the babysitting session"
+      //     );
+      //   }
+      // }
 
       // Update post status
       const io = req.app.get("io");

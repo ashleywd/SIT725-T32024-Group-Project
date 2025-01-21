@@ -10,6 +10,7 @@ const {
   postRoutes,
   accountRoutes,
   notificationRoutes,
+  pointsRoutes,
 } = require("./routes/");
 const { connectDB } = require("./config/db");
 const { Server } = require("socket.io");
@@ -40,6 +41,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/account", accountRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/points", pointsRoutes);
 
 // Error handlers
 app.use(handleError);

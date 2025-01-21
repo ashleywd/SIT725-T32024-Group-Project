@@ -1,52 +1,56 @@
 const User = require("../models/user");
 
 const pointsController = {
-  checkPoints: async (userId, pointsNeeded) => {
+  getPoints: async (req, res) => {
     try {
+      const { userId } = req;
       const user = await User.findById(userId);
-      return user.points >= pointsNeeded;
+      return res.status(200).json({ points: user.points });
     } catch (error) {
-      console.error("Error checking points:", error);
-      return false;
+      console.error("Error getting points:", error);
+      return res.status(500).json({ error: "Internal server error" });
     }
   },
 
-  updatePoints: async (userId, pointsChange) => {
+  updatePoints: async (req, res) => {
     try {
+      const { userId } = req;
+      const { points, reason, createNotification = true } = req.body;
+
       const user = await User.findByIdAndUpdate(
         userId,
-        { $inc: { points: pointsChange } },
+        { $inc: { points: points } },
         { new: true }
       );
-      return user.points;
+
+      // Only create notification if flag is true
+      if (createNotification) {
+        await fetch(`${req.protocol}://${req.get("host")}/api/notifications`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: req.header("Authorization"),
+          },
+          body: JSON.stringify({
+            userId,
+            message:
+              points > 0
+                ? `${points} points have been credited for ${reason}.`
+                : `${Math.abs(
+                    points
+                  )} points have been deducted for ${reason}.`,
+          }),
+        });
+      }
+
+      return res.status(200).json({
+        points: user.points,
+        message: "Points updated successfully",
+      });
     } catch (error) {
       console.error("Error updating points:", error);
-      throw error;
+      return res.status(500).json({ error: "Internal server error" });
     }
-  },
-  handleRequestPoints: async (userId, pointsNeeded) => {
-    const hasEnoughPoints = await pointsController.checkPoints(
-      userId,
-      pointsNeeded
-    );
-    if (!hasEnoughPoints) {
-      throw new Error("You do not have enough points to create this request.");
-    }
-    // Single point deduction
-    await pointsController.updatePoints(userId, -pointsNeeded);
-    return true;
-  },
-
-  handleOfferPoints: async (userId, pointsNeeded) => {
-    const hasEnoughPoints = await pointsController.checkPoints(
-      userId,
-      pointsNeeded
-    );
-    if (!hasEnoughPoints) {
-      throw new Error("Not enough points to accept offer");
-    }
-    await pointsController.updatePoints(userId, -pointsNeeded);
-    return true;
   },
 };
 

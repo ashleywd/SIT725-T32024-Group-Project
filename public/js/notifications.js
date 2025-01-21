@@ -153,7 +153,6 @@ const displayNotifications = async () => {
 };
 
 const handleStatusNotification = (updatedPost, type) => {
-  let toastMessage;
   const dateTime = new Date(updatedPost.dateTime).toLocaleString();
   const currentUserId = JSON.parse(
     atob(localStorage.getItem("token").split(".")[1])
@@ -163,40 +162,14 @@ const handleStatusNotification = (updatedPost, type) => {
   const isPostCreator = updatedPost.postedBy === currentUserId;
   const isPostAcceptor = updatedPost.acceptedBy === currentUserId;
 
-  if (!isPostCreator && !isPostAcceptor) {
-    return; // Exit if user hasn't interacted with this post
-  }
+  if (!isPostCreator && !isPostAcceptor) return;
 
-  if (updatedPost.status === "accepted") {
-    if (updatedPost.type === "offer") {
-      if (isPostCreator) {
-        toastMessage = `Your babysitting offer for ${dateTime} has been accepted`;
-      }
-      if (isPostAcceptor) {
-        toastMessage = `You have accepted a babysitting offer for ${dateTime}. ${updatedPost.hoursNeeded} points have been deducted from your account.`;
-      }
-    } else {
-      if (isPostCreator) {
-        toastMessage = `Your request for a babysitter on ${dateTime} has been accepted`;
-      }
-    }
-  } else if (updatedPost.status === "completed") {
-    if (updatedPost.type === "offer" && isPostCreator) {
-      toastMessage = `Your babysitting offer for ${dateTime} has been completed and ${updatedPost.hoursNeeded} points have been credited to your account.`;
-    } else if (updatedPost.type === "request" && isPostAcceptor) {
-      toastMessage = `The babysitting session you provided on ${dateTime} has been completed and ${updatedPost.hoursNeeded} points have been credited to your account.`;
-    }
-  } else if (updatedPost.status === "cancelled") {
-    if (updatedPost.type === "offer") {
-      if (isPostAcceptor) {
-        toastMessage = `The babysitting offer you accepted for ${dateTime} has been cancelled. ${updatedPost.hoursNeeded} points have been refunded.`;
-      }
-    } else {
-      if (isPostAcceptor) {
-        toastMessage = `The babysitting request you accepted for ${dateTime} has been cancelled.`;
-      }
-    }
-  }
+  let toastMessage = getStatusMessage(
+    updatedPost,
+    isPostCreator,
+    isPostAcceptor,
+    dateTime
+  );
 
   if (toastMessage) {
     M.toast({
@@ -206,4 +179,54 @@ const handleStatusNotification = (updatedPost, type) => {
   }
 };
 
-export { displayNotifications, handleStatusNotification };
+const getStatusMessage = (post, isCreator, isAcceptor, dateTime) => {
+  const messageKey = `${post.status}_${post.type}_${
+    isCreator ? "creator" : "acceptor"
+  }`;
+
+  switch (messageKey) {
+    case "accepted_offer_creator":
+      return `Your babysitting offer for ${dateTime} has been accepted`;
+
+    case "accepted_offer_acceptor":
+      return `You have accepted a babysitting offer for ${dateTime}. ${post.hoursNeeded} points have been deducted from your account.`;
+
+    case "accepted_request_creator":
+      return `Your request for a babysitter on ${dateTime} has been accepted`;
+
+    case "completed_offer_creator":
+      return `Your babysitting offer for ${dateTime} has been completed and ${post.hoursNeeded} points have been credited to your account.`;
+
+    case "completed_request_acceptor":
+      return `The babysitting session you provided on ${dateTime} has been completed and ${post.hoursNeeded} points have been credited to your account.`;
+
+    case "cancelled_offer_acceptor":
+      return `The babysitting offer you accepted for ${dateTime} has been cancelled. ${post.hoursNeeded} points have been refunded.`;
+
+    case "cancelled_request_acceptor":
+      return `The babysitting request you accepted for ${dateTime} has been cancelled.`;
+
+    default:
+      return null;
+  }
+};
+
+const createNotification = async (userId, message, token, baseUrl) => {
+  try {
+    await fetch(`${baseUrl}/api/notifications`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+      body: JSON.stringify({
+        userId,
+        message,
+      }),
+    });
+  } catch (error) {
+    console.error("Error creating notification:", error);
+  }
+};
+
+export { displayNotifications, handleStatusNotification, createNotification };
