@@ -1,17 +1,54 @@
 const getNotifications = async () => {
   try {
     const token = localStorage.getItem("token");
+    console.log("Fetching notifications...");
+
     const response = await fetch("/api/notifications", {
-      method: "GET",
       headers: {
         "Content-Type": "application/json",
         Authorization: token,
       },
     });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch notifications");
+    }
+
     const data = await response.json();
+    console.log("Fetched notifications:", data);
     return data;
   } catch (err) {
     console.error("Error fetching notifications:", err.message);
+    return [];
+  }
+};
+
+const createNotification = async (userId, message, token, baseUrl) => {
+  try {
+    console.log("Creating notification:", { userId, message });
+
+    const response = await fetch(`${baseUrl}/api/notifications`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+      body: JSON.stringify({
+        userId,
+        message,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to create notification");
+    }
+
+    const result = await response.json();
+    console.log("Notification created:", result);
+    return result;
+  } catch (error) {
+    console.error("Error creating notification:", error);
+    throw error;
   }
 };
 
@@ -25,45 +62,65 @@ const deleteNotification = async (notificationId) => {
         Authorization: token,
       },
     });
+
     if (!response.ok) {
       throw new Error("Failed to delete notification");
     }
   } catch (err) {
     console.error("Error deleting notification:", err.message);
+    throw err;
   }
 };
 
 const updateStatusToSeen = async () => {
   try {
     const token = localStorage.getItem("token");
-    const response = await fetch(`/api/notifications/`, {
+    const response = await fetch("/api/notifications", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: token,
       },
     });
+
     if (!response.ok) {
-      throw new Error("Failed to delete notification");
+      throw new Error("Failed to update notification status");
     }
   } catch (err) {
-    console.error("Error deleting notification:", err.message);
+    console.error("Error updating notification status:", err.message);
+    throw err;
   }
 };
 
 const handleDeleteNotification = async (e) => {
   try {
     e.preventDefault();
-    // Get the parent li element that contains the notification
+    e.stopPropagation(); // Prevent event bubbling
     const notificationItem = e.target.closest(".notification-item");
-
-    // Get the delete button which should have the data attribute
     const deleteButton = notificationItem.querySelector(".delete-notification");
-
     const notificationId = deleteButton.dataset.notificationId;
 
     await deleteNotification(notificationId);
-    displayNotifications();
+
+    // Immediately refresh notifications and reinitialize dropdown
+    const notificationElements = document.querySelectorAll(".dropdown-trigger");
+    const notifications = await getNotifications();
+
+    // Update notifications list
+    triggerNewNotificationEffect(notifications);
+    addNotificationToMenu(notifications);
+
+    // Reinitialize dropdown but keep it open
+    const instance = M.Dropdown.init(notificationElements, {
+      constrainWidth: false,
+      coverTrigger: false,
+      onOpenStart: handleOnOpenStart,
+    });
+
+    // Keep dropdown open after deletion
+    if (instance[0]) {
+      instance[0].open();
+    }
   } catch (err) {
     console.error("Error deleting notification:", err);
     M.toast({ html: "Failed to delete notification", classes: "red" });
@@ -76,7 +133,6 @@ const deleteButtonIcon = (notificationId) => {
   deleteButton.innerHTML = '<i class="material-icons">delete</i>';
   deleteButton.classList.add("delete-notification", "center");
   deleteButton.addEventListener("click", handleDeleteNotification);
-
   return deleteButton;
 };
 
@@ -86,7 +142,7 @@ const addNotificationToMenu = (notifications) => {
   );
   notificationsContainer.innerHTML = "";
 
-  if (!notifications.length) {
+  if (!notifications?.length) {
     const emptyMessage = document.createElement("li");
     emptyMessage.classList.add("no-notifications");
     emptyMessage.textContent = "No notifications to display";
@@ -108,20 +164,19 @@ const addNotificationToMenu = (notifications) => {
 
 const growingEffect = (element) => {
   element.classList.add("grow");
-  setTimeout(() => {
-    element.classList.remove("grow");
-  }, 1000);
+  setTimeout(() => element.classList.remove("grow"), 1000);
 };
 
 const triggerNewNotificationEffect = (notifications) => {
   const notificationIcon = document.querySelector(".notifications-icon");
-  const unseenNotification = notifications.find(
+  const hasNewNotification = notifications?.some(
     (notification) => notification.status === "new"
   );
-  if (!unseenNotification) return;
 
-  notificationIcon.textContent = "notifications_active";
-  growingEffect(notificationIcon);
+  if (hasNewNotification) {
+    notificationIcon.textContent = "notifications_active";
+    growingEffect(notificationIcon);
+  }
 };
 
 const handleOnOpenStart = async () => {
@@ -129,15 +184,17 @@ const handleOnOpenStart = async () => {
     await updateStatusToSeen();
     const notificationIcon = document.querySelector(".notifications-icon");
     notificationIcon.textContent = "notifications_none";
-  } catch (e) {
-    console.error("Error handleOnOpenStart:", err.message);
+  } catch (err) {
+    console.error("Error in handleOnOpenStart:", err.message);
   }
 };
 
 const displayNotifications = async () => {
   try {
+    console.log("Displaying notifications...");
     const notificationElements = document.querySelectorAll(".dropdown-trigger");
     const notifications = await getNotifications();
+    console.log("Notifications to display:", notifications);
 
     triggerNewNotificationEffect(notifications);
     addNotificationToMenu(notifications);
@@ -149,33 +206,6 @@ const displayNotifications = async () => {
     });
   } catch (err) {
     console.error("Error initializing notifications menu:", err.message);
-  }
-};
-
-const handleStatusNotification = (updatedPost, type) => {
-  const dateTime = new Date(updatedPost.dateTime).toLocaleString();
-  const currentUserId = JSON.parse(
-    atob(localStorage.getItem("token").split(".")[1])
-  ).userId;
-
-  // Only show notification if user is involved with the post
-  const isPostCreator = updatedPost.postedBy === currentUserId;
-  const isPostAcceptor = updatedPost.acceptedBy === currentUserId;
-
-  if (!isPostCreator && !isPostAcceptor) return;
-
-  let toastMessage = getStatusMessage(
-    updatedPost,
-    isPostCreator,
-    isPostAcceptor,
-    dateTime
-  );
-
-  if (toastMessage) {
-    M.toast({
-      html: toastMessage,
-      classes: "green",
-    });
   }
 };
 
@@ -194,14 +224,29 @@ const getStatusMessage = (post, isCreator, isAcceptor, dateTime) => {
     case "accepted_request_creator":
       return `Your request for a babysitter on ${dateTime} has been accepted`;
 
+    case "accepted_request_acceptor":
+      return `You have accepted to provide babysitting on ${dateTime}`;
+
     case "completed_offer_creator":
       return `Your babysitting offer for ${dateTime} has been completed and ${post.hoursNeeded} points have been credited to your account.`;
+
+    case "completed_offer_acceptor":
+      return `The babysitting offer you accepted for ${dateTime} has been completed.`;
+
+    case "completed_request_creator":
+      return `Your babysitting request for ${dateTime} has been completed.`;
 
     case "completed_request_acceptor":
       return `The babysitting session you provided on ${dateTime} has been completed and ${post.hoursNeeded} points have been credited to your account.`;
 
+    case "cancelled_offer_creator":
+      return `You have cancelled your offer post for ${dateTime}.`;
+
     case "cancelled_offer_acceptor":
       return `The babysitting offer you accepted for ${dateTime} has been cancelled. ${post.hoursNeeded} points have been refunded.`;
+
+    case "cancelled_request_creator":
+      return `You have cancelled your request post for ${dateTime}. ${post.hoursNeeded} points have been refunded.`;
 
     case "cancelled_request_acceptor":
       return `The babysitting request you accepted for ${dateTime} has been cancelled.`;
@@ -211,22 +256,36 @@ const getStatusMessage = (post, isCreator, isAcceptor, dateTime) => {
   }
 };
 
-const createNotification = async (userId, message, token, baseUrl) => {
-  try {
-    await fetch(`${baseUrl}/api/notifications`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
-      body: JSON.stringify({
-        userId,
-        message,
-      }),
+const handleStatusNotification = (updatedPost) => {
+  const dateTime = new Date(updatedPost.dateTime).toLocaleString();
+  const currentUserId = JSON.parse(
+    atob(localStorage.getItem("token").split(".")[1])
+  ).userId;
+
+  // Only show notification if user is involved with the post
+  const isPostCreator = updatedPost.postedBy === currentUserId;
+  const isPostAcceptor = updatedPost.acceptedBy === currentUserId;
+
+  if (!isPostCreator && !isPostAcceptor) return;
+
+  const toastMessage = getStatusMessage(
+    updatedPost,
+    isPostCreator,
+    isPostAcceptor,
+    dateTime
+  );
+
+  if (toastMessage) {
+    M.toast({
+      html: toastMessage,
+      classes: "green",
     });
-  } catch (error) {
-    console.error("Error creating notification:", error);
   }
 };
 
-export { displayNotifications, handleStatusNotification, createNotification };
+export {
+  displayNotifications,
+  handleStatusNotification,
+  createNotification,
+  getNotifications,
+};

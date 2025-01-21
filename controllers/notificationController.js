@@ -22,9 +22,10 @@ const notificationController = {
     try {
       const userId = req.userId;
       const notifications = await Notification.find({
-        $or: [{ userId }, { isGlobal: true }],
-      });
+        $or: [{ userId }, { userId: null }, { isGlobal: true }],
+      }).sort({ createdAt: -1 });
 
+      console.log("Found notifications for user:", userId, notifications);
       res.status(200).json(notifications);
     } catch (error) {
       console.error("Error fetching notifications:", error);
