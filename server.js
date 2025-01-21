@@ -10,7 +10,7 @@ const {
   postRoutes,
   accountRoutes,
 } = require("./routes/");
-const { connectDB } = require("./config/db");
+const connectDB = require("./config/db");
 const { Server } = require("socket.io");
 const { createServer } = require("node:http");
 const verifyToken = require("./middleware/socketMiddleware");
