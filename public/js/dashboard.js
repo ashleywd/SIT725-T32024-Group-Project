@@ -77,6 +77,8 @@ const handleSubmitForm = async function (e) {
       window.location.origin
     );
 
+    await displayNotifications();
+
     // UI Updates
     const modal = M.Modal.getInstance(document.getElementById("modalForm"));
     modal.close();
