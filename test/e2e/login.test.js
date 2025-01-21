@@ -31,14 +31,24 @@ test.describe("Login Functionality", () => {
   
 
   // After all tests: Clear the database and close the database connection
-test.afterAll(async () => {
-  try {
-    await User.deleteMany({});
-    await mongoose.connection.close();
-  } catch (error) {
-    console.error("Error during afterAll cleanup:", error);
-  }
-});
+  test.afterAll(async () => {
+    try {
+      // Check if the connection is ready before attempting cleanup
+      if (mongoose.connection.readyState === 1) { // 1 means connected
+        console.log("Cleaning up the User collection...");
+        await User.deleteMany({});
+        console.log("User collection cleaned up successfully.");
+      } else {
+        console.log("Mongoose connection is not active. Skipping cleanup.");
+      }
+  
+      console.log("Closing the Mongoose connection...");
+      await mongoose.disconnect();
+      console.log("Mongoose connection closed successfully.");
+    } catch (error) {
+      console.error("Error during afterAll cleanup:", error);
+    }
+  });  
 
   // Test if the login page loads successfully
 test("should load the login page", async ({ page }) => {
