@@ -5,11 +5,16 @@ import {
   initializeMaterializeComponent,
   updatePointsDisplay,
 } from "./global.js";
+
 import { activateWebSocket } from "./socket-client.js";
+
 import {
   displayNotifications,
   handleStatusNotification,
+  createNotification,
 } from "./notifications.js";
+
+import { pointsService } from "./points.js";
 
 verifyUserAuthentication();
 
@@ -134,10 +139,73 @@ const getCardActions = (id, status, postedBy) => {
   `;
 };
 
+const getStatusActions = (post, dateTime) => {
+  const statusKey = `${post.status}_${post.type}`;
+
+  switch (statusKey) {
+    case "completed_offer":
+      return {
+        creatorMessage: `Your babysitting offer for ${dateTime} has been completed and ${post.hoursNeeded} points have been credited to your account.`,
+        acceptorMessage: `The babysitting offer you accepted for ${dateTime} has been completed.`,
+        pointsUpdate: {
+          amount: post.hoursNeeded,
+          recipient: post.postedBy,
+          reason: "completing your babysitting offer",
+        },
+      };
+
+    case "completed_request":
+      return {
+        creatorMessage: `Your babysitting request for ${dateTime} has been completed.`,
+        acceptorMessage: `The babysitting session you provided on ${dateTime} has been completed and ${post.hoursNeeded} points have been credited to your account.`,
+        pointsUpdate: {
+          amount: post.hoursNeeded,
+          recipient: post.acceptedBy,
+          reason: "completing the babysitting session",
+        },
+      };
+
+    case "cancelled_offer":
+      return {
+        creatorMessage: `You have cancelled your offer post for ${dateTime}.`,
+        acceptorMessage: post.acceptedBy
+          ? `The babysitting offer you accepted for ${dateTime} has been cancelled. ${post.hoursNeeded} points have been refunded.`
+          : null,
+        pointsUpdate: post.acceptedBy
+          ? {
+              amount: post.hoursNeeded,
+              recipient: post.acceptedBy,
+              reason: "cancelled babysitting offer refund",
+            }
+          : null,
+      };
+
+    case "cancelled_request":
+      return {
+        creatorMessage: `You have cancelled your request post for ${dateTime}. ${post.hoursNeeded} points have been refunded.`,
+        acceptorMessage: post.acceptedBy
+          ? `The babysitting request you accepted for ${dateTime} has been cancelled.`
+          : null,
+        pointsUpdate: {
+          amount: post.hoursNeeded,
+          recipient: post.postedBy,
+          reason: "cancelling your babysitting request",
+        },
+      };
+
+    default:
+      return null;
+  }
+};
+
 const handleMarkCompleted = async (postId, postedBy) => {
   const userToken = localStorage.getItem("token");
   try {
-    const response = await fetch("/api/posts/status/" + postId, {
+    const originalPost = await getPostById(postId);
+    const dateTime = new Date(originalPost.dateTime).toLocaleString();
+
+    // 1. Update post status first
+    const response = await fetch(`/api/posts/status/${postId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -146,14 +214,44 @@ const handleMarkCompleted = async (postId, postedBy) => {
       body: JSON.stringify({ postId, postedBy, status: "completed" }),
     });
 
-    const result = await response.json();
     if (!response.ok) {
       throw new Error(`Server error: ${result.error || "Unknown error"}`);
     }
 
+    // 2. Get status actions
+    const actions = getStatusActions(originalPost, dateTime);
+
+    // 3. Create notifications
+    await createNotification(
+      null,
+      actions.creatorMessage,
+      userToken,
+      window.location.origin
+    );
+
+    if (originalPost.acceptedBy) {
+      await createNotification(
+        originalPost.acceptedBy,
+        actions.acceptorMessage,
+        userToken,
+        window.location.origin
+      );
+    }
+
+    // 4. Update points
+    if (actions.pointsUpdate) {
+      await pointsService.updatePoints(
+        actions.pointsUpdate.amount,
+        actions.pointsUpdate.reason,
+        false
+      );
+    }
+
+    // 5. Update UI
     M.toast({ html: "Post marked as completed", classes: "green" });
     displayMyPosts();
     updatePointsDisplay();
+    displayNotifications();
   } catch (error) {
     console.error("Error marking post as completed:", error);
     M.toast({ html: "Failed to mark post as completed", classes: "red" });
@@ -169,24 +267,34 @@ const handleEditPost = async (postId) => {
     const newHours = parseInt(document.getElementById("editHoursNeeded").value);
     const pointDifference = newHours - originalPost.hoursNeeded;
 
+    // Points validation for requests first
+    if (document.getElementById("editType").value === "request") {
+      if (pointDifference > 0) {
+        const currentPoints = await pointsService.getPoints();
+        if (currentPoints < pointDifference) {
+          throw new Error("Insufficient points for increasing hours");
+        }
+      }
+    }
+
+    // Validate date
     if (selectedDate < new Date()) {
       throw new Error("Cannot set date/time in the past");
     }
 
-    const requestBody = {
-      type: document.getElementById("editType").value,
-      hoursNeeded: parseInt(document.getElementById("editHoursNeeded").value),
-      dateTime: selectedDate.toISOString(),
-      description: document.getElementById("editDescription").value,
-    };
-
+    // Update the post
     const response = await fetch(`/api/posts/${postId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: token,
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        type: document.getElementById("editType").value,
+        hoursNeeded: newHours,
+        dateTime: selectedDate.toISOString(),
+        description: document.getElementById("editDescription").value,
+      }),
     });
 
     const result = await response.json();
@@ -194,33 +302,57 @@ const handleEditPost = async (postId) => {
       throw new Error(result.message || "Failed to update post");
     }
 
+    // Create notification about post update
+    await createNotification(
+      null,
+      `You have updated your ${result.type} post for ${new Date(
+        result.dateTime
+      ).toLocaleString()}.${
+        pointDifference !== 0
+          ? ` ${Math.abs(pointDifference)} points have been ${
+              pointDifference > 0 ? "deducted" : "refunded"
+            }.`
+          : ""
+      }`,
+      token,
+      window.location.origin
+    );
+
+    // Handle points updates after post update succeeds
+    if (document.getElementById("editType").value === "request") {
+      if (pointDifference > 0) {
+        // Deduct points for increased hours
+        await pointsService.updatePoints(
+          -pointDifference,
+          "updating your babysitting request",
+          false
+        );
+      } else if (pointDifference < 0) {
+        // Refund points for reduced hours
+        await pointsService.updatePoints(
+          Math.abs(pointDifference),
+          "reducing hours in your babysitting request",
+          false
+        );
+      }
+    }
+
+    // 5. Update UI
     const modal = M.Modal.getInstance(document.getElementById("editPostModal"));
     modal.close();
-
-    if (requestBody.type === "request") {
-      if (pointDifference > 0) {
-        M.toast({
-          html: `Request post updated successfully and you have been deducted ${pointDifference} additional points`,
-          classes: "green",
-        });
-      } else if (pointDifference < 0) {
-        M.toast({
-          html: `Request post updated successfully and you have been refunded ${Math.abs(
-            pointDifference
-          )} points`,
-          classes: "green",
-        });
-      } else {
-        M.toast({
-          html: "Request post updated successfully",
-          classes: "green",
-        });
-      }
-    } else {
-      M.toast({ html: "Offer post updated successfully", classes: "green" });
-    }
+    M.toast({
+      html: `Post updated successfully${
+        pointDifference !== 0
+          ? ` and points have been ${
+              pointDifference > 0 ? "deducted" : "refunded"
+            }`
+          : ""
+      }`,
+      classes: "green",
+    });
     displayMyPosts();
     updatePointsDisplay();
+    displayNotifications();
   } catch (error) {
     console.error("Error updating post:", error);
     M.toast({ html: error.message || "Failed to update post", classes: "red" });
@@ -229,12 +361,16 @@ const handleEditPost = async (postId) => {
 
 const handleCancelPost = async (postId) => {
   try {
+    // 1. Confirmation validation
     if (!confirm("Are you sure you want to cancel this post?")) {
       return;
     }
 
     const originalPost = await getPostById(postId);
+    const dateTime = new Date(originalPost.dateTime).toLocaleString();
     const token = localStorage.getItem("token");
+
+    // 2. Update post status first
     const response = await fetch(`/api/posts/cancel/${postId}`, {
       method: "PUT",
       headers: {
@@ -243,23 +379,53 @@ const handleCancelPost = async (postId) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to cancel post");
+      throw new Error("Failed to cancel post");
     }
 
-    if (originalPost.type === "request") {
-      M.toast({
-        html: `Post cancelled successfully and you have been refunded ${originalPost.hoursNeeded} points`,
-        classes: "green",
-      });
-    } else {
-      M.toast({
-        html: "Post cancelled successfully",
-        classes: "green",
-      });
+    // 3. Get status actions
+    const actions = getStatusActions(
+      {
+        ...originalPost,
+        status: "cancelled",
+      },
+      dateTime
+    );
+
+    // 4. Create notifications
+    await createNotification(
+      null,
+      actions.creatorMessage,
+      token,
+      window.location.origin
+    );
+
+    if (originalPost.acceptedBy && actions.acceptorMessage) {
+      await createNotification(
+        originalPost.acceptedBy,
+        actions.acceptorMessage,
+        token,
+        window.location.origin
+      );
     }
+
+    // 5. Update points if needed
+    if (actions.pointsUpdate) {
+      await pointsService.updatePoints(
+        actions.pointsUpdate.amount,
+        actions.pointsUpdate.reason,
+        false
+      );
+    }
+
+    // 6. Update UI
+    M.toast({
+      html: "Post cancelled successfully",
+      classes: "green",
+    });
+
     displayMyPosts();
     updatePointsDisplay();
+    displayNotifications();
   } catch (error) {
     console.error("Error cancelling post:", error);
     M.toast({ html: error.message || "Failed to cancel post", classes: "red" });

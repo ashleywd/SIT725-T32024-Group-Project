@@ -6,11 +6,16 @@ import {
   resetScreenPosition,
   updatePointsDisplay,
 } from "./global.js";
+
 import { activateWebSocket } from "./socket-client.js";
+
 import {
   displayNotifications,
   handleStatusNotification,
+  createNotification,
 } from "./notifications.js";
+
+import { pointsService } from "./points.js";
 
 const postForm = document.getElementById("postForm");
 
@@ -25,6 +30,16 @@ const handleSubmitForm = async function (e) {
 
   try {
     const userToken = localStorage.getItem("token");
+
+    // Points validation first
+    if (formData.type === "request") {
+      const currentPoints = await pointsService.getPoints();
+      if (currentPoints < formData.hoursNeeded) {
+        throw new Error("Insufficient points for this request");
+      }
+    }
+
+    // Create post
     const response = await fetch("/api/posts", {
       method: "POST",
       headers: {
@@ -39,12 +54,37 @@ const handleSubmitForm = async function (e) {
       throw new Error(result.message || "Unknown error");
     }
 
+    // Handle points update for requests
+    if (formData.type === "request") {
+      await pointsService.updatePoints(
+        -formData.hoursNeeded,
+        "babysitting request",
+        false // Don't create notification yet
+      );
+    }
+
+    // Create single consolidated notification
+    await createNotification(
+      null,
+      `You have created a new ${formData.type} post for ${new Date(
+        formData.dateTime
+      ).toLocaleString()}.${
+        formData.type === "request"
+          ? ` ${formData.hoursNeeded} points have been deducted.`
+          : ""
+      }`,
+      userToken,
+      window.location.origin
+    );
+
+    // UI Updates
     const modal = M.Modal.getInstance(document.getElementById("modalForm"));
     modal.close();
-    M.toast({ html: result.message || "Post created successfully!" });
+    M.toast({ html: "Post created successfully!" });
     postForm.reset();
     updatePointsDisplay();
     displayPosts();
+    displayNotifications();
   } catch (error) {
     console.error("Error creating post:", error);
     M.toast({ html: error.message, classes: "red" });
@@ -193,6 +233,16 @@ const handleAcceptPost = async (postInfo) => {
     const decodedData = decodeURIComponent(postInfo);
     const { postId, postedBy } = JSON.parse(decodedData);
 
+    // Get post and validate points first
+    const post = await getPostById(postId);
+    if (post.type === "offer") {
+      const currentPoints = await pointsService.getPoints();
+      if (currentPoints < post.hoursNeeded) {
+        throw new Error("Insufficient points to accept this offer");
+      }
+    }
+
+    // Update post status
     const response = await fetch(`/api/posts/status/${postId}`, {
       method: "PUT",
       headers: {
@@ -207,9 +257,31 @@ const handleAcceptPost = async (postInfo) => {
       throw new Error(errorData.message || "Failed to accept post");
     }
 
-    await response.json();
+    // Create acceptance notification
+    await createNotification(
+      null,
+      `You have accepted ${post.type === "offer" ? "a" : "to provide"} 
+      babysitting ${post.type === "offer" ? "offer" : ""} 
+      for ${new Date(post.dateTime).toLocaleString()}.${
+        post.type === "offer"
+          ? ` ${post.hoursNeeded} points will be deducted from your account.`
+          : ""
+      }`,
+      userToken,
+      window.location.origin
+    );
+
+    // Update points if offer (only after successful post update)
+    if (post.type === "offer") {
+      await pointsService.updatePoints(
+        -post.hoursNeeded,
+        "accepting a babysitting offer",
+        false // Suppress points notification
+      );
+    }
+
+    // Show success message
     M.toast({ html: "Post accepted successfully", classes: "green" });
-    displayPosts();
   } catch (error) {
     console.error("Error accepting post:", error);
     M.toast({ html: error.message || "Failed to accept post", classes: "red" });
@@ -262,16 +334,16 @@ const displayPosts = async () => {
 const handleNotifyAcceptPost = (data) => {
   handleStatusNotification(data.updatedPost);
   displayPosts();
-  resetScreenPosition();
   displayNotifications();
   updatePointsDisplay();
+  resetScreenPosition();
 };
 
 const handlePostsUpdated = () => {
-  resetScreenPosition();
   filterAndRenderPosts();
   displayNotifications();
   updatePointsDisplay();
+  resetScreenPosition();
 };
 
 verifyUserAuthentication();
