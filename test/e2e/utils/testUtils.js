@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const User = require("../../models/User"); // Adjust the path to your User model
+const User = require("../../../models/user"); // Adjust the path to your User model
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 // In testUtils.js
