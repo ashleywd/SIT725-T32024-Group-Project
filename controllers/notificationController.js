@@ -40,7 +40,9 @@ const notificationController = {
     try {
       const userId = req.userId;
       await Notification.updateMany(
-        { userId },
+        {
+          $or: [{ userId }, { userId: null }, { isGlobal: true }],
+        },
         { status: "seen" },
         { new: true }
       );

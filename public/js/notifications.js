@@ -169,12 +169,18 @@ const growingEffect = (element) => {
 
 const triggerNewNotificationEffect = (notifications) => {
   const notificationIcon = document.querySelector(".notifications-icon");
-  const hasNewNotification = notifications?.some(
+
+  // Check for unread notifications directly from notifications array
+  const hasUnread = notifications?.some(
     (notification) => notification.status === "new"
   );
 
-  if (hasNewNotification) {
-    notificationIcon.textContent = "notifications_active";
+  // Update icon based on unread status
+  notificationIcon.textContent = hasUnread
+    ? "notifications_active"
+    : "notifications_none";
+
+  if (hasUnread) {
     growingEffect(notificationIcon);
   }
 };
@@ -262,24 +268,32 @@ const handleStatusNotification = (updatedPost) => {
     atob(localStorage.getItem("token").split(".")[1])
   ).userId;
 
-  // Only show notification if user is involved with the post
-  const isPostCreator = updatedPost.postedBy === currentUserId;
-  const isPostAcceptor = updatedPost.acceptedBy === currentUserId;
+  // For edits, only show notification to post creator
+  if (updatedPost.type === "edit" && currentUserId !== updatedPost.postedBy) {
+    return; // Exit early if it's an edit and user is not the creator
+  }
 
-  if (!isPostCreator && !isPostAcceptor) return;
+  // For other status changes, notify both creator and acceptor
+  if (
+    currentUserId === updatedPost.postedBy ||
+    currentUserId === updatedPost.acceptedBy
+  ) {
+    const isPostCreator = currentUserId === updatedPost.postedBy;
+    const isPostAcceptor = currentUserId === updatedPost.acceptedBy;
 
-  const toastMessage = getStatusMessage(
-    updatedPost,
-    isPostCreator,
-    isPostAcceptor,
-    dateTime
-  );
+    const toastMessage = getStatusMessage(
+      updatedPost,
+      isPostCreator,
+      isPostAcceptor,
+      dateTime
+    );
 
-  if (toastMessage) {
-    M.toast({
-      html: toastMessage,
-      classes: "green",
-    });
+    if (toastMessage) {
+      M.toast({
+        html: toastMessage,
+        classes: "green",
+      });
+    }
   }
 };
 

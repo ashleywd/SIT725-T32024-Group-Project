@@ -160,6 +160,13 @@ const postController = {
         { new: true }
       ).populate({ path: "postedBy", select: "username" });
 
+      // Notify only the post creator about the edit
+      io.to(updatedPost.postedBy.toString()).emit("notify-post-status-update", {
+        updatedPost,
+        type: "edit", // Add this type to differentiate edits
+      });
+
+      // Update everyone's dashboard view only
       io.emit("posts-updated");
 
       res.status(200).json(updatedPost);

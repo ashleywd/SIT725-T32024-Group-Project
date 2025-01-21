@@ -10,16 +10,12 @@ const initializeWebSocket = () => {
   return socket;
 };
 
-const activateWebSocket = ({
-  handleNotifyAcceptPost,
-  handlePostsUpdated
-}) => {
+const activateWebSocket = ({ handleNotifyAcceptPost, handlePostsUpdated }) => {
   const socket = initializeWebSocket();
   if (handleNotifyAcceptPost)
     socket.on("notify-post-status-update", handleNotifyAcceptPost);
 
-  if (handlePostsUpdated)
-    socket.on("posts-updated", handlePostsUpdated);
+  if (handlePostsUpdated) socket.on("posts-updated", handlePostsUpdated);
 };
 
 export { activateWebSocket };
