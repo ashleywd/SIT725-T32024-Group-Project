@@ -47,28 +47,16 @@ describe("Post Controller Tests", () => {
       expect(res.json).toHaveBeenCalledWith(mockSavedPost);
     });
 
-    it("should reject invalid post type", async () => {
-      req.body = {
-        type: "invalid_type",
-        hoursNeeded: 4,
-        description: "Test task",
-        dateTime: new Date(Date.now() + 86400000).toISOString(),
-      };
-
-      const mockError = {
-        errors: {
-          type: { message: "Invalid type value" },
-        },
-      };
-
-      Post.prototype.save = jest.fn().mockRejectedValue(mockError);
-
+    it("should handle errors during post creation", async () => {
+      Post.prototype.save = jest
+        .fn()
+        .mockRejectedValue(new Error("Save error"));
       await postController.createPost(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({
         message: "Error creating post",
-        error: mockError.errors.type.message,
+        error: "Save error",
       });
     });
   });
