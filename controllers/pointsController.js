@@ -14,33 +14,17 @@ const pointsController = {
 
   updatePoints: async (req, res) => {
     try {
-      const { userId } = req;
-      const { points, reason, createNotification = true } = req.body;
+      const { points, reason, recipientId } = req.body;
+      const targetUserId = recipientId || req.userId;
 
       const user = await User.findByIdAndUpdate(
-        userId,
+        targetUserId,
         { $inc: { points: points } },
         { new: true }
       );
 
-      // Only create notification if flag is true
-      if (createNotification) {
-        await fetch(`${req.protocol}://${req.get("host")}/api/notifications`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: req.header("Authorization"),
-          },
-          body: JSON.stringify({
-            userId,
-            message:
-              points > 0
-                ? `${points} points have been credited for ${reason}.`
-                : `${Math.abs(
-                    points
-                  )} points have been deducted for ${reason}.`,
-          }),
-        });
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
       }
 
       return res.status(200).json({

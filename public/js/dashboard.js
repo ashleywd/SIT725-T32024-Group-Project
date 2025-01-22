@@ -6,6 +6,7 @@ import {
   resetScreenPosition,
   updatePointsDisplay,
   getPostById,
+  getStatusActions,
 } from "./global.js";
 
 import { activateWebSocket } from "./socket-client.js";
@@ -14,6 +15,7 @@ import {
   displayNotifications,
   handleStatusNotification,
   createNotification,
+  notificationService,
 } from "./notifications.js";
 
 import { pointsService } from "./points.js";
@@ -22,18 +24,21 @@ const postForm = document.getElementById("postForm");
 
 const handleSubmitForm = async function (e) {
   e.preventDefault();
-  const formData = {
-    type: document.getElementById("type").value,
-    hoursNeeded: parseFloat(document.getElementById("hoursNeeded").value),
-    description: document.getElementById("description").value,
-    dateTime: document.getElementById("dateTime").value,
-  };
+  const userToken = localStorage.getItem("token");
+  const currentUserId = JSON.parse(atob(userToken.split(".")[1])).userId;
 
   try {
-    const userToken = localStorage.getItem("token");
-    const currentUserId = JSON.parse(atob(userToken.split(".")[1])).userId;
+    // 1. Validate the form
+    const formData = {
+      type: document.getElementById("type").value,
+      hoursNeeded: parseFloat(document.getElementById("hoursNeeded").value),
+      description: document.getElementById("description").value,
+      dateTime: document.getElementById("dateTime").value,
+    };
 
-    // Points validation first
+    const dateTime = new Date(formData.dateTime).toLocaleString();
+
+    // 2. Validate points for requests
     if (formData.type === "request") {
       const currentPoints = await pointsService.getPoints();
       if (currentPoints < formData.hoursNeeded) {
@@ -41,7 +46,7 @@ const handleSubmitForm = async function (e) {
       }
     }
 
-    // Create post
+    // 3. Create post
     const response = await fetch("/api/posts", {
       method: "POST",
       headers: {
@@ -50,42 +55,37 @@ const handleSubmitForm = async function (e) {
       },
       body: JSON.stringify(formData),
     });
-
     const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.message || "Unknown error");
-    }
 
-    // Handle points update for requests
+    // 4. Create status notification
+    await notificationService.createStatusNotification(
+      currentUserId,
+      `You have created a new ${formData.type} post for ${dateTime}.`,
+      userToken
+    );
+
+    // 5 & 6. Handle points and points notification for requests
     if (formData.type === "request") {
+      // Update points
       await pointsService.updatePoints(
+        -formData.hoursNeeded, // Amount to deduct
+        "babysitting request", // Reason
+        currentUserId // Target user
+      );
+
+      // Create points notification
+      await notificationService.createPointsNotification(
+        currentUserId,
         -formData.hoursNeeded,
-        "babysitting request",
-        false // Don't create notification yet
+        userToken
       );
     }
 
-    // Create notification only for post creator
-    await createNotification(
-      currentUserId, // Use existing user's ID instead of null
-      `You have created a new ${formData.type} post for ${new Date(
-        formData.dateTime
-      ).toLocaleString()}.${
-        formData.type === "request"
-          ? ` ${formData.hoursNeeded} points have been deducted.`
-          : ""
-      }`,
-      userToken,
-      window.location.origin
-    );
-
-    await displayNotifications();
-
-    // UI Updates
+    // Update UI
     const modal = M.Modal.getInstance(document.getElementById("modalForm"));
     modal.close();
-    M.toast({ html: "Post created successfully!" });
     postForm.reset();
+    displayNotifications();
     updatePointsDisplay();
     displayPosts();
   } catch (error) {

@@ -271,11 +271,20 @@ const postController = {
       //   }
       // }
 
-      // Emit socket events for post owner
+      // Emit socket events for post creator
       io.to(req.userId.toString()).emit("notify-post-status-update", {
         updatedPost: post,
       });
 
+      // Emit socket events for post acceptor if exists
+      if (post.acceptedBy) {
+        io.to(post.acceptedBy.toString()).emit("notify-post-status-update", {
+          updatedPost: post,
+          type: "cancel",
+        });
+      }
+
+      // Update everyone's dashboard
       io.emit("posts-updated");
 
       res.status(200).json({

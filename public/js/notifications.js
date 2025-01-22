@@ -297,9 +297,35 @@ const handleStatusNotification = (updatedPost) => {
   }
 };
 
+const notificationService = {
+  async createStatusNotification(userId, message, token) {
+    return await createNotification(
+      userId,
+      message,
+      token,
+      window.location.origin
+    );
+  },
+
+  async createPointsNotification(userId, points, reason, token) {
+    const message =
+      points > 0
+        ? `${points} points have been credited for ${reason}.`
+        : `${Math.abs(points)} points have been deducted for ${reason}.`;
+
+    return await createNotification(
+      userId,
+      message,
+      token,
+      window.location.origin
+    );
+  },
+};
+
 export {
   displayNotifications,
   handleStatusNotification,
   createNotification,
   getNotifications,
+  notificationService,
 };

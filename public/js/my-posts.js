@@ -5,6 +5,7 @@ import {
   initializeMaterializeComponent,
   updatePointsDisplay,
   getPostById,
+  getStatusActions,
 } from "./global.js";
 
 import { activateWebSocket } from "./socket-client.js";
@@ -140,65 +141,6 @@ const getCardActions = (id, status, postedBy) => {
   `;
 };
 
-const getStatusActions = (post, dateTime) => {
-  const statusKey = `${post.status}_${post.type}`;
-
-  switch (statusKey) {
-    case "completed_offer":
-      return {
-        creatorMessage: `Your babysitting offer for ${dateTime} has been completed and ${post.hoursNeeded} points have been credited to your account.`,
-        acceptorMessage: `The babysitting offer you accepted for ${dateTime} has been completed.`,
-        pointsUpdate: {
-          amount: post.hoursNeeded,
-          recipient: post.postedBy,
-          reason: "completing your babysitting offer",
-        },
-      };
-
-    case "completed_request":
-      return {
-        creatorMessage: `Your babysitting request for ${dateTime} has been completed.`,
-        acceptorMessage: `The babysitting session you provided on ${dateTime} has been completed and ${post.hoursNeeded} points have been credited to your account.`,
-        pointsUpdate: {
-          amount: post.hoursNeeded,
-          recipient: post.acceptedBy,
-          reason: "completing the babysitting session",
-        },
-      };
-
-    case "cancelled_offer":
-      return {
-        creatorMessage: `You have cancelled your babysitting offer for ${dateTime}.`,
-        acceptorMessage: post.acceptedBy
-          ? `The babysitting offer you accepted for ${dateTime} has been cancelled. ${post.hoursNeeded} points have been refunded to your account.`
-          : null,
-        pointsUpdate: post.acceptedBy
-          ? {
-              amount: post.hoursNeeded,
-              recipient: post.acceptedBy,
-              reason: "cancelled babysitting offer refund",
-            }
-          : null,
-      };
-
-    case "cancelled_request":
-      return {
-        creatorMessage: `Your babysitting request for ${dateTime} has been cancelled. ${post.hoursNeeded} points have been refunded to your account.`,
-        acceptorMessage: post.acceptedBy
-          ? `The babysitting request you accepted for ${dateTime} has been cancelled.`
-          : null,
-        pointsUpdate: {
-          amount: post.hoursNeeded,
-          recipient: post.postedBy,
-          reason: "cancelled babysitting request refund",
-        },
-      };
-
-    default:
-      return null;
-  }
-};
-
 const handleMarkCompleted = async (postId, postedBy) => {
   const userToken = localStorage.getItem("token");
   try {
@@ -220,36 +162,44 @@ const handleMarkCompleted = async (postId, postedBy) => {
     }
 
     // 2. Get status actions
-    const actions = getStatusActions(originalPost, dateTime);
+    const actions = getStatusActions(
+      {
+        ...originalPost,
+        status: "completed",
+      },
+      dateTime
+    );
 
-    // 3. Create notifications
+    // 3. Create notification for post creator
     await createNotification(
-      null,
+      originalPost.postedBy, // Send to creator
       actions.creatorMessage,
       userToken,
       window.location.origin
     );
 
+    // 4. Create notification for acceptor
     if (originalPost.acceptedBy) {
       await createNotification(
-        originalPost.acceptedBy,
+        originalPost.acceptedBy, // Send to acceptor
         actions.acceptorMessage,
         userToken,
         window.location.origin
       );
     }
 
-    // 4. Update points
+    // 5. Update points if needed
     if (actions.pointsUpdate) {
       await pointsService.updatePoints(
         actions.pointsUpdate.amount,
         actions.pointsUpdate.reason,
-        false
+        false, // Suppress separate points notification
+        actions.pointsUpdate.recipient
       );
     }
 
-    // 5. Update UI
-    M.toast({ html: "Post marked as completed", classes: "green" });
+    // 6. Update UI
+    // M.toast({ html: "Post marked as completed", classes: "green" });
     displayMyPosts();
     updatePointsDisplay();
     displayNotifications();
@@ -406,8 +356,8 @@ const handleCancelPost = async (postId) => {
     // Create notification for acceptor if post was accepted
     if (originalPost.acceptedBy && actions.acceptorMessage) {
       await createNotification(
-        originalPost.acceptedBy,
-        actions.acceptorMessage,
+        originalPost.acceptedBy, // Send to acceptor
+        actions.acceptorMessage, // Use acceptor-specific message
         userToken,
         window.location.origin
       );
