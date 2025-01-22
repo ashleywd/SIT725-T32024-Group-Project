@@ -264,7 +264,7 @@ const handleEditPost = async (postId) => {
       throw new Error(result.message || "Failed to update post");
     }
 
-    const updatedPost = await response.json();
+    const updatedPost = result;
 
     // 4. Handle points adjustment for requests
     if (isRequestPost && originalPost.type === "request") {

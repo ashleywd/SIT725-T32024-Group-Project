@@ -63,7 +63,7 @@ const handleSubmitForm = async function (e) {
       throw new Error(result.message || "Unknown error");
     }
 
-    const newPost = await response.json();
+    const newPost = result;
 
     // 4. Handle points deduction for requests
     if (formData.type === "request") {
