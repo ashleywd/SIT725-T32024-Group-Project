@@ -354,17 +354,23 @@ const displayPosts = async () => {
 };
 
 const handleNotifyAcceptPost = (data) => {
-  displayPosts();
-  displayNotifications();
-  updatePointsDisplay();
-  resetScreenPosition();
+  // Add a small delay to ensure notification is created first
+  setTimeout(() => {
+    displayPosts();
+    displayNotifications();
+    updatePointsDisplay();
+    resetScreenPosition();
+  }, 500); // 500ms delay
 };
 
 const handlePostsUpdated = () => {
-  filterAndRenderPosts();
-  displayNotifications();
-  updatePointsDisplay();
-  resetScreenPosition();
+  // Add a small delay to ensure notification is created first
+  setTimeout(() => {
+    filterAndRenderPosts();
+    displayNotifications();
+    updatePointsDisplay();
+    resetScreenPosition();
+  }, 500); // 500ms delay
 };
 
 verifyUserAuthentication();
