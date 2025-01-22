@@ -31,9 +31,10 @@ const postController = {
       res.status(201).json(savedPost);
     } catch (error) {
       console.error("Error creating post:", error);
-      res
-        .status(500)
-        .json({ message: "Error creating post", error: error.message });
+      res.status(500).json({
+        message: "Error creating post",
+        error: error.errors?.type?.message || error.message,
+      });
     }
   },
 
