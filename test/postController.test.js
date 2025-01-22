@@ -26,16 +26,17 @@ describe("Post Controller Tests", () => {
   describe("createPost", () => {
     it("should create a new post successfully", async () => {
       req.body = {
-        type: "task",
+        type: "offer",
         hoursNeeded: 4,
         description: "Test task",
-        dateTime: new Date(),
+        dateTime: new Date(Date.now() + 86400000).toISOString(),
       };
 
       const mockSavedPost = {
         ...req.body,
         postedBy: req.userId,
         _id: "mockPostId123",
+        status: "open",
       };
 
       Post.prototype.save = jest.fn().mockResolvedValue(mockSavedPost);
@@ -46,17 +47,28 @@ describe("Post Controller Tests", () => {
       expect(res.json).toHaveBeenCalledWith(mockSavedPost);
     });
 
-    it("should handle errors during post creation", async () => {
-      Post.prototype.save = jest
-        .fn()
-        .mockRejectedValue(new Error("Save error"));
+    it("should reject invalid post type", async () => {
+      req.body = {
+        type: "invalid_type",
+        hoursNeeded: 4,
+        description: "Test task",
+        dateTime: new Date(Date.now() + 86400000).toISOString(),
+      };
+
+      const mockError = {
+        errors: {
+          type: { message: "Invalid type value" },
+        },
+      };
+
+      Post.prototype.save = jest.fn().mockRejectedValue(mockError);
 
       await postController.createPost(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({
         message: "Error creating post",
-        error: "Save error",
+        error: mockError.errors.type.message,
       });
     });
   });
@@ -123,7 +135,14 @@ describe("Post Controller Tests", () => {
 
   describe("updatePostStatus", () => {
     it("should update post status successfully", async () => {
-      const mockPost = { _id: "post1", acceptedBy: null };
+      const mockPost = {
+        _id: "post1",
+        acceptedBy: null,
+        postedBy: {
+          _id: "otherUserId",
+          toString: () => "otherUserId",
+        },
+      };
       const mockUpdatedPost = {
         ...mockPost,
         status: "accepted",
@@ -148,6 +167,7 @@ describe("Post Controller Tests", () => {
       expect(mockIo.to).toHaveBeenCalledWith("otherUserId");
       expect(mockIo.emit).toHaveBeenCalledWith("notify-post-status-update", {
         updatedPost: mockUpdatedPost,
+        type: "accepted",
       });
     });
 
