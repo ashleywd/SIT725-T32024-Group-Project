@@ -2,7 +2,7 @@ import {
   verifyUserAuthentication,
   initializeMaterializeComponent,
   updatePointsDisplay,
-} from "./global.js";
+} from "./services/global.js";
 
 verifyUserAuthentication();
 initializeMaterializeComponent();

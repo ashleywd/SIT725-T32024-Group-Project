@@ -1,4 +1,4 @@
-import { initializeMaterializeComponent } from "./global.js";
+import { initializeMaterializeComponent } from "./services/global.js";
 
 const loginButton = document.querySelector("#login-button");
 const loginForm = document.querySelector(".login-form");
