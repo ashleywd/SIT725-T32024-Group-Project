@@ -5,18 +5,16 @@ import {
   initializeMaterializeComponent,
   updatePointsDisplay,
   getPostById,
-  getStatusActions,
-} from "./global.js";
+} from "./services/global.js";
 
-import { activateWebSocket } from "./socket-client.js";
+import { activateWebSocket } from "./services/socket-client.js";
 
 import {
   displayNotifications,
-  handleStatusNotification,
-  createNotification,
-} from "./notifications.js";
+  createPostNotification,
+} from "./services/notifications.js";
 
-import { pointsService } from "./points.js";
+import { pointsService } from "./services/points.js";
 
 verifyUserAuthentication();
 
@@ -144,10 +142,11 @@ const getCardActions = (id, status, postedBy) => {
 const handleMarkCompleted = async (postId, postedBy) => {
   const userToken = localStorage.getItem("token");
   try {
-    const originalPost = await getPostById(postId);
-    const dateTime = new Date(originalPost.dateTime).toLocaleString();
+    // 1. Get original post details
+    const post = await getPostById(postId);
+    const currentUserId = JSON.parse(atob(userToken.split(".")[1])).userId;
 
-    // 1. Update post status first
+    // 2. Update post status
     const response = await fetch(`/api/posts/status/${postId}`, {
       method: "PUT",
       headers: {
@@ -158,54 +157,61 @@ const handleMarkCompleted = async (postId, postedBy) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Server error: ${result.error || "Unknown error"}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to complete post");
     }
 
-    // 2. Get status actions
-    const actions = getStatusActions(
+    // 3. Update points based on post type
+    if (post.type === "offer") {
+      // Credit points to offer creator
+      await pointsService.updatePoints(post.hoursNeeded, post.postedBy);
+    } else if (post.type === "request") {
+      // Credit points to request acceptor
+      await pointsService.updatePoints(post.hoursNeeded, post.acceptedBy);
+    }
+
+    // 4. Create notifications for post creator
+    await createPostNotification(
       {
-        ...originalPost,
+        ...post,
         status: "completed",
+        dateTime: post.dateTime,
+        type: post.type,
+        hoursNeeded: post.hoursNeeded,
+        postedBy: post.postedBy,
+        acceptedBy: post.acceptedBy,
       },
-      dateTime
-    );
-
-    // 3. Create notification for post creator
-    await createNotification(
-      originalPost.postedBy, // Send to creator
-      actions.creatorMessage,
+      post.postedBy,
       userToken,
-      window.location.origin
+      { toast: true, persistent: true }
     );
 
-    // 4. Create notification for acceptor
-    if (originalPost.acceptedBy) {
-      await createNotification(
-        originalPost.acceptedBy, // Send to acceptor
-        actions.acceptorMessage,
-        userToken,
-        window.location.origin
-      );
-    }
-
-    // 5. Update points if needed
-    if (actions.pointsUpdate) {
-      await pointsService.updatePoints(
-        actions.pointsUpdate.amount,
-        actions.pointsUpdate.reason,
-        false, // Suppress separate points notification
-        actions.pointsUpdate.recipient
-      );
-    }
+    // 5. Create notifications for post acceptor
+    await createPostNotification(
+      {
+        ...post,
+        status: "completed",
+        dateTime: post.dateTime,
+        type: post.type,
+        hoursNeeded: post.hoursNeeded,
+        postedBy: post.postedBy,
+        acceptedBy: post.acceptedBy,
+      },
+      post.acceptedBy,
+      userToken,
+      { toast: false, persistent: true }
+    );
 
     // 6. Update UI
-    // M.toast({ html: "Post marked as completed", classes: "green" });
     displayMyPosts();
-    updatePointsDisplay();
     displayNotifications();
+    updatePointsDisplay();
   } catch (error) {
-    console.error("Error marking post as completed:", error);
-    M.toast({ html: "Failed to mark post as completed", classes: "red" });
+    console.error("Error completing post:", error);
+    M.toast({
+      html: error.message || "Failed to complete post",
+      classes: "red",
+    });
   }
 };
 
@@ -213,32 +219,36 @@ const handleEditPost = async (postId) => {
   try {
     const userToken = localStorage.getItem("token");
     const currentUserId = JSON.parse(atob(userToken.split(".")[1])).userId;
-    const dateTimeInput = document.getElementById("editDateTime").value;
-    const selectedDate = new Date(dateTimeInput);
     const originalPost = await getPostById(postId);
-    const newHours = parseInt(document.getElementById("editHoursNeeded").value);
+    const newHours = parseFloat(
+      document.getElementById("editHoursNeeded").value
+    );
     const isRequestPost =
       document.getElementById("editType").value === "request";
-    const wasRequestPost = originalPost.type === "request";
 
-    /// Only calculate point difference if both old and new posts are requests
-    const pointDifference =
-      isRequestPost && wasRequestPost ? newHours - originalPost.hoursNeeded : 0;
-
-    // Points validation for requests only
-    if (isRequestPost && wasRequestPost && pointDifference > 0) {
-      const currentPoints = await pointsService.getPoints();
-      if (currentPoints < pointDifference) {
-        throw new Error("Insufficient points for increasing hours");
+    // 1. Calculate and validate points for request posts
+    if (isRequestPost && originalPost.type === "request") {
+      const pointDifference = newHours - originalPost.hoursNeeded;
+      if (pointDifference > 0) {
+        const currentPoints = await pointsService.getPoints();
+        if (currentPoints < pointDifference) {
+          throw new Error("Insufficient points for increasing hours");
+        }
       }
     }
 
-    // Validate date
+    // 2. Validate form data
+    const dateTimeInput = document.getElementById("editDateTime").value;
+    const selectedDate = new Date(dateTimeInput);
     if (selectedDate < new Date()) {
       throw new Error("Cannot set date/time in the past");
     }
+    const newType = document.getElementById("editType").value;
+    if (newType !== originalPost.type) {
+      throw new Error("Cannot change post type between offer and request");
+    }
 
-    // Update the post
+    // 3. Update post
     const response = await fetch(`/api/posts/${postId}`, {
       method: "PUT",
       headers: {
@@ -253,60 +263,48 @@ const handleEditPost = async (postId) => {
       }),
     });
 
-    const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.message || "Failed to update post");
+      const error = await response.json();
+      throw new Error(error.message || "Failed to update post");
     }
 
-    // Create notification about post update with specific userId
-    await createNotification(
-      currentUserId, // Use currentUserId instead of null
-      `You have updated your ${result.type} post for ${new Date(
-        result.dateTime
-      ).toLocaleString()}.${
-        pointDifference !== 0
-          ? ` ${Math.abs(pointDifference)} points have been ${
-              pointDifference > 0 ? "deducted" : "refunded"
-            }.`
-          : ""
-      }`,
-      userToken,
-      window.location.origin
-    );
+    const updatedPost = await response.json();
 
-    // Handle points updates only if both old and new posts are requests
-    if (isRequestPost && wasRequestPost) {
-      if (pointDifference > 0) {
+    // 4. Handle points adjustment for requests
+    if (isRequestPost && originalPost.type === "request") {
+      const pointDifference = newHours - originalPost.hoursNeeded;
+      if (pointDifference !== 0) {
         await pointsService.updatePoints(
-          -pointDifference,
-          "updating your babysitting request",
-          false
-        );
-      } else if (pointDifference < 0) {
-        await pointsService.updatePoints(
-          Math.abs(pointDifference),
-          "reducing hours in your babysitting request",
-          false
+          -pointDifference, // Negative if more hours (deduct points), positive if fewer hours (refund points)
+          currentUserId
         );
       }
     }
 
-    // 5. Update UI
+    // 5. Create notification for post creator
+    await createPostNotification(
+      {
+        ...updatedPost,
+        status: "edited",
+        dateTime: selectedDate,
+        type: document.getElementById("editType").value,
+        hoursNeeded: newHours,
+        postedBy: currentUserId,
+        pointDifference: isRequestPost
+          ? newHours - originalPost.hoursNeeded
+          : 0,
+      },
+      currentUserId,
+      userToken,
+      { toast: true, persistent: true }
+    );
+
+    // 6. Update UI
     const modal = M.Modal.getInstance(document.getElementById("editPostModal"));
     modal.close();
-    M.toast({
-      html: `Post updated successfully${
-        pointDifference !== 0
-          ? ` and points have been ${
-              pointDifference > 0 ? "deducted" : "refunded"
-            }`
-          : ""
-      }`,
-      classes: "green",
-    });
     displayMyPosts();
-    updatePointsDisplay();
     displayNotifications();
+    updatePointsDisplay();
   } catch (error) {
     console.error("Error updating post:", error);
     M.toast({ html: error.message || "Failed to update post", classes: "red" });
@@ -315,67 +313,81 @@ const handleEditPost = async (postId) => {
 
 const handleCancelPost = async (postId) => {
   try {
+    // 1. Confirm cancellation
     if (!confirm("Are you sure you want to cancel this post?")) {
       return;
     }
 
-    const originalPost = await getPostById(postId);
-    const dateTime = new Date(originalPost.dateTime).toLocaleString();
     const userToken = localStorage.getItem("token");
     const currentUserId = JSON.parse(atob(userToken.split(".")[1])).userId;
 
-    // Update post status
+    // 2. Get original post details before cancellation
+    const originalPost = await getPostById(postId);
+
+    // 3. Update post status to cancelled
     const response = await fetch(`/api/posts/cancel/${postId}`, {
       method: "PUT",
       headers: {
+        "Content-Type": "application/json",
         Authorization: userToken,
       },
+      body: JSON.stringify({ status: "cancelled" }),
     });
 
     if (!response.ok) {
       throw new Error("Failed to cancel post");
     }
 
-    // Get status actions for notifications and points
-    const actions = getStatusActions(
+    // 4. Handle points refunds
+    if (originalPost.type === "request") {
+      // Refund points to request creator
+      await pointsService.updatePoints(originalPost.hoursNeeded, currentUserId);
+    } else if (originalPost.type === "offer" && originalPost.acceptedBy) {
+      // Refund points to offer acceptor
+      await pointsService.updatePoints(
+        originalPost.hoursNeeded,
+        originalPost.acceptedBy
+      );
+    }
+
+    // 5. Create notifications
+    // Notification for post creator (always)
+    await createPostNotification(
       {
         ...originalPost,
         status: "cancelled",
+        dateTime: originalPost.dateTime,
+        type: originalPost.type,
+        hoursNeeded: originalPost.hoursNeeded,
+        postedBy: currentUserId,
       },
-      dateTime
-    );
-
-    // Create notification for post creator
-    await createNotification(
       currentUserId,
-      actions.creatorMessage,
       userToken,
-      window.location.origin
+      { toast: true, persistent: true }
     );
 
-    // Create notification for acceptor if post was accepted
-    if (originalPost.acceptedBy && actions.acceptorMessage) {
-      await createNotification(
-        originalPost.acceptedBy, // Send to acceptor
-        actions.acceptorMessage, // Use acceptor-specific message
+    // 6. Notification for post acceptor (if exists)
+    if (originalPost.acceptedBy) {
+      await createPostNotification(
+        {
+          ...originalPost,
+          status: "cancelled",
+          dateTime: originalPost.dateTime,
+          type: originalPost.type,
+          hoursNeeded: originalPost.hoursNeeded,
+          postedBy: currentUserId,
+          acceptedBy: originalPost.acceptedBy,
+        },
+        originalPost.acceptedBy,
         userToken,
-        window.location.origin
+        { toast: false, persistent: true }
       );
     }
 
-    // Update points based on post type
-    if (actions.pointsUpdate) {
-      await pointsService.updatePoints(
-        actions.pointsUpdate.amount,
-        actions.pointsUpdate.reason,
-        false // Suppress separate points notification
-      );
-    }
-
-    // Update UI
+    // 7. Update UI
     displayMyPosts();
-    updatePointsDisplay();
     displayNotifications();
+    updatePointsDisplay();
   } catch (error) {
     console.error("Error cancelling post:", error);
     M.toast({ html: error.message || "Failed to cancel post", classes: "red" });
@@ -420,25 +432,36 @@ const handleClickEditPost = async (e) => {
     const postData = await getPostById(postId);
     const selectedDate = getLocalDate(postData.dateTime);
 
-    document.getElementById("editType").value = postData.type;
+    // Disable type changing
+    const typeSelect = document.getElementById("editType");
+    typeSelect.value = postData.type;
+    typeSelect.disabled = true;
+
+    // Populate form fields
     document.getElementById("editHoursNeeded").value = postData.hoursNeeded;
     document.getElementById("editDateTime").value = selectedDate;
     document.getElementById("editDescription").value = postData.description;
 
     // Initialize and open modal
-    const modelElement = document.getElementById("editPostModal");
-    const modalInstance = M.Modal.init(modelElement);
+    const modalElement = document.getElementById("editPostModal");
+    const modalInstance = M.Modal.init(modalElement);
     modalInstance.open();
 
-    // Set up save button
+    // Set up save button with cleanup
     const saveButton = document.getElementById("saveEditButton");
     saveButton.dataset.postId = postId;
-    saveButton.addEventListener("click", handleSaveEdits);
 
-    // Reinitialize Materialize components
+    // Remove any existing event listeners before adding new one
+    const newSaveHandler = (e) => {
+      handleSaveEdits(e);
+      saveButton.removeEventListener("click", newSaveHandler);
+    };
+    saveButton.addEventListener("click", newSaveHandler);
+
+    // Reinitialize Materialize fields
     M.updateTextFields();
   } catch (error) {
-    console.error("Error parsing date:", error);
+    console.error("Error opening edit form:", error);
     M.toast({ html: "Error opening edit form", classes: "red" });
   }
 };

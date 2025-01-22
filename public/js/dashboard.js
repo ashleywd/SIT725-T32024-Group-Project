@@ -6,19 +6,16 @@ import {
   resetScreenPosition,
   updatePointsDisplay,
   getPostById,
-  getStatusActions,
-} from "./global.js";
+} from "./services/global.js";
 
-import { activateWebSocket } from "./socket-client.js";
+import { activateWebSocket } from "./services/socket-client.js";
 
 import {
   displayNotifications,
-  handleStatusNotification,
-  createNotification,
-  notificationService,
-} from "./notifications.js";
+  createPostNotification,
+} from "./services/notifications.js";
 
-import { pointsService } from "./points.js";
+import { pointsService } from "./services/points.js";
 
 const postForm = document.getElementById("postForm");
 
@@ -36,9 +33,13 @@ const handleSubmitForm = async function (e) {
       dateTime: document.getElementById("dateTime").value,
     };
 
-    const dateTime = new Date(formData.dateTime).toLocaleString();
+    // Validate date is not in the past
+    const selectedDate = new Date(formData.dateTime);
+    if (selectedDate < new Date()) {
+      throw new Error("Cannot set date/time in the past");
+    }
 
-    // 2. Validate points for requests
+    // 2. Check points for requests
     if (formData.type === "request") {
       const currentPoints = await pointsService.getPoints();
       if (currentPoints < formData.hoursNeeded) {
@@ -55,42 +56,44 @@ const handleSubmitForm = async function (e) {
       },
       body: JSON.stringify(formData),
     });
-    const result = await response.json();
 
-    // 4. Create status notification
-    await notificationService.createStatusNotification(
-      currentUserId,
-      `You have created a new ${formData.type} post for ${dateTime}.`,
-      userToken
-    );
-
-    // 5 & 6. Handle points and points notification for requests
-    if (formData.type === "request") {
-      // Update points
-      await pointsService.updatePoints(
-        -formData.hoursNeeded, // Amount to deduct
-        "babysitting request", // Reason
-        currentUserId // Target user
-      );
-
-      // Create points notification
-      await notificationService.createPointsNotification(
-        currentUserId,
-        -formData.hoursNeeded,
-        userToken
-      );
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Failed to create post");
     }
 
-    // Update UI
+    const newPost = await response.json();
+
+    // 4. Handle points deduction for requests
+    if (formData.type === "request") {
+      await pointsService.updatePoints(-formData.hoursNeeded, currentUserId);
+    }
+
+    // 5. Create notifications
+    await createPostNotification(
+      {
+        ...newPost,
+        dateTime: formData.dateTime,
+        type: formData.type,
+        hoursNeeded: formData.hoursNeeded,
+        postedBy: currentUserId,
+        status: "created",
+      },
+      currentUserId,
+      userToken,
+      { toast: true, persistent: true }
+    );
+
+    // 6. Update UI
     const modal = M.Modal.getInstance(document.getElementById("modalForm"));
     modal.close();
     postForm.reset();
+    displayPosts();
     displayNotifications();
     updatePointsDisplay();
-    displayPosts();
   } catch (error) {
     console.error("Error creating post:", error);
-    M.toast({ html: error.message, classes: "red" });
+    M.toast({ html: error.message || "Failed to create post", classes: "red" });
   }
 };
 
@@ -237,7 +240,7 @@ const handleAcceptPost = async (postInfo) => {
     const { postId, postedBy } = JSON.parse(decodedData);
     const currentUserId = JSON.parse(atob(userToken.split(".")[1])).userId;
 
-    // Get post and validate points first
+    // 1. Get post and validate points if needed
     const post = await getPostById(postId);
     if (post.type === "offer") {
       const currentPoints = await pointsService.getPoints();
@@ -246,7 +249,7 @@ const handleAcceptPost = async (postInfo) => {
       }
     }
 
-    // Update post status
+    // 2. Update post status
     const response = await fetch(`/api/posts/status/${postId}`, {
       method: "PUT",
       headers: {
@@ -261,45 +264,43 @@ const handleAcceptPost = async (postInfo) => {
       throw new Error(errorData.message || "Failed to accept post");
     }
 
-    const result = await response.json();
-
-    // Create notification for post creator
-    await createNotification(
-      post.postedBy,
-      `Your ${post.type} for ${new Date(
-        post.dateTime
-      ).toLocaleString()} has been accepted.`,
-      userToken,
-      window.location.origin
-    );
-
-    // Create notification for acceptor (current user)
-    await createNotification(
-      currentUserId,
-      `You have accepted ${
-        post.type === "offer" ? "a" : "to provide"
-      } babysitting ${post.type === "offer" ? "offer" : ""} for ${new Date(
-        post.dateTime
-      ).toLocaleString()}.${
-        post.type === "offer"
-          ? ` ${post.hoursNeeded} points will be deducted from your account.`
-          : ""
-      }`,
-      userToken,
-      window.location.origin
-    );
-
-    // Update points if offer
+    // 3. Update points if accepting an offer
     if (post.type === "offer") {
-      await pointsService.updatePoints(
-        -post.hoursNeeded,
-        "accepting a babysitting offer",
-        false // Suppress separate points notification
-      );
+      await pointsService.updatePoints(-post.hoursNeeded, currentUserId);
     }
 
-    // Update UI
-    M.toast({ html: "Post accepted successfully", classes: "green" });
+    // 4. Create notifications
+    await createPostNotification(
+      {
+        ...post,
+        status: "accepted",
+        acceptedBy: currentUserId,
+        postedBy: post.postedBy,
+        dateTime: post.dateTime,
+        type: post.type,
+        hoursNeeded: post.hoursNeeded,
+      },
+      post.postedBy, // Create notification for post owner
+      userToken,
+      { toast: false, persistent: true }
+    );
+
+    await createPostNotification(
+      {
+        ...post,
+        status: "accepted",
+        acceptedBy: currentUserId,
+        postedBy: post.postedBy,
+        dateTime: post.dateTime,
+        type: post.type,
+        hoursNeeded: post.hoursNeeded,
+      },
+      currentUserId, // Create notification for acceptor
+      userToken,
+      { toast: true, persistent: true }
+    );
+
+    // 5. Update UI
     displayPosts();
     displayNotifications();
     updatePointsDisplay();

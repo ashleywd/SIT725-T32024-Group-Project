@@ -1,7 +1,4 @@
 const Post = require("../models/post");
-const Notification = require("../models/notification");
-const pointsController = require("./pointsController");
-const notificationController = require("./notificationController");
 
 const postController = {
   createPost: async (req, res) => {
