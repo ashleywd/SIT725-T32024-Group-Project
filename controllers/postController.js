@@ -6,7 +6,6 @@ const postController = {
       const io = req.app.get("io");
       const { type, hoursNeeded, description, dateTime } = req.body;
 
-      // Use userId from auth middleware
       const userId = req.userId;
 
       const selectedDate = new Date(dateTime);
@@ -110,7 +109,7 @@ const postController = {
         type: "edit",
       });
 
-      // Update everyone's dashboard view only
+      // Update everyone's dashboard view
       io.emit("posts-updated");
 
       res.status(200).json(updatedPost);

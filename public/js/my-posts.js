@@ -144,7 +144,6 @@ const handleMarkCompleted = async (postId, postedBy) => {
   try {
     // 1. Get original post details
     const post = await getPostById(postId);
-    const currentUserId = JSON.parse(atob(userToken.split(".")[1])).userId;
 
     // 2. Update post status
     const response = await fetch(`/api/posts/status/${postId}`, {
@@ -399,12 +398,6 @@ const handleClickCompletePost = (e) => {
   const postId = e.currentTarget.dataset.postId;
   const postedBy = e.currentTarget.dataset.postPostedBy;
   handleMarkCompleted(postId, postedBy);
-};
-
-const handleSaveEdits = (e) => {
-  e.preventDefault();
-  const postId = e.target.dataset.postId;
-  handleEditPost(postId);
 };
 
 const getLocalDate = (date) => {
