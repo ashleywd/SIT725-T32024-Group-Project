@@ -228,7 +228,7 @@ const createPostNotification = async (
 
     // Define notification case key
     const notificationKey = `${post.status}_${post.type}_${
-      isCreator ? "creator" : "acceptor"
+      isCreator ? "creator" : isAcceptor ? "acceptor" : "unknown"
     }`;
 
     // Map of notification messages

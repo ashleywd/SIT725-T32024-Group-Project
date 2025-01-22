@@ -422,6 +422,14 @@ const getLocalDate = (date) => {
   return localDate;
 };
 
+// Define saveHandler outside handleClickEditPost
+const saveHandler = async (e) => {
+  e.preventDefault();
+  const postId = e.target.dataset.postId;
+  if (!postId) return;
+  handleEditPost(postId);
+};
+
 const handleClickEditPost = async (e) => {
   e.preventDefault();
   const target = e.target.closest(".edit-post");
@@ -432,12 +440,8 @@ const handleClickEditPost = async (e) => {
     const postData = await getPostById(postId);
     const selectedDate = getLocalDate(postData.dateTime);
 
-    // Disable type changing
-    const typeSelect = document.getElementById("editType");
-    typeSelect.value = postData.type;
-    typeSelect.disabled = true;
-
     // Populate form fields
+    document.getElementById("editType").value = postData.type;
     document.getElementById("editHoursNeeded").value = postData.hoursNeeded;
     document.getElementById("editDateTime").value = selectedDate;
     document.getElementById("editDescription").value = postData.description;
@@ -445,20 +449,17 @@ const handleClickEditPost = async (e) => {
     // Initialize and open modal
     const modalElement = document.getElementById("editPostModal");
     const modalInstance = M.Modal.init(modalElement);
-    modalInstance.open();
 
-    // Set up save button with cleanup
+    // Set up save button once
     const saveButton = document.getElementById("saveEditButton");
     saveButton.dataset.postId = postId;
-
-    // Remove any existing event listeners before adding new one
-    const newSaveHandler = (e) => {
-      handleSaveEdits(e);
-      saveButton.removeEventListener("click", newSaveHandler);
+    saveButton.onclick = (e) => {
+      e.preventDefault();
+      handleEditPost(postId);
     };
-    saveButton.addEventListener("click", newSaveHandler);
 
-    // Reinitialize Materialize fields
+    modalInstance.open();
+    M.FormSelect.init(document.getElementById("editType"));
     M.updateTextFields();
   } catch (error) {
     console.error("Error opening edit form:", error);
@@ -492,9 +493,9 @@ const initializeButtons = () => {
 };
 
 const handleNotifyAcceptPost = (data) => {
-  handleStatusNotification(data.updatedPost);
   displayMyPosts();
   displayNotifications();
+  updatePointsDisplay();
 };
 
 const handlePostsUpdated = () => {
