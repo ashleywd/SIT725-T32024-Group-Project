@@ -22,7 +22,7 @@ const notificationController = {
     try {
       const userId = req.userId;
       const notifications = await Notification.find({
-        $or: [{ userId }, { userId: null }, { isGlobal: true }],
+        $or: [{ userId }, { isGlobal: true }],
       }).sort({ createdAt: -1 });
 
       res.status(200).json(notifications);
@@ -39,9 +39,7 @@ const notificationController = {
     try {
       const userId = req.userId;
       await Notification.updateMany(
-        {
-          $or: [{ userId }, { userId: null }, { isGlobal: true }],
-        },
+        { userId },
         { status: "seen" },
         { new: true }
       );
