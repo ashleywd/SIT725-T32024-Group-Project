@@ -196,17 +196,21 @@ const handleOnOpenStart = async () => {
 
 const displayNotifications = async () => {
   try {
-    const notificationElements = document.querySelectorAll(".dropdown-trigger");
     const notifications = await getNotifications();
 
+    // Update notifications without reinitializing dropdown
     triggerNewNotificationEffect(notifications);
     addNotificationToMenu(notifications);
 
-    M.Dropdown.init(notificationElements, {
-      constrainWidth: false,
-      coverTrigger: false,
-      onOpenStart: handleOnOpenStart,
-    });
+    // Only initialize dropdown if it hasn't been initialized yet
+    const notificationElements = document.querySelectorAll(".dropdown-trigger");
+    if (!M.Dropdown.getInstance(notificationElements[0])) {
+      M.Dropdown.init(notificationElements, {
+        constrainWidth: false,
+        coverTrigger: false,
+        onOpenStart: handleOnOpenStart,
+      });
+    }
   } catch (err) {
     console.error("Error initializing notifications menu:", err.message);
   }
