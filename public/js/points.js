@@ -1,5 +1,5 @@
 const pointsService = {
-  async updatePoints(points, reason, createNotification = true) {
+  async updatePoints(points, reason, recipientId = null) {
     try {
       const response = await fetch("/api/points", {
         method: "PUT",
@@ -10,7 +10,7 @@ const pointsService = {
         body: JSON.stringify({
           points,
           reason,
-          createNotification,
+          recipientId,
         }),
       });
 
@@ -46,5 +46,3 @@ const pointsService = {
     }
   },
 };
-
-export { pointsService };
