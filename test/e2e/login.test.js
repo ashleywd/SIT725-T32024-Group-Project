@@ -4,6 +4,12 @@ const { test, expect } = require("@playwright/test");
 const mongoose = require("mongoose");
 const { insertTestUser } = require("./utils/testUtils"); 
 
+const dotenv = require('dotenv');
+dotenv.config({ path: './.env.test' });
+
+console.log("MONGODB_URI_E2E from dotenv:", process.env.MONGODB_URI_E2E);
+
+
 // Define the test block
 test.describe("Login Functionality", () => {
   let token;
@@ -12,13 +18,23 @@ test.describe("Login Functionality", () => {
   test.beforeEach(async ({ page }, testInfo) => {
     if (testInfo.title !== "should load the login page") {
       try {
+        if (mongoose.connection.readyState !== 1) {
+          console.log("Mongoose connection not active. Reconnecting...");
+          await mongoose.connect(process.env.MONGODB_URI_E2E, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+          });
+          console.log("Reconnected to MongoDB.");
+        }
+  
         console.log("Clearing the User collection...");
         await User.deleteMany({});
         console.log("User collection cleared successfully.");
   
         const { user, token: generatedToken } = await insertTestUser("testUser", "password123");
         console.log("Test user inserted:", user);
-        token = generatedToken;
+  
+        token = generatedToken; // Store the token if needed for future tests.
       } catch (error) {
         console.error("Error during beforeEach setup:", error);
         throw error;
@@ -28,6 +44,7 @@ test.describe("Login Functionality", () => {
     // Navigate to the login page for all tests
     await page.goto("/login");
   });
+  
   
 
   // After all tests: Clear the database and close the database connection
