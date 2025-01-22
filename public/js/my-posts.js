@@ -422,14 +422,6 @@ const getLocalDate = (date) => {
   return localDate;
 };
 
-// Define saveHandler outside handleClickEditPost
-const saveHandler = async (e) => {
-  e.preventDefault();
-  const postId = e.target.dataset.postId;
-  if (!postId) return;
-  handleEditPost(postId);
-};
-
 const handleClickEditPost = async (e) => {
   e.preventDefault();
   const target = e.target.closest(".edit-post");
@@ -493,13 +485,20 @@ const initializeButtons = () => {
 };
 
 const handleNotifyAcceptPost = (data) => {
-  displayMyPosts();
-  displayNotifications();
-  updatePointsDisplay();
+  // Add a small delay to ensure notification is created first
+  setTimeout(() => {
+    displayMyPosts();
+    displayNotifications();
+    updatePointsDisplay();
+  }, 500); // 500ms delay
 };
 
 const handlePostsUpdated = () => {
-  displayNotifications();
+  // Add a small delay to ensure notification is created first
+  setTimeout(() => {
+    displayNotifications();
+    updatePointsDisplay();
+  }, 500); // 500ms delay
 };
 
 initializeMaterializeComponent();
