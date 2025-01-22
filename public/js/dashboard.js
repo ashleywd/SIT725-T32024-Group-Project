@@ -57,9 +57,10 @@ const handleSubmitForm = async function (e) {
       body: JSON.stringify(formData),
     });
 
+    const result = await response.json();
+
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to create post");
+      throw new Error(result.message || "Unknown error");
     }
 
     const newPost = await response.json();
@@ -93,7 +94,7 @@ const handleSubmitForm = async function (e) {
     updatePointsDisplay();
   } catch (error) {
     console.error("Error creating post:", error);
-    M.toast({ html: error.message || "Failed to create post", classes: "red" });
+    M.toast({ html: error.message, classes: "red" });
   }
 };
 

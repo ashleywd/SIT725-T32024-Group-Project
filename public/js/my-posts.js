@@ -156,8 +156,7 @@ const handleMarkCompleted = async (postId, postedBy) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to complete post");
+      throw new Error(`Server error: ${result.error || "Unknown error"}`);
     }
 
     // 3. Update points based on post type
@@ -206,11 +205,8 @@ const handleMarkCompleted = async (postId, postedBy) => {
     displayNotifications();
     updatePointsDisplay();
   } catch (error) {
-    console.error("Error completing post:", error);
-    M.toast({
-      html: error.message || "Failed to complete post",
-      classes: "red",
-    });
+    console.error("Error marking post as completed:", error);
+    M.toast({ html: "Failed to mark post as completed", classes: "red" });
   }
 };
 
@@ -262,9 +258,10 @@ const handleEditPost = async (postId) => {
       }),
     });
 
+    const result = await response.json();
+
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to update post");
+      throw new Error(result.message || "Failed to update post");
     }
 
     const updatedPost = await response.json();
@@ -333,8 +330,10 @@ const handleCancelPost = async (postId) => {
       body: JSON.stringify({ status: "cancelled" }),
     });
 
+    const result = await response.json();
+
     if (!response.ok) {
-      throw new Error("Failed to cancel post");
+      throw new Error(result.message || "Failed to cancel post");
     }
 
     // 4. Handle points refunds
