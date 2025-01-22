@@ -313,66 +313,6 @@ const createPostNotification = async (
   }
 };
 
-// const handleStatusNotification = (updatedPost) => {
-//   const dateTime = new Date(updatedPost.dateTime).toLocaleString();
-//   const currentUserId = JSON.parse(
-//     atob(localStorage.getItem("token").split(".")[1])
-//   ).userId;
-
-//   // For edits, only show notification to post creator
-//   if (updatedPost.type === "edit" && currentUserId !== updatedPost.postedBy) {
-//     return; // Exit early if it's an edit and user is not the creator
-//   }
-
-//   // For other status changes, notify both creator and acceptor
-//   if (
-//     currentUserId === updatedPost.postedBy ||
-//     currentUserId === updatedPost.acceptedBy
-//   ) {
-//     const isPostCreator = currentUserId === updatedPost.postedBy;
-//     const isPostAcceptor = currentUserId === updatedPost.acceptedBy;
-
-//     const toastMessage = getStatusMessage(
-//       updatedPost,
-//       isPostCreator,
-//       isPostAcceptor,
-//       dateTime
-//     );
-
-//     if (toastMessage) {
-//       M.toast({
-//         html: toastMessage,
-//         classes: "green",
-//       });
-//     }
-//   }
-// };
-
-// const notificationService = {
-//   async createStatusNotification(userId, message, token) {
-//     return await createNotification(
-//       userId,
-//       message,
-//       token,
-//       window.location.origin
-//     );
-//   },
-
-//   async createPointsNotification(userId, points, reason, token) {
-//     const message =
-//       points > 0
-//         ? `${points} points have been credited for ${reason}.`
-//         : `${Math.abs(points)} points have been deducted for ${reason}.`;
-
-//     return await createNotification(
-//       userId,
-//       message,
-//       token,
-//       window.location.origin
-//     );
-//   },
-// };
-
 export {
   displayNotifications,
   getNotifications,

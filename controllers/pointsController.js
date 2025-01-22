@@ -1,7 +1,6 @@
 const User = require("../models/user");
 
 const pointsController = {
-  // Get user's current points balance
   getPoints: async (req, res) => {
     try {
       const { userId } = req;
@@ -18,7 +17,6 @@ const pointsController = {
     }
   },
 
-  // Update points balance (add or subtract)
   updatePoints: async (req, res) => {
     try {
       const { points, recipientId } = req.body;
@@ -26,7 +24,7 @@ const pointsController = {
 
       const user = await User.findByIdAndUpdate(
         targetUserId,
-        { $inc: { points: points } }, // Increment/decrement points
+        { $inc: { points: points } },
         { new: true }
       );
 

@@ -1,5 +1,4 @@
 const pointsService = {
-  // Update points balance (add or subtract)
   async updatePoints(points, recipientId = null) {
     try {
       const response = await fetch("/api/points", {
@@ -25,8 +24,6 @@ const pointsService = {
       throw error;
     }
   },
-
-  // Get user's current points balance
   async getPoints() {
     try {
       const response = await fetch("/api/points", {
