@@ -354,7 +354,6 @@ const displayPosts = async () => {
 };
 
 const handleNotifyAcceptPost = (data) => {
-  handleStatusNotification(data.updatedPost);
   displayPosts();
   displayNotifications();
   updatePointsDisplay();
