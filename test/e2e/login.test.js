@@ -78,16 +78,27 @@ test("should load the login page", async ({ page }) => {
 });
 
   // Test login with valid credentials
-  test("should log in successfully with valid credentials", async ({ page }) => {
-    await page.fill("#username", "testUser");
-    await page.fill("#password", "password123");
+  // Test login with valid credentials
+test("should log in successfully with valid credentials", async ({ page }) => {
+  await page.fill("#username", "testUser");
+  await page.fill("#password", "password123");
 
-    await page.click('button[type="submit"]');
+  await page.click('button[type="submit"]');
 
-    await page.waitForURL("/dashboard");
-    const url = page.url();
-    expect(url).toBe("http://localhost:3000/dashboard");
-  });
+  // Wait for the navigation to complete
+  try {
+    await page.waitForURL("/dashboard", { timeout: 60000 }); // 60 seconds
+  } catch (error) {
+    console.error("Navigation to /dashboard failed:", error);
+    const pageContent = await page.content();
+    console.log("Page content after login attempt:", pageContent);
+    throw error;
+  }
+
+  const url = page.url();
+  console.log("Current URL after login:", url); // Debug statement
+  expect(url).toBe("http://localhost:3000/dashboard");
+});
 
   // Test login with invalid credentials
   test("should show error message for invalid credentials", async ({ page }) => {
