@@ -49,14 +49,13 @@ npm run start
 ```
 Access application at http://localhost:3000
 
-### Tests
-#### Unit tests
+### Unit Tests
 ```console
 npm run test
 ```
 
-#### E2E tests
-#### Prerequisites
+### E2E Tests
+#### Prerequisites:
 - Application running on port 3000
 - MongoDB running
 - A test user already stored in the DB
