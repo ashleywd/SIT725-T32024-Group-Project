@@ -2,11 +2,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-
-/**
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
