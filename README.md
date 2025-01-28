@@ -50,18 +50,18 @@ npm run start
 Access application at http://localhost:3000
 
 ### Tests
-To run unit tests
+#### Unit tests
 ```console
 npm run test
 ```
 
-To run E2E tests
+#### E2E tests
 #### Prerequisites
 - Application running on port 3000
 - MongoDB running
-- A test user already stored in the DB:
-  username: testuser1
-  password: 123456
+- A test user already stored in the DB
+  - username: testuser1
+  - password: 123456
 
 ```console
 npm run E2E:ui // To initialize UI
