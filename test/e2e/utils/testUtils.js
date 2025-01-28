@@ -11,7 +11,7 @@ const testPassword = process.env.TEST_USER_PASSWORD || "TestPassword!123";
 // Function to insert a test user into the database and generate a token
 async function insertTestUser(username, password) {
   try {
-    const user = new User({
+     const user = new User({
       username,
       password,
       email: `${username}@example.com`, // Add a valid email address
@@ -19,9 +19,10 @@ async function insertTestUser(username, password) {
 
     await user.save();
     console.log("Test user created successfully:", user);
-
-    // Return the user and optionally generate a token if needed
-    return { user, token: null }; // Replace null with a token if applicable
+    const token = jwt.sign({ userId: user._id }, SESSION_SECRET, {
+            expiresIn: "1h",
+          });
+    return { user, token: token }; 
   } catch (error) {
     console.error("Error inserting test user:", error);
     throw error;

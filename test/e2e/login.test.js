@@ -43,9 +43,7 @@ test.describe("Login Functionality", () => {
   
     // Navigate to the login page for all tests
     await page.goto("/login");
-  });
-  
-  
+  });  
 
   // After all tests: Clear the database and close the database connection
   test.afterAll(async () => {
@@ -77,8 +75,7 @@ test("should load the login page", async ({ page }) => {
   await expect(page.locator('button[type="submit"]')).toBeVisible();
 });
 
-  // Test login with valid credentials
-  // Test login with valid credentials
+// Test login with valid credentials
 test("should log in successfully with valid credentials", async ({ page }) => {
   await page.fill("#username", "testUser");
   await page.fill("#password", "password123");
