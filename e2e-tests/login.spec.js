@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 test.describe("Login Flow", () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to login page before each test
-    await page.goto('http://localhost:3000/login');
+    await page.goto('/login');
   });
   test('user logs in successfully', async ({ page }) => {
     const username = 'testuser1';
@@ -26,7 +26,7 @@ test.describe("Login Flow", () => {
 
     // Assert - Verify successful login
     // Wait for navigation or success indicator
-    await expect(page).toHaveURL('http://localhost:3000/dashboard');
+    await expect(page).toHaveURL('/dashboard');
 
     // Check for success message or authenticated state
     const welcomeMessage = page.getByText(`Welcome to BabySwap`);

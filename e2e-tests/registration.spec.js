@@ -6,7 +6,7 @@ const getRandomInt = (max) => Math.floor(Math.random() * max);
 test.describe("Registration Flow", () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to Registration page before each test
-    await page.goto('http://localhost:3000/register');
+    await page.goto('/register');
   });
   test('user registers successfully', async ({ page }) => {
     const randomNumber = + getRandomInt(1000);
@@ -33,7 +33,7 @@ test.describe("Registration Flow", () => {
 
     // Assert - Verify successful registration
     // Wait for navigation or success indicator
-    await expect(page).toHaveURL('http://localhost:3000/dashboard');
+    await expect(page).toHaveURL('/dashboard');
 
     // Check for success message or authenticated state
     const welcomeMessage = page.getByText(`Welcome to BabySwap`);
@@ -67,7 +67,7 @@ test.describe("Registration Flow", () => {
     await registerButton.click();
 
     // Wait for navigation or error indicator
-    await expect(page).toHaveURL('http://localhost:3000/register');
+    await expect(page).toHaveURL('/register');
 
     // Check for error message
     const errorMessage = page.getByText(`Username is already taken`);

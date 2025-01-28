@@ -1,10 +1,10 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
 
-test.describe("Logout Flow", () => {
+test.describe("Account Page", () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to login page before each test
-    await page.goto('http://localhost:3000/login');
+    await page.goto('/login');
     const username = 'testuser1';
     const password = '123456';
 
@@ -19,20 +19,20 @@ test.describe("Logout Flow", () => {
     await loginButton.click();
 
   });
-  test('user logs out successfully', async ({ page }) => {
+  test('user access the account page successfully', async ({ page }) => {
     // Assert - user is logged in
-    await expect(page).toHaveURL('http://localhost:3000/dashboard');
+    await expect(page).toHaveURL('/dashboard');
 
-    // Check for success message or authenticated state
-    const welcomeMessage = page.getByText(`Welcome to BabySwap`);
-    await expect(welcomeMessage).toBeVisible();
-
-    // Verify user is properly authenticated
-    const logoutButton = page.getByRole('navigation').getByRole('link', { name: /Logout/i });
+    // Navigate to the account page
+    const logoutButton = page.getByRole('navigation').getByRole('link', { name: /Account/i });
     await expect(logoutButton).toBeVisible();
     await logoutButton.click();
 
-    // Assert - user is return to login page
-    await expect(page).toHaveURL('http://localhost:3000/');
+    // Check for account page title
+    const accountTitle = page.getByText(`Account Details:`);
+    await expect(accountTitle).toBeVisible();
+
+    // Assert - user is in the right url
+    await expect(page).toHaveURL('/account');
   });
 })
