@@ -5,20 +5,20 @@ BabySwap is a web application developed for SIT725 (T3 2024) that enables parent
 
 ## Features
  - User registration and authentication
- - Create and view babysitting posts 
+ - Create and view babysitting posts
  - Accept babysitting requests
  - Simple points-based exchange system
 
 ## Technologies
 - Backend: Node.js with Express
 - Database: MongoDB
-- Frontend: HTML, CSS, JavaScript
-- UI: Materialize CSS
+- Frontend: HTML, CSS, JavaScript, Materialize CSS
+- Unit Test: Jest
+- E2E Test: Playwright
 
 ## Prerequisites
-- Node.js installed
+- Node.js version 22
 - MongoDB installed and running
-- Git installed
 
 ## Installation & Setup
 ### Clone Repository
@@ -48,6 +48,27 @@ PORT=3000
 npm run start
 ```
 Access application at http://localhost:3000
+
+### Unit Tests
+```console
+npm run test
+```
+
+### E2E Tests
+#### Prerequisites:
+- Application running on port 3000
+- MongoDB running
+- A test user already stored in the DB
+  - username: testuser1
+  - password: 123456
+
+```console
+npm run E2E:ui // To initialize UI
+or
+npm run E2E:test // To run test in the background
+and
+npm run E2E:report // To display report in the browser
+```
 
 ## Development Team
 [Suppressed for Privacy]

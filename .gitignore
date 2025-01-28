@@ -4,3 +4,9 @@ node_modules/
 .idea/modules.xml
 .idea/SIT725-T32024-Group-Project.iml
 .idea/vcs.xml
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
