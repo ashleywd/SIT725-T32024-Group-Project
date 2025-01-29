@@ -3,6 +3,7 @@ const appRoutes = require("./app");
 const postRoutes = require("./post");
 const accountRoutes = require("./account");
 const notificationRoutes = require("./notification");
+const pointsRoutes = require("./points");
 
 module.exports = {
   authRoutes,
@@ -10,4 +11,5 @@ module.exports = {
   postRoutes,
   accountRoutes,
   notificationRoutes,
+  pointsRoutes,
 };
