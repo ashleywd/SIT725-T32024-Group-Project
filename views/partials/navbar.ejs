@@ -5,6 +5,7 @@
       <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons">menu</i></a>
       <ul class="right hide-on-med-and-down">
         <li><a id="notifications-menu" class="dropdown-trigger" href="#!" data-target="notifications-container"><i class="notifications-icon material-icons">notifications_none</i></a></li>
+        <li><a id="pointsBadge" class="points-display">Points: <span id="userPoints">-</span></a></li>
         <li <%- title === 'Dashboard' ? 'class="active"' : '' %>><a id="dashboard-menu" href="/dashboard">Dashboard</a></li>
         <li <%- title === 'My Posts' ? 'class="active"' : '' %>><a id="my-posts-menu" href="/my-posts">My Posts</a></li>
         <li <%- title === 'Account' ? 'class="active"' : '' %>><a id="account-menu" href="/account">Account </a></li>

@@ -1,3 +1,5 @@
+import { updatePointsDisplay } from "./points.js";
+
 const loginMenu = document.querySelectorAll("#login-menu");
 const registerMenu = document.querySelectorAll("#register-menu");
 const logoutMenu = document.querySelectorAll("#logout-menu");
@@ -5,6 +7,7 @@ const dashboardMenu = document.querySelectorAll("#dashboard-menu");
 const accountMenu = document.querySelectorAll("#account-menu");
 const myPostsMenu = document.querySelectorAll("#my-posts-menu");
 const notificationsMenu = document.querySelectorAll("#notifications-menu");
+const pointsDisplay = document.querySelectorAll("#pointsBadge");
 
 const toggleUnnecessaryMenu = () => {
   loginMenu.forEach((menu) => menu.style.display = "none")
@@ -14,6 +17,7 @@ const toggleUnnecessaryMenu = () => {
   logoutMenu.forEach((menu) => menu.style.display = "block");
   accountMenu.forEach((menu) => menu.style.display = "block");
   notificationsMenu.forEach((menu) => menu.style.display = "block");
+  pointsDisplay.forEach((menu) => (menu.style.display = "block"));
 };
 
 const logout = (e) => {
@@ -23,6 +27,8 @@ const logout = (e) => {
 };
 
 logoutMenu.forEach((menu) => menu.addEventListener("click", logout));
+
+updatePointsDisplay();
 
 export {
   toggleUnnecessaryMenu,
