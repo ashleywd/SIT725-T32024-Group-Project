@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest test/",
     "E2E:ui": "npx playwright test --ui",
     "E2E:test": "npx playwright test",
     "E2E:report": "npx playwright show-report",
@@ -30,6 +30,7 @@
     "@playwright/test": "^1.50.0",
     "@types/node": "^22.12.0",
     "jest": "^29.7.0",
+    "node-mocks-http": "^1.16.2",
     "nodemon": "^3.1.7"
   }
 }
