@@ -26,7 +26,6 @@ const createPost = async function () {
     if (formData.type === "request") {
       const { userId: recipientId, points } = await accountService.getAccountDetails();
       const newPoints = points - formData.hoursNeeded;
-      console.log({ newPoints });
       await pointsService.updatePoints(newPoints, recipientId);
     }
 
