@@ -1,6 +1,7 @@
 const pointsService = {
   updatePoints: async (points, recipientId) => {
     try {
+      if (!recipientId) throw new Error("recipientId is required");
       const response = await fetch("/api/points", {
         method: "PUT",
         headers: {
@@ -21,7 +22,6 @@ const pointsService = {
       return result;
     } catch (error) {
       console.error("Error updating points:", error);
-      throw error;
     }
   },
   getPoints: async () => {
@@ -40,7 +40,6 @@ const pointsService = {
       return result.points;
     } catch (error) {
       console.error("Error getting points:", error);
-      throw error;
     }
   },
 };

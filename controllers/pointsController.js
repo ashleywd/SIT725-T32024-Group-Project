@@ -23,7 +23,7 @@ const pointsController = {
 
       const user = await User.findByIdAndUpdate(
         recipientId,
-        { $inc: { points: points } },
+        { points: points },
         { new: true },
       );
 
