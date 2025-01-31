@@ -1,3 +1,5 @@
+import { verifyUserAuthentication } from "./global.js";
+
 const initializeWebSocket = () => {
   const userToken = localStorage.getItem("token");
 
@@ -15,6 +17,11 @@ const activateWebSocket = ({
   handlePostsUpdated
 }) => {
   const socket = initializeWebSocket();
+
+  socket.on("connect_error", () => {
+    verifyUserAuthentication();
+  });
+
   if (handleNotifyAcceptPost)
     socket.on("notify-post-status-update", handleNotifyAcceptPost);
 

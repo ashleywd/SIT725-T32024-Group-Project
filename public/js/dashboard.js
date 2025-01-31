@@ -281,6 +281,7 @@ const handlePostsUpdated = () => {
   resetScreenPosition();
   filterAndRenderPosts();
   displayNotifications();
+  updatePointsDisplay();
 };
 
 verifyUserAuthentication();

@@ -97,6 +97,47 @@ const postsService = {
       throw new Error("Error fetching post");
     }
   },
+  updatePostDetails: async (postId, requestBody) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`/api/posts/${postId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok && response.status === 401) {
+        clearTokenAndRedirectToLogin();
+      }
+
+      const result = await response.json();
+      return result;
+    } catch(error) {
+      console.error("Error updating post details:", error);
+      throw new Error("Error updating post details");
+    }
+  },
+  cancelPost: async (postId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`/api/posts/cancel/${postId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: token,
+        },
+      });
+
+      if (!response.ok && response.status === 401) {
+        clearTokenAndRedirectToLogin();
+      }
+    } catch(error) {
+      console.error("Error cancelling post:", error);
+      throw new Error("Error cancelling post");
+    }
+  }
 };
 
 export default postsService;

@@ -1,6 +1,5 @@
 import {
   verifyUserAuthentication,
-  clearTokenAndRedirectToLogin,
   getStatusColor,
   initializeMaterializeComponent,
 } from "./global.js";
@@ -8,36 +7,11 @@ import { activateWebSocket } from "./socket-client.js";
 import { displayNotifications } from "./notifications.js";
 import postsService from "./services/posts.js";
 import { updatePointsDisplay } from "./points.js";
+import myPostsService from "./services/myPosts.js";
+import pointsService from "./services/points.js";
+import accountService from "./services/account.js";
 
 verifyUserAuthentication();
-
-const getMyPosts = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      window.location.href = "/login";
-      return;
-    }
-
-    const response = await fetch("/api/posts/my-posts", {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
-    });
-
-    if (!response.ok && response.status === 401) {
-      clearTokenAndRedirectToLogin();
-      throw new Error("Failed to fetch posts");
-    }
-
-    const posts = await response.json();
-    return posts;
-  } catch (error) {
-    console.error("Failed to fetch posts:", error);
-    M.toast({ html: "Failed to load posts", classes: "red" });
-  }
-};
 
 const renderPosts = (posts) => {
   const postsHtml =
@@ -50,9 +24,14 @@ const renderPosts = (posts) => {
 };
 
 const displayMyPosts = async () => {
-  const posts = await getMyPosts();
-  renderPosts(posts);
-  initializeButtons();
+  try {
+    const posts = await myPostsService.getMyPosts();
+    renderPosts(posts);
+    initializeButtons();
+  } catch (error) {
+    console.error("Failed to display posts:", error);
+    M.toast({ html: "Failed to load posts", classes: "red" });
+  }
 };
 
 const completedButton = ({ postId, postedBy }) => `
@@ -129,24 +108,22 @@ const getCardActions = (id, status, postedBy) => {
 };
 
 const handleMarkCompleted = async (postId, postedBy) => {
-  const userToken = localStorage.getItem("token");
   try {
-    const response = await fetch("/api/posts/status/" + postId, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: userToken,
-      },
-      body: JSON.stringify({ postId, postedBy, status: "completed" }),
-    });
+    // Credit points
+    const post = await postsService.getPostById(postId);
+    const recipientId = post.type === "offer" ? post.postedBy : post.acceptedBy;
+    const recipient = await accountService.getAccountDetailsByUserId(recipientId);
+    const newPoints = Number(recipient.points) + Number(post.hoursNeeded);
+    await pointsService.updatePoints(newPoints, recipientId);
 
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(`Server error: ${result.error || "Unknown error"}`);
-    }
+    // Update post status
+    const status = "completed";
+    await postsService.updatePostStatus(postId, postedBy, status);
 
     M.toast({ html: "Post marked as completed", classes: "green" });
+
     displayMyPosts();
+    updatePointsDisplay();
   } catch (error) {
     console.error("Error marking post as completed:", error);
     M.toast({ html: "Failed to mark post as completed", classes: "red" });
@@ -155,11 +132,11 @@ const handleMarkCompleted = async (postId, postedBy) => {
 
 const handleEditPost = async (postId) => {
   try {
-    const token = localStorage.getItem("token");
     const dateTimeInput = document.getElementById("editDateTime").value;
     const selectedDate = new Date(dateTimeInput);
+    const currentDate = new Date();
 
-    if (selectedDate < new Date()) {
+    if (selectedDate < currentDate) {
       throw new Error("Cannot set date/time in the past");
     }
 
@@ -170,19 +147,7 @@ const handleEditPost = async (postId) => {
       description: document.getElementById("editDescription").value,
     };
 
-    const response = await fetch(`/api/posts/${postId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.message || "Failed to update post");
-    }
+    await postsService.updatePostDetails(postId, requestBody);
 
     const modal = M.Modal.getInstance(document.getElementById("editPostModal"));
     modal.close();
@@ -201,18 +166,7 @@ const handleCancelPost = async (postId) => {
       return;
     }
 
-    const token = localStorage.getItem("token");
-    const response = await fetch(`/api/posts/cancel/${postId}`, {
-      method: "PUT",
-      headers: {
-        Authorization: token,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to cancel post");
-    }
+    await postsService.cancelPost(postId);
 
     M.toast({ html: "Post cancelled successfully", classes: "green" });
     displayMyPosts();
@@ -260,10 +214,20 @@ const handleClickEditPost = async (e) => {
     const postData = await postsService.getPostById(postId);
     const selectedDate = getLocalDate(postData.dateTime);
 
-    document.getElementById("editType").value = postData.type;
-    document.getElementById("editHoursNeeded").value = postData.hoursNeeded;
-    document.getElementById("editDateTime").value = selectedDate;
-    document.getElementById("editDescription").value = postData.description;
+    const typeField = document.getElementById("editType");
+    const hoursField = document.getElementById("editHoursNeeded");
+    const dateField = document.getElementById("editDateTime");
+    const descriptionField = document.getElementById("editDescription");
+
+    typeField.value = postData.type;
+    hoursField.disabled = false;
+    hoursField.value = postData.hoursNeeded;
+    dateField.value = selectedDate;
+    descriptionField.value = postData.description;
+
+    if (postData.type === "request") {
+      hoursField.disabled = true; // Editable only if it is an offer
+    }
 
     // Initialize and open modal
     const modelElement = document.getElementById("editPostModal");
