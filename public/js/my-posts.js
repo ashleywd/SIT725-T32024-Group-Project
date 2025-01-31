@@ -7,6 +7,7 @@ import {
 import { activateWebSocket } from "./socket-client.js";
 import { displayNotifications } from "./notifications.js";
 import postsService from "./services/posts.js";
+import { updatePointsDisplay } from "./points.js";
 
 verifyUserAuthentication();
 
@@ -325,6 +326,5 @@ const handlePostsUpdated = () => {
 initializeMaterializeComponent();
 displayMyPosts();
 displayNotifications();
+updatePointsDisplay();
 activateWebSocket({ handleNotifyAcceptPost, handlePostsUpdated });
-
-export { displayMyPosts };

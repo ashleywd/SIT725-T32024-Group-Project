@@ -1,3 +1,5 @@
+import { verifyUserAuthentication } from "../global.js";
+
 const pointsService = {
   updatePoints: async (points, recipientId) => {
     try {

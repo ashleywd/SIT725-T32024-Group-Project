@@ -1,5 +1,3 @@
-import { updatePointsDisplay } from "./points.js";
-
 const loginMenu = document.querySelectorAll("#login-menu");
 const registerMenu = document.querySelectorAll("#register-menu");
 const logoutMenu = document.querySelectorAll("#logout-menu");
@@ -27,8 +25,6 @@ const logout = (e) => {
 };
 
 logoutMenu.forEach((menu) => menu.addEventListener("click", logout));
-
-updatePointsDisplay();
 
 export {
   toggleUnnecessaryMenu,

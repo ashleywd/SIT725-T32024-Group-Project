@@ -285,5 +285,3 @@ displayPosts();
 displayNotifications();
 updatePointsDisplay();
 activateWebSocket({ handleNotifyAcceptPost, handlePostsUpdated });
-
-export { displayPosts };
