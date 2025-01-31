@@ -1,3 +1,5 @@
+import { clearTokenAndRedirectToLogin } from "../global.js";
+
 const accountService = {
   getAccountDetails: async () => {
     try {
@@ -10,14 +12,15 @@ const accountService = {
         },
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch account details");
+      if (!response.ok && response.status === 401) {
+        clearTokenAndRedirectToLogin();
       }
 
       const data = await response.json();
       return data;
     } catch (err) {
       console.error("Error fetching account details:", err.message);
+      throw new Error("Error fetching account details");
     }
   },
   deleteAccount: async () => {
@@ -27,14 +30,15 @@ const accountService = {
         headers: { Authorization: localStorage.getItem("token") },
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to delete account");
+      if (!response.ok && response.status === 401) {
+        clearTokenAndRedirectToLogin();
       }
 
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error("Error fetching account details:", err.message);
+      console.error("Error deleting account:", err.message);
+      throw new Error("Error deleting account");
     }
   },
 }

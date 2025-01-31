@@ -3,6 +3,7 @@ import {
   initializeMaterializeComponent,
 } from "./global.js";
 import accountService from "./services/account.js";
+import { updatePointsDisplay } from "./points.js";
 
 verifyUserAuthentication();
 initializeMaterializeComponent();
@@ -101,3 +102,4 @@ const displayAccountDetails = async () => {
 };
 
 displayAccountDetails();
+updatePointsDisplay();
