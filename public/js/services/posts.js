@@ -13,8 +13,8 @@ const postsService = {
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to create post");
+      if (!response.ok && response.status === 401) {
+        clearTokenAndRedirectToLogin();
       }
 
       const data = await response.json();
@@ -22,6 +22,7 @@ const postsService = {
       return data;
     } catch (error) {
       console.error("Error creating post:", error);
+      throw new Error("Error creating post");
     }
   },
   getPosts: async () => {
@@ -41,7 +42,6 @@ const postsService = {
 
       if (!response.ok && response.status === 401) {
         clearTokenAndRedirectToLogin();
-        throw new Error("Failed to fetch posts");
       }
 
       const posts = await response.json();
@@ -49,7 +49,7 @@ const postsService = {
       return posts;
     } catch (error) {
       console.error("Failed to fetch posts:", error);
-      console.log(error);
+      throw new Error("Error fetching posts");
     }
   },
   updatePostStatus: async (postId, postedBy, status) => {
@@ -64,15 +64,15 @@ const postsService = {
         body: JSON.stringify({ postId, postedBy, status }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to ${status} post`);
+      if (!response.ok && response.status === 401) {
+        clearTokenAndRedirectToLogin();
       }
 
       const data = await response.json();
       return data;
     } catch (error) {
       console.error("Failed to update post status:", error);
+      throw new Error("Error fetching posts");
     }
   },
   getPostById: async (postId) => {
@@ -85,10 +85,16 @@ const postsService = {
           method: "GET",
         },
       });
+
+      if (!response.ok && response.status === 401) {
+        clearTokenAndRedirectToLogin();
+      }
+
       const post = await response.json();
       return post;
     } catch (error) {
       console.error("Error fetching post:", error);
+      throw new Error("Error fetching post");
     }
   },
 };

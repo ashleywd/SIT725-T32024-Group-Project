@@ -1,4 +1,4 @@
-import { verifyUserAuthentication } from "../global.js";
+import { clearTokenAndRedirectToLogin } from "../global.js";
 
 const pointsService = {
   updatePoints: async (points, recipientId) => {
@@ -16,14 +16,15 @@ const pointsService = {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to update points");
+      if (!response.ok && response.status === 401) {
+        clearTokenAndRedirectToLogin();
       }
 
       const result = await response.json();
       return result;
     } catch (error) {
       console.error("Error updating points:", error);
+      throw new Error("Error updating points");
     }
   },
   getPoints: async () => {
@@ -34,14 +35,15 @@ const pointsService = {
         },
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to get points");
+      if (!response.ok && response.status === 401) {
+        clearTokenAndRedirectToLogin();
       }
 
       const result = await response.json();
       return result.points;
     } catch (error) {
       console.error("Error getting points:", error);
+      throw new Error("Error getting points");
     }
   },
 };

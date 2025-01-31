@@ -195,12 +195,15 @@ const handleAcceptPost = async (postInfo) => {
     const decodedData = decodeURIComponent(postInfo);
     const { postId, postedBy } = JSON.parse(decodedData);
 
+    const { userId } = await accountService.getAccountDetails();
     const post = await postsService.getPostById(postId);
     if (post.type === "offer") {
       const currentPoints = await pointsService.getPoints();
       if (currentPoints < post.hoursNeeded) {
         throw new Error("Insufficient points to accept this offer");
       }
+      const newPoints = Number(currentPoints) - Number(post.hoursNeeded);
+      await pointsService.updatePoints(newPoints, userId);
     }
 
     const status = "accepted";
@@ -208,6 +211,7 @@ const handleAcceptPost = async (postInfo) => {
 
     M.toast({ html: "Post accepted successfully", classes: "green" });
     displayPosts();
+    updatePointsDisplay();
   } catch (error) {
     console.error("Error accepting post:", error);
     M.toast({ html: error.message || "Failed to accept post", classes: "red" });
