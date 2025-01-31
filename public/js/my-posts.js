@@ -112,7 +112,8 @@ const handleMarkCompleted = async (postId, postedBy) => {
     // Credit points
     const post = await postsService.getPostById(postId);
     const recipientId = post.type === "offer" ? post.postedBy : post.acceptedBy;
-    const recipient = await accountService.getAccountDetailsByUserId(recipientId);
+    const recipient =
+      await accountService.getAccountDetailsByUserId(recipientId);
     const newPoints = Number(recipient.points) + Number(post.hoursNeeded);
     await pointsService.updatePoints(newPoints, recipientId);
 
@@ -166,10 +167,24 @@ const handleCancelPost = async (postId) => {
       return;
     }
 
+    // Refunds points
+    const post = await postsService.getPostById(postId);
+    const recipientId =
+      post.type === "offer" && post.acceptedBy
+        ? post.acceptedBy
+        : post.postedBy;
+    const recipient =
+      await accountService.getAccountDetailsByUserId(recipientId);
+    const newPoints = Number(recipient.points) + Number(post.hoursNeeded);
+    await pointsService.updatePoints(newPoints, recipientId);
+
+    // Cancel post
     await postsService.cancelPost(postId);
 
     M.toast({ html: "Post cancelled successfully", classes: "green" });
+
     displayMyPosts();
+    updatePointsDisplay();
   } catch (error) {
     console.error("Error cancelling post:", error);
     M.toast({ html: error.message || "Failed to cancel post", classes: "red" });
