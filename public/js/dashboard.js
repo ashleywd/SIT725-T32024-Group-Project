@@ -10,6 +10,7 @@ import { displayNotifications } from "./notifications.js";
 import { updatePointsDisplay } from "./points.js";
 import pointsService from "./services/points.js";
 import accountService from "./services/account.js";
+import postsService from "./services/posts.js";
 
 const postForm = document.getElementById("postForm");
 
@@ -29,27 +30,17 @@ const createPost = async function () {
       await pointsService.updatePoints(newPoints, recipientId);
     }
 
-    // TODO: Move to services
-    const userToken = localStorage.getItem("token");
-    const response = await fetch("/api/posts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: userToken,
-      },
-      body: JSON.stringify(formData),
-    });
-    const result = await response.json();
+    await postsService.createPost(formData);
 
-    if (!response.ok) {
-      throw new Error(result.message || "Unknown error");
-    }
-
+    // Close and reset form
     const modal = M.Modal.getInstance(document.getElementById("modalForm"));
     modal.close();
     postForm.reset();
+
+    // Show successful message
     M.toast({ html: "Post created successfully!" });
 
+    // Update page
     displayPosts();
     updatePointsDisplay();
   } catch (error) {
@@ -67,7 +58,7 @@ const validatePoints = async () => {
     }
   } catch (error) {
     console.error("Error validating has enough points:", error);
-    M.toast({ html: error.message, classes: "red" });
+    throw new Error(error);
   }
 };
 
@@ -86,7 +77,7 @@ const validatePostCreation = async (e) => {
       await validatePoints();
     }
 
-    createPost();
+    await createPost();
   } catch (error) {
     console.error("Error validating post creation:", error);
     M.toast({ html: error.message, classes: "red" });
@@ -94,39 +85,6 @@ const validatePostCreation = async (e) => {
 };
 
 postForm.addEventListener("submit", validatePostCreation);
-
-const getPosts = async () => {
-  const postsContent = document.getElementById("postsContent");
-
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      window.location.href = "/login";
-      return;
-    }
-
-    postsContent.innerHTML = "";
-
-    const response = await fetch("/api/posts", {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
-    });
-
-    if (!response.ok && response.status === 401) {
-      clearTokenAndRedirectToLogin();
-      throw new Error("Failed to fetch posts");
-    }
-
-    const posts = await response.json();
-
-    return posts;
-  } catch (error) {
-    console.error("Failed to fetch posts:", error);
-    M.toast({ html: "Failed to load posts", classes: "red" });
-  }
-};
 
 const filterPosts = (posts, typeFilter, statusFilter) => {
   return posts.filter((post) => {
@@ -139,7 +97,10 @@ const filterPosts = (posts, typeFilter, statusFilter) => {
 
 const filterAndRenderPosts = async () => {
   try {
-    const posts = await getPosts();
+    const postsContent = document.getElementById("postsContent");
+    postsContent.innerHTML = "";
+
+    const posts = await postsService.getPosts();
     const typeFilter = document.getElementById("typeFilter").value;
     const statusFilter = document.getElementById("statusFilter").value;
     const filteredPosts = filterPosts(posts, typeFilter, statusFilter);
@@ -230,26 +191,21 @@ const createPostElement = ({
 `;
 
 const handleAcceptPost = async (postInfo) => {
-  const userToken = localStorage.getItem("token");
   try {
     const decodedData = decodeURIComponent(postInfo);
     const { postId, postedBy } = JSON.parse(decodedData);
 
-    const response = await fetch(`/api/posts/status/${postId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: userToken,
-      },
-      body: JSON.stringify({ postId, postedBy, status: "accepted" }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to accept post");
+    const post = await postsService.getPostById(postId);
+    if (post.type === "offer") {
+      const currentPoints = await pointsService.getPoints();
+      if (currentPoints < post.hoursNeeded) {
+        throw new Error("Insufficient points to accept this offer");
+      }
     }
 
-    await response.json();
+    const status = "accepted";
+    await postsService.updatePostStatus(postId, postedBy, status);
+
     M.toast({ html: "Post accepted successfully", classes: "green" });
     displayPosts();
   } catch (error) {
@@ -296,9 +252,14 @@ const renderPosts = (posts) => {
 };
 
 const displayPosts = async () => {
-  const posts = await getPosts();
-  renderPosts(posts);
-  initializeButtons();
+  try {
+    const posts = await postsService.getPosts();
+    renderPosts(posts);
+    initializeButtons();
+  } catch (error) {
+    console.error("Error displaying post:", error);
+    M.toast({ html: error.message, classes: "red" });
+  }
 };
 
 const handleNotifyAcceptPost = (data) => {

@@ -6,6 +6,7 @@ import {
 } from "./global.js";
 import { activateWebSocket } from "./socket-client.js";
 import { displayNotifications } from "./notifications.js";
+import postsService from "./services/posts.js";
 
 verifyUserAuthentication();
 
@@ -227,24 +228,6 @@ const handleClickCompletePost = (e) => {
   handleMarkCompleted(postId, postedBy);
 };
 
-const getPostById = async (postId) => {
-  try {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`/api/posts/${postId}`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-        method: "GET",
-      },
-    });
-    const post = await response.json();
-    return post;
-  } catch (error) {
-    console.error("Error fetching post:", error);
-    M.toast({ html: "Failed to fetch post", classes: "red" });
-  }
-};
-
 const handleSaveEdits = (e) => {
   e.preventDefault();
   const postId = e.target.dataset.postId;
@@ -273,7 +256,7 @@ const handleClickEditPost = async (e) => {
 
   try {
     const postId = target.dataset.postId;
-    const postData = await getPostById(postId);
+    const postData = await postsService.getPostById(postId);
     const selectedDate = getLocalDate(postData.dateTime);
 
     document.getElementById("editType").value = postData.type;
