@@ -169,14 +169,14 @@ const handleCancelPost = async (postId) => {
 
     // Refunds points
     const post = await postsService.getPostById(postId);
-    const recipientId =
-      post.type === "offer" && post.acceptedBy
-        ? post.acceptedBy
-        : post.postedBy;
-    const recipient =
-      await accountService.getAccountDetailsByUserId(recipientId);
-    const newPoints = Number(recipient.points) + Number(post.hoursNeeded);
-    await pointsService.updatePoints(newPoints, recipientId);
+    if (post.status === "accepted" || post.type === "request") {
+      const recipientId =
+        post.type === "offer" ? post.acceptedBy : post.postedBy;
+      const recipient =
+        await accountService.getAccountDetailsByUserId(recipientId);
+      const newPoints = Number(recipient.points) + Number(post.hoursNeeded);
+      await pointsService.updatePoints(newPoints, recipientId);
+    }
 
     // Cancel post
     await postsService.cancelPost(postId);
