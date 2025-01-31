@@ -2,6 +2,7 @@ import {
   verifyUserAuthentication,
   initializeMaterializeComponent,
 } from "./global.js";
+import accountService from "./services/account.js";
 
 verifyUserAuthentication();
 initializeMaterializeComponent();
@@ -10,30 +11,6 @@ const populateData = (data) => {
   document.getElementById("accountName").value = data.name;
   document.getElementById("accountEmail").value = data.email;
   document.getElementById("accountPoints").innerText = data.points;
-};
-
-const getAccountDetails = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    const response = await fetch("/api/account", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch account details");
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (err) {
-    console.error("Error fetching account details:", err.message);
-    const instance = M.Modal.getInstance(document.getElementById("errorModal"));
-    instance.open();
-  }
 };
 
 const accountDetails = document.getElementById("accountDetails");
@@ -102,13 +79,7 @@ deleteAccountBtn.addEventListener("click", async () => {
   if (!confirm("Are you sure you want to delete your account?")) return;
 
   try {
-    const response = await fetch("/api/account", {
-      method: "DELETE",
-      headers: { Authorization: localStorage.getItem("token") },
-    });
-    const result = await response.json();
-
-    if (!response.ok) throw new Error(result.error || "Deletion failed");
+    await accountService.deleteAccount();
 
     M.toast({ html: "Account deleted successfully!" });
     window.location.href = "/login";
@@ -120,8 +91,13 @@ deleteAccountBtn.addEventListener("click", async () => {
 
 // Fetch account details on page load
 const displayAccountDetails = async () => {
-  const data = await getAccountDetails();
-  populateData(data);
+  try {
+    const data = await accountService.getAccountDetails();
+    populateData(data);
+  } catch (error) {
+    console.error("Error displaying account details:", error);
+    M.toast({ html: error.message, classes: "red" });
+  }
 };
 
 displayAccountDetails();

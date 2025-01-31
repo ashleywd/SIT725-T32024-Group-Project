@@ -7,19 +7,29 @@ import {
 } from "./global.js";
 import { activateWebSocket } from "./socket-client.js";
 import { displayNotifications } from "./notifications.js";
+import { updatePointsDisplay } from "./points.js";
+import pointsService from "./services/points.js";
+import accountService from "./services/account.js";
 
 const postForm = document.getElementById("postForm");
 
-const handleSubmitForm = async function (e) {
-  e.preventDefault();
+const createPost = async function () {
   const formData = {
     type: document.getElementById("type").value,
-    hoursNeeded: parseFloat(document.getElementById("hoursNeeded").value),
+    hoursNeeded: Number(document.getElementById("hoursNeeded").value),
     description: document.getElementById("description").value,
     dateTime: document.getElementById("dateTime").value,
   };
 
   try {
+    // We need to deduct points before creating the post
+    if (formData.type === "request") {
+      const { userId: recipientId, points } = await accountService.getAccountDetails();
+      const newPoints = points - formData.hoursNeeded;
+      await pointsService.updatePoints(newPoints, recipientId);
+    }
+
+    // TODO: Move to services
     const userToken = localStorage.getItem("token");
     const response = await fetch("/api/posts", {
       method: "POST",
@@ -37,16 +47,53 @@ const handleSubmitForm = async function (e) {
 
     const modal = M.Modal.getInstance(document.getElementById("modalForm"));
     modal.close();
-    M.toast({ html: "Post created successfully!" });
     postForm.reset();
+    M.toast({ html: "Post created successfully!" });
+
     displayPosts();
+    updatePointsDisplay();
   } catch (error) {
     console.error("Error creating post:", error);
     M.toast({ html: error.message, classes: "red" });
   }
 };
 
-postForm.addEventListener("submit", handleSubmitForm);
+const validatePoints = async () => {
+  try {
+    const hoursNeeded = parseFloat(document.getElementById("hoursNeeded").value);
+    const currentPoints = await pointsService.getPoints();
+    if (currentPoints < hoursNeeded) {
+      throw new Error("Insufficient points for this request");
+    }
+  } catch (error) {
+    console.error("Error validating has enough points:", error);
+    M.toast({ html: error.message, classes: "red" });
+  }
+};
+
+const validatePostCreation = async (e) => {
+  try {
+    e.preventDefault();
+    const currentDate = new Date();
+    const dateField = document.getElementById("dateTime").value;
+    const selectedDate = new Date(dateField);
+    if (selectedDate < currentDate) {
+      throw new Error("Cannot set date/time in the past");
+    }
+
+    const type = document.getElementById("type").value;
+    if (type === "request") {
+      await validatePoints();
+    }
+
+    createPost();
+  } catch (error) {
+    console.error("Error validating post creation:", error);
+    M.toast({ html: error.message, classes: "red" });
+  }
+};
+
+postForm.addEventListener("submit", validatePostCreation);
 
 const getPosts = async () => {
   const postsContent = document.getElementById("postsContent");
@@ -132,7 +179,7 @@ const acceptButtonComponent = ({ status, postId, postedBy }) => {
   `;
 };
 
-const createPost = ({
+const createPostElement = ({
   postId,
   postedBy,
   type,
@@ -231,7 +278,7 @@ const renderPosts = (posts) => {
     Array.isArray(posts) && posts.length > 0
       ? posts
           .map((post) =>
-            createPost({
+            createPostElement({
               postId: post._id,
               postedBy: post.postedBy,
               type: post.type,
@@ -275,6 +322,7 @@ verifyUserAuthentication();
 initializeMaterializeComponent();
 displayPosts();
 displayNotifications();
+updatePointsDisplay();
 activateWebSocket({ handleNotifyAcceptPost, handlePostsUpdated });
 
 export { displayPosts };

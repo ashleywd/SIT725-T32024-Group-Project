@@ -13,6 +13,7 @@ const getAccountDetails = async (req, res) => {
     }
 
     res.status(200).json({
+      userId: user._id,
       name: user.username,
       email: user.email,
       points: user.points,
