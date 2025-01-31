@@ -8,6 +8,8 @@ import { displayNotifications } from "./notifications.js";
 import postsService from "./services/posts.js";
 import { updatePointsDisplay } from "./points.js";
 import myPostsService from "./services/myPosts.js";
+import pointsService from "./services/points.js";
+import accountService from "./services/account.js";
 
 verifyUserAuthentication();
 
@@ -107,11 +109,21 @@ const getCardActions = (id, status, postedBy) => {
 
 const handleMarkCompleted = async (postId, postedBy) => {
   try {
+    // Credit points
+    const post = await postsService.getPostById(postId);
+    const recipientId = post.type === "offer" ? post.postedBy : post.acceptedBy;
+    const recipient = await accountService.getAccountDetailsByUserId(recipientId);
+    const newPoints = Number(recipient.points) + Number(post.hoursNeeded);
+    await pointsService.updatePoints(newPoints, recipientId);
+
+    // Update post status
     const status = "completed";
     await postsService.updatePostStatus(postId, postedBy, status);
 
     M.toast({ html: "Post marked as completed", classes: "green" });
+
     displayMyPosts();
+    updatePointsDisplay();
   } catch (error) {
     console.error("Error marking post as completed:", error);
     M.toast({ html: "Failed to mark post as completed", classes: "red" });

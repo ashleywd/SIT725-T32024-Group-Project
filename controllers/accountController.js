@@ -23,6 +23,27 @@ const getAccountDetails = async (req, res) => {
   }
 };
 
+const getAccountDetailsByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await UserModel.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({
+      userId: user._id,
+      name: user.username,
+      email: user.email,
+      points: user.points,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 const updateAccountDetails = async (req, res) => {
   try {
     const { userId } = req;
@@ -111,4 +132,5 @@ module.exports = {
   updateAccountDetails,
   deleteAccount,
   getAccountPoints,
+  getAccountDetailsByUserId,
 };
