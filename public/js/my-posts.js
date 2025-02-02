@@ -235,6 +235,8 @@ const handleClickEditPost = async (e) => {
     const descriptionField = document.getElementById("editDescription");
 
     typeField.value = postData.type;
+    M.FormSelect.init(typeField);
+
     hoursField.disabled = false;
     hoursField.value = postData.hoursNeeded;
     dateField.value = selectedDate;
