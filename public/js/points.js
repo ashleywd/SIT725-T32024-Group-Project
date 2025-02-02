@@ -6,7 +6,7 @@ const updatePointsDisplay = async () => {
     if (!userToken) return;
 
     const data = await pointsService.getPoints();
-    const pointsDisplay = document.querySelectorAll("#pointsBadge");
+    const pointsDisplay = document.querySelectorAll("#userPoints");
     pointsDisplay[0].textContent = data;
   } catch (error) {
     console.error("Error fetching points:", error);
