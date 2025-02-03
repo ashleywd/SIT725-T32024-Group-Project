@@ -7,15 +7,20 @@ const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) +
 const getRandomFutureDateTime = () => {
   const futureDate = new Date();
   futureDate.setDate(futureDate.getDate() + getRandomInt(1, 30)); // Random date within next 30 days
-  const hours = getRandomInt(8, 22); // Random hour between 8 AM - 10 PM
+  const hours = String(getRandomInt(8, 22)).padStart(2, '0'); // Ensure two-digit hour format
   const minutes = getRandomInt(0, 1) === 0 ? '00' : '30'; // Choose between :00 or :30 minutes
-  return futureDate.toISOString().split('T')[0] + `T${hours}:${minutes}`; // Format: YYYY-MM-DDTHH:MM
+
+  const year = futureDate.getFullYear();
+  const month = String(futureDate.getMonth() + 1).padStart(2, '0'); // Ensure two-digit month
+  const day = String(futureDate.getDate()).padStart(2, '0'); // Ensure two-digit day
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`; // Format: YYYY-MM-DDTHH:MM
 };
 
 function formatDateTime(isoString) {
   const date = new Date(isoString); // Convert ISO string to Date object
 
-  return new Intl.DateTimeFormat('en-US', { 
+  return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'numeric',
       day: 'numeric',
@@ -64,7 +69,7 @@ test.describe('Post Creation Workflow', () => {
 
 
     // Generate a valid randomHours (must be ≤ currentPoints)
-    const maxHours = Math.max(1, Math.min(currentPoints, 10)); 
+    const maxHours = Math.max(1, Math.min(currentPoints, 10));
     const randomHours = getRandomInt(1, maxHours);
 
     const PostType = currentPoints === 0 ? 'Offering Babysitting' : 'Requesting Babysitter';
@@ -125,7 +130,7 @@ test.describe('Post Creation Workflow', () => {
     });
 
     // request more hours than points
-    const excessiveHours = currentPoints + 10; 
+    const excessiveHours = currentPoints + 10;
     const randomDateTime = getRandomFutureDateTime();
 
     // Click "Create Post" button to open modal
