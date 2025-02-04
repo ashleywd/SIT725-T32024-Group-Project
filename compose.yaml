@@ -1,0 +1,15 @@
+version: '3'
+services:
+  gateway:
+    image: daosgava/baby-swap:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: baby-swap
+    ports:
+      - "3000:3000"
+    environment:
+      - SESSION_SECRET=replace-with-your-secret
+      - MONGODB_URI=replace-with-your-db-url
+      - PORT=3000
+    restart: "no"
