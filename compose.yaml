@@ -1,0 +1,28 @@
+version: '3'
+services:
+  db:
+    image: mongo:7.0.0
+    container_name: db
+    ports:
+      - "27017:27017"
+    restart: always
+    volumes:
+      - mongodb_data:/data/db
+  baby-swap:
+    image: daosgava/baby-swap:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: baby-swap
+    ports:
+      - "3000:3000"
+    environment:
+      - SESSION_SECRET=replace-with-your-secret
+      - MONGODB_URI=mongodb://db:27017/babyswap
+      - PORT=3000
+    depends_on:
+      - db
+    restart: "no"
+
+volumes:
+  mongodb_data:

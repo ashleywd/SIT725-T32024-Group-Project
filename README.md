@@ -70,6 +70,14 @@ and
 npm run E2E:report // To display report in the browser
 ```
 
+### Docker
+#### Prerequisites:
+- Docker running
+```console
+docker compose up --build
+docker compose down
+```
+
 ## Development Team
 [Suppressed for Privacy]
 
