@@ -6,6 +6,8 @@ services:
     ports:
       - "27017:27017"
     restart: always
+    volumes:
+      - mongodb_data:/data/db
   baby-swap:
     image: daosgava/baby-swap:latest
     build:
@@ -21,3 +23,6 @@ services:
     depends_on:
       - db
     restart: "no"
+
+volumes:
+  mongodb_data:
