@@ -1,6 +1,12 @@
 version: '3'
 services:
-  gateway:
+  db:
+    image: mongo:7.0.0
+    container_name: db
+    ports:
+      - "27017:27017"
+    restart: always
+  baby-swap:
     image: daosgava/baby-swap:latest
     build:
       context: .
@@ -10,6 +16,8 @@ services:
       - "3000:3000"
     environment:
       - SESSION_SECRET=replace-with-your-secret
-      - MONGODB_URI=replace-with-your-db-url
+      - MONGODB_URI=mongodb://db:27017/babyswap
       - PORT=3000
+    depends_on:
+      - db
     restart: "no"

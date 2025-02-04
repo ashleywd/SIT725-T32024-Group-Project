@@ -70,6 +70,15 @@ and
 npm run E2E:report // To display report in the browser
 ```
 
+### Docker
+To containerize the app, we are creating the base image using the Dockerfile.
+Additionally, we use Docker Compose to create two containers: one for MongoDB and another for the app.
+
+```console
+docker compose up --build
+docker compose down
+```
+
 ## Development Team
 [Suppressed for Privacy]
 
